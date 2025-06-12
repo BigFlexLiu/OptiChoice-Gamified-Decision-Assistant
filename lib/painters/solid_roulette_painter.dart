@@ -1,21 +1,15 @@
 import 'dart:math' as math;
+import 'package:decision_spin/storage/color_storage_service.dart';
 import 'package:flutter/material.dart';
-import '../enums/roulette_paint_mode.dart';
 
-class RoulettePainter extends CustomPainter {
+class SolidRoulettePainter extends CustomPainter {
   final List<String> options;
   final double rotation;
   final String? selectedOption;
-  final RoulettePaintMode paintMode;
-  final List<List<Color>> gradientColors;
-  final List<Color> solidColors;
 
-  RoulettePainter({
+  SolidRoulettePainter({
     required this.options,
     required this.rotation,
-    required this.paintMode,
-    required this.gradientColors,
-    required this.solidColors,
     this.selectedOption,
   });
 
@@ -35,18 +29,44 @@ class RoulettePainter extends CustomPainter {
     canvas.drawCircle(center, radius, borderPaint);
 
     final anglePerOption = 2 * math.pi / options.length;
+
     for (int i = 0; i < options.length; i++) {
-      // Start from the top (-π/2) and add rotation
-      final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
+      final startAngle = i * anglePerOption + rotation;
       final sweepAngle = anglePerOption;
 
-      // Check if this option is selected
-      final isSelected = selectedOption != null && options[i] == selectedOption;
+      // Get solid color for this slice
+      final color = [
+        Color(0xFFFF6B6B), // Red
+        Color(0xFF4ECDC4), // Teal
+        Color(0xFF667eea), // Blue
+        Color(0xFFf093fb), // Pink
+        Color(0xFF4facfe), // Light Blue
+        Color(0xFF43e97b), // Green
+        Color(0xFFfa709a), // Rose
+        Color(0xFF30cfd0), // Cyan
+        Color(0xFFa8edea), // Light Teal
+        Color(0xFFffecd2), // Cream
+        Color(0xFFFF8E53), // Orange
+        Color(0xFF44A08D), // Dark Green
+        Color(0xFF764ba2), // Purple
+        Color(0xFFf5576c), // Dark Pink
+        Color(0xFF00f2fe), // Bright Cyan
+        Color(0xFF38f9d7), // Mint
+        Color(0xFFfee140), // Yellow
+        Color(0xFF91a7ff), // Lavender
+        Color(0xFFfed6e3), // Light Pink
+        Color(0xFFfcb69f), // Peach
+      ][i];
 
-      // Create slice paint based on mode
-      final slicePaint = _createSlicePaint(i, center, radius, isSelected);
+      // Highlight selected option
+      final isSelected = selectedOption != null && options[i] == selectedOption;
+      final sliceColor = isSelected ? color.withValues(alpha: 0.8) : color;
 
       // Draw slice
+      final slicePaint = Paint()
+        ..color = sliceColor
+        ..style = PaintingStyle.fill;
+
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius - 2),
         startAngle,
@@ -69,7 +89,7 @@ class RoulettePainter extends CustomPainter {
         sliceBorderPaint,
       );
 
-      // Draw text - use the middle of the slice
+      // Draw text
       _drawText(
         canvas,
         options[i],
@@ -79,6 +99,7 @@ class RoulettePainter extends CustomPainter {
         isSelected,
       );
     }
+
     // Draw center circle
     final centerPaint = Paint()
       ..color = Colors.white
@@ -92,38 +113,6 @@ class RoulettePainter extends CustomPainter {
       ..strokeWidth = 2;
 
     canvas.drawCircle(center, 20, centerBorderPaint);
-  }
-
-  Paint _createSlicePaint(
-    int index,
-    Offset center,
-    double radius,
-    bool isSelected,
-  ) {
-    switch (paintMode) {
-      case RoulettePaintMode.gradient:
-        final colors = _getGradientColorsForIndex(index);
-        return Paint()
-          ..shader = RadialGradient(
-            colors: isSelected
-                ? colors.map((c) => c.withValues(alpha: 0.8)).toList()
-                : colors,
-          ).createShader(Rect.fromCircle(center: center, radius: radius));
-
-      case RoulettePaintMode.solid:
-        final color = _getSolidColorForIndex(index);
-        return Paint()
-          ..color = isSelected ? color.withValues(alpha: 0.8) : color
-          ..style = PaintingStyle.fill;
-    }
-  }
-
-  List<Color> _getGradientColorsForIndex(int index) {
-    return gradientColors[index % gradientColors.length];
-  }
-
-  Color _getSolidColorForIndex(int index) {
-    return solidColors[index % solidColors.length];
   }
 
   void _drawText(
@@ -155,44 +144,32 @@ class RoulettePainter extends CustomPainter {
 
     textPainter.layout();
 
-    // Calculate text position - place it at 65% of the radius from center
-    final textRadius = radius * 0.65;
+    // Calculate text position
+    final textRadius = radius * 0.7;
+    final textX = center.dx + textRadius * math.cos(angle - math.pi / 2);
+    final textY = center.dy + textRadius * math.sin(angle - math.pi / 2);
 
-    // Calculate position using the angle directly (no offset needed)
-    final textX = center.dx + textRadius * math.cos(angle);
-    final textY = center.dy + textRadius * math.sin(angle);
-
+    // Rotate text to be readable
     canvas.save();
     canvas.translate(textX, textY);
 
-    // Calculate rotation angle for text
-    // Add π/2 to make text perpendicular to radius (tangential to circle)
-    double textRotation = angle + math.pi / 2;
-
-    // Ensure text is readable (not upside down)
-    // If angle would make text upside down, rotate 180 degrees
-    if (textRotation > math.pi / 2 && textRotation < 3 * math.pi / 2) {
-      textRotation += math.pi;
+    double textAngle = angle;
+    if (textAngle > math.pi / 2 && textAngle < 3 * math.pi / 2) {
+      textAngle += math.pi;
     }
 
-    canvas.rotate(textRotation);
-
-    // Draw text centered at the calculated position
+    canvas.rotate(textAngle - math.pi / 2);
     textPainter.paint(
       canvas,
       Offset(-textPainter.width / 2, -textPainter.height / 2),
     );
-
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant RoulettePainter oldDelegate) {
+  bool shouldRepaint(covariant SolidRoulettePainter oldDelegate) {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
-        oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.paintMode != paintMode ||
-        oldDelegate.gradientColors != gradientColors ||
-        oldDelegate.solidColors != solidColors;
+        oldDelegate.selectedOption != selectedOption;
   }
 }

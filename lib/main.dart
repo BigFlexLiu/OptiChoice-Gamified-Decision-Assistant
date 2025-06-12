@@ -1,6 +1,6 @@
 import 'package:decision_spin/views/roulette_view.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(RouletteApp());
@@ -11,10 +11,10 @@ class RouletteApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Decision Roulette',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode:
+          ThemeMode.system, // Automatically switches based on system preference
       home: RouletteView(),
     );
   }

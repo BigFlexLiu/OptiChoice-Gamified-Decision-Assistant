@@ -1,13 +1,19 @@
 import 'dart:math' as math;
-
-import 'package:decision_spin/painters/roulette_painter.dart';
 import 'package:flutter/material.dart';
+import '../painters/roulette_painter.dart';
+import '../enums/roulette_paint_mode.dart';
 
 class RouletteWheel extends StatefulWidget {
   final List<String> options;
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
+  final Function(String)? onPointingOptionChanged;
+  final double? size;
+  final bool showSpinButton;
+  final RoulettePaintMode paintMode;
+  final List<List<Color>> gradientColors; // Add gradient colors parameter
+  final List<Color> solidColors; // Add solid colors parameter
 
   const RouletteWheel({
     Key? key,
@@ -15,7 +21,41 @@ class RouletteWheel extends StatefulWidget {
     required this.isSpinning,
     required this.onSpinStart,
     required this.onSpinComplete,
+    required this.gradientColors,
+    required this.solidColors,
+    this.onPointingOptionChanged,
+    this.size,
+    this.showSpinButton = true,
+    this.paintMode = RoulettePaintMode.gradient,
   }) : super(key: key);
+
+  /// Factory constructor for gradient mode
+  const RouletteWheel.gradient({
+    Key? key,
+    required this.options,
+    required this.isSpinning,
+    required this.onSpinStart,
+    required this.onSpinComplete,
+    required this.gradientColors,
+    required this.solidColors,
+    this.onPointingOptionChanged,
+    this.size,
+    this.showSpinButton = true,
+  }) : paintMode = RoulettePaintMode.gradient;
+
+  /// Factory constructor for solid color mode
+  const RouletteWheel.solid({
+    Key? key,
+    required this.options,
+    required this.isSpinning,
+    required this.onSpinStart,
+    required this.onSpinComplete,
+    required this.gradientColors,
+    required this.solidColors,
+    this.onPointingOptionChanged,
+    this.size,
+    this.showSpinButton = true,
+  }) : paintMode = RoulettePaintMode.solid;
 
   @override
   _RouletteWheelState createState() => _RouletteWheelState();
@@ -31,6 +71,10 @@ class _RouletteWheelState extends State<RouletteWheel>
   void initState() {
     super.initState();
     _initializeAnimation();
+    // Initialize with the first option pointing
+    if (widget.options.isNotEmpty && widget.onPointingOptionChanged != null) {
+      widget.onPointingOptionChanged!(widget.options[0]);
+    }
   }
 
   @override
@@ -50,11 +94,30 @@ class _RouletteWheelState extends State<RouletteWheel>
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
+    // Add listener to track rotation during animation
+    _animation.addListener(() {
+      if (widget.onPointingOptionChanged != null && widget.isSpinning) {
+        _updatePointingOption();
+      }
+    });
+
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _determineWinner();
       }
     });
+  }
+
+  void _updatePointingOption() {
+    if (widget.options.isEmpty) return;
+
+    final normalizedRotation = _animation.value % (2 * math.pi);
+    final sectionAngle = (2 * math.pi) / widget.options.length;
+    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
+    final pointingIndex =
+        (pointerAngle / sectionAngle).floor() % widget.options.length;
+
+    widget.onPointingOptionChanged!(widget.options[pointingIndex]);
   }
 
   void _spin() {
@@ -74,6 +137,13 @@ class _RouletteWheelState extends State<RouletteWheel>
       end: finalRotation,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
+    // Re-add the listener for the new animation
+    _animation.addListener(() {
+      if (widget.onPointingOptionChanged != null && widget.isSpinning) {
+        _updatePointingOption();
+      }
+    });
+
     _currentRotation = finalRotation;
     _controller.reset();
     _controller.forward();
@@ -91,91 +161,101 @@ class _RouletteWheelState extends State<RouletteWheel>
     widget.onSpinComplete(widget.options[winnerIndex]);
   }
 
-  List<Color> _getGradientColorsForIndex(int index) {
-    final gradients = [
-      [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-      [Color(0xFF4ECDC4), Color(0xFF44A08D)],
-      [Color(0xFF667eea), Color(0xFF764ba2)],
-      [Color(0xFFf093fb), Color(0xFFf5576c)],
-      [Color(0xFF4facfe), Color(0xFF00f2fe)],
-      [Color(0xFF43e97b), Color(0xFF38f9d7)],
-      [Color(0xFFfa709a), Color(0xFFfee140)],
-      [Color(0xFF30cfd0), Color(0xFF91a7ff)],
-      [Color(0xFFa8edea), Color(0xFFfed6e3)],
-      [Color(0xFFffecd2), Color(0xFFfcb69f)],
-    ];
-    return gradients[index % gradients.length];
+  String? _getCurrentPointingOption() {
+    if (widget.options.isEmpty) return null;
+
+    final normalizedRotation = _animation.value % (2 * math.pi);
+    final sectionAngle = (2 * math.pi) / widget.options.length;
+    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
+    final pointingIndex =
+        (pointerAngle / sectionAngle).floor() % widget.options.length;
+
+    return widget.options[pointingIndex];
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
+        mainAxisSize: MainAxisSize.max,
         children: [
           _buildRouletteWheel(),
-          SizedBox(height: 20),
-          _buildSpinButton(),
+          if (widget.showSpinButton) ...[
+            SizedBox(
+              height: (widget.size ?? 350) * 0.2,
+            ), // Proportional spacing
+            _buildSpinButton(),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildRouletteWheel() {
+    final containerHeight = widget.size ?? 350;
+    final shadowSize = containerHeight * 0.914; // 320/350 ratio
+    final wheelSize = containerHeight * 0.857; // 300/350 ratio
+
     return Container(
-      height: 350,
+      height: containerHeight,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          _buildWheelShadow(),
-          _buildAnimatedWheel(),
-          _buildPointer(),
-          _buildCenterCircle(),
+          _buildWheelShadow(shadowSize),
+          _buildAnimatedWheel(wheelSize),
+          _buildPointer(containerHeight),
+          _buildCenterCircle(wheelSize),
         ],
       ),
     );
   }
 
-  Widget _buildWheelShadow() {
+  Widget _buildWheelShadow(double size) {
     return Container(
-      width: 320,
-      height: 320,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: size * 0.0625, // 20/320 ratio
+            offset: Offset(0, size * 0.03125), // 10/320 ratio
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAnimatedWheel() {
+  Widget _buildAnimatedWheel(double size) {
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
         return Transform.rotate(
           angle: _animation.value,
           child: Container(
-            width: 300,
-            height: 300,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 15,
-                  offset: Offset(0, 5),
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: size * 0.05, // 15/300 ratio
+                  offset: Offset(0, size * 0.0167), // 5/300 ratio
                 ),
               ],
             ),
             child: CustomPaint(
               painter: RoulettePainter(
-                widget.options,
-                _getGradientColorsForIndex,
+                options: widget.options,
+                rotation: 0, // Rotation is handled by Transform.rotate
+                paintMode: widget.paintMode,
+                gradientColors: widget.gradientColors,
+                solidColors: widget.solidColors,
+                selectedOption: _getCurrentPointingOption(),
               ),
+              size: Size(size, size),
             ),
           ),
         );
@@ -183,85 +263,108 @@ class _RouletteWheelState extends State<RouletteWheel>
     );
   }
 
-  Widget _buildPointer() {
+  Widget _buildPointer(double containerHeight) {
+    final pointerTop = containerHeight * 0.357; // 125/350 ratio
+    final pointerSize =
+        containerHeight * 0.057; // Scale pointer relative to roulette size
+
     return Positioned(
-      top: 125,
+      top: pointerTop,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          _buildPointerShadow(),
-          _buildMainPointer(),
-          _buildPointerHighlight(),
+          _buildPointerShadow(pointerSize),
+          _buildMainPointer(pointerSize),
+          _buildPointerHighlight(pointerSize),
         ],
       ),
     );
   }
 
-  Widget _buildPointerShadow() {
+  Widget _buildPointerShadow(double baseSize) {
+    final width = baseSize * 0.9; // Proportional to pointer base size
+    final height = baseSize * 1.75; // Proportional to pointer base size
+
     return Transform.translate(
-      offset: Offset(2, 2),
+      offset: Offset(
+        baseSize * 0.1,
+        baseSize * 0.1,
+      ), // Proportional shadow offset
       child: Container(
         width: 0,
         height: 0,
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(color: Colors.transparent, width: 18),
-            right: BorderSide(color: Colors.transparent, width: 18),
-            top: BorderSide(color: Colors.black.withOpacity(0.3), width: 35),
+            left: BorderSide(color: Colors.transparent, width: width),
+            right: BorderSide(color: Colors.transparent, width: width),
+            top: BorderSide(
+              color: Colors.black.withValues(alpha: 0.3),
+              width: height,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMainPointer() {
+  Widget _buildMainPointer(double baseSize) {
+    final width = baseSize * 0.9; // Proportional to pointer base size
+    final height = baseSize * 1.75; // Proportional to pointer base size
+
     return Container(
       width: 0,
       height: 0,
       decoration: BoxDecoration(
         border: Border(
-          left: BorderSide(color: Colors.transparent, width: 18),
-          right: BorderSide(color: Colors.transparent, width: 18),
-          top: BorderSide(color: Colors.white, width: 35),
+          left: BorderSide(color: Colors.transparent, width: width),
+          right: BorderSide(color: Colors.transparent, width: width),
+          top: BorderSide(color: Colors.white, width: height),
         ),
       ),
     );
   }
 
-  Widget _buildPointerHighlight() {
+  Widget _buildPointerHighlight(double baseSize) {
+    final width = baseSize * 0.75; // Proportional to pointer base size
+    final height = baseSize * 1.5; // Proportional to pointer base size
+
     return Container(
       width: 0,
       height: 0,
       decoration: BoxDecoration(
         border: Border(
-          left: BorderSide(color: Colors.transparent, width: 15),
-          right: BorderSide(color: Colors.transparent, width: 15),
-          top: BorderSide(color: Colors.deepPurple, width: 30),
+          left: BorderSide(color: Colors.transparent, width: width),
+          right: BorderSide(color: Colors.transparent, width: width),
+          top: BorderSide(color: Colors.deepPurple, width: height),
         ),
       ),
     );
   }
 
-  Widget _buildCenterCircle() {
+  Widget _buildCenterCircle(double wheelSize) {
+    final circleSize = wheelSize * 0.167; // 50/300 ratio
+    final innerCircleSize = circleSize * 0.4; // 20/50 ratio
+    final borderWidth = circleSize * 0.08; // 4/50 ratio
+
     return Container(
-      width: 50,
-      height: 50,
+      width: circleSize,
+      height: circleSize,
       decoration: BoxDecoration(
         gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.deepPurple, width: 4),
+        border: Border.all(color: Colors.deepPurple, width: borderWidth),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: circleSize * 0.2, // 10/50 ratio
+            offset: Offset(0, circleSize * 0.06), // 3/50 ratio
           ),
         ],
       ),
       child: Center(
         child: Container(
-          width: 20,
-          height: 20,
+          width: innerCircleSize,
+          height: innerCircleSize,
           decoration: BoxDecoration(
             color: Colors.deepPurple,
             shape: BoxShape.circle,
@@ -277,9 +380,9 @@ class _RouletteWheelState extends State<RouletteWheel>
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-        textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        textStyle: Theme.of(context).textTheme.headlineSmall,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
       ),
       child: Text(widget.isSpinning ? 'Spinning...' : 'SPIN!'),
     );
