@@ -820,42 +820,42 @@ class _RouletteManagerState extends State<RouletteManager> {
                 const SizedBox(height: 24),
 
                 // Weight section
-                Text('Weight', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.tune,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Slider(
-                        value: tempWeight,
-                        min: 1.0,
-                        max: 10.0,
-                        divisions: 9,
-                        label: tempWeight.toStringAsFixed(1),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            tempWeight = value;
-                          });
-                        },
-                      ),
-                    ),
-                    Container(
-                      width: 50,
-                      child: Text(
-                        '${tempWeight.toStringAsFixed(1)}x',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.end,
-                      ),
-                    ),
-                  ],
-                ),
+                // Text('Weight', style: Theme.of(context).textTheme.titleSmall),
+                // const SizedBox(height: 8),
+                // Row(
+                //   children: [
+                //     Icon(
+                //       Icons.tune,
+                //       size: 18,
+                //       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                //     ),
+                //     const SizedBox(width: 8),
+                //     Expanded(
+                //       child: Slider(
+                //         value: tempWeight,
+                //         min: 1.0,
+                //         max: 10.0,
+                //         divisions: 9,
+                //         label: tempWeight.toStringAsFixed(1),
+                //         onChanged: (value) {
+                //           setDialogState(() {
+                //             tempWeight = value;
+                //           });
+                //         },
+                //       ),
+                //     ),
+                //     Container(
+                //       width: 50,
+                //       child: Text(
+                //         '${tempWeight.toStringAsFixed(1)}x',
+                //         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //           fontWeight: FontWeight.bold,
+                //         ),
+                //         textAlign: TextAlign.end,
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),
