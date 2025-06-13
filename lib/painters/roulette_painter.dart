@@ -40,11 +40,8 @@ class RoulettePainter extends CustomPainter {
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
       final sweepAngle = anglePerOption;
 
-      // Check if this option is selected
-      final isSelected = selectedOption != null && options[i] == selectedOption;
-
       // Create slice paint based on mode
-      final slicePaint = _createSlicePaint(i, center, radius, isSelected);
+      final slicePaint = _createSlicePaint(i, center, radius);
 
       // Draw slice
       canvas.drawArc(
@@ -76,7 +73,6 @@ class RoulettePainter extends CustomPainter {
         center,
         radius,
         startAngle + sweepAngle / 2,
-        isSelected,
       );
     }
     // Draw center circle
@@ -94,26 +90,19 @@ class RoulettePainter extends CustomPainter {
     canvas.drawCircle(center, 20, centerBorderPaint);
   }
 
-  Paint _createSlicePaint(
-    int index,
-    Offset center,
-    double radius,
-    bool isSelected,
-  ) {
+  Paint _createSlicePaint(int index, Offset center, double radius) {
     switch (paintMode) {
       case RoulettePaintMode.gradient:
         final colors = _getGradientColorsForIndex(index);
         return Paint()
           ..shader = RadialGradient(
-            colors: isSelected
-                ? colors.map((c) => c.withValues(alpha: 0.8)).toList()
-                : colors,
+            colors: colors,
           ).createShader(Rect.fromCircle(center: center, radius: radius));
 
       case RoulettePaintMode.solid:
         final color = _getSolidColorForIndex(index);
         return Paint()
-          ..color = isSelected ? color.withValues(alpha: 0.8) : color
+          ..color = color
           ..style = PaintingStyle.fill;
     }
   }
@@ -132,12 +121,11 @@ class RoulettePainter extends CustomPainter {
     Offset center,
     double radius,
     double angle,
-    bool isSelected,
   ) {
     final textStyle = TextStyle(
       color: Colors.white,
-      fontSize: isSelected ? 16 : 14,
-      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
       shadows: [
         Shadow(
           offset: const Offset(1, 1),
@@ -158,22 +146,16 @@ class RoulettePainter extends CustomPainter {
     // Calculate text position - place it at 65% of the radius from center
     final textRadius = radius * 0.65;
 
-    // Calculate position using the angle directly (no offset needed)
+    // Calculate position using the angle directly
     final textX = center.dx + textRadius * math.cos(angle);
     final textY = center.dy + textRadius * math.sin(angle);
 
     canvas.save();
     canvas.translate(textX, textY);
 
-    // Calculate rotation angle for text
-    // Add π/2 to make text perpendicular to radius (tangential to circle)
-    double textRotation = angle + math.pi / 2;
-
-    // Ensure text is readable (not upside down)
-    // If angle would make text upside down, rotate 180 degrees
-    if (textRotation > math.pi / 2 && textRotation < 3 * math.pi / 2) {
-      textRotation += math.pi;
-    }
+    // Calculate rotation angle for vertical text
+    // Use the angle pointing outward from center and add π/2 for vertical orientation
+    double textRotation = angle + math.pi;
 
     canvas.rotate(textRotation);
 
