@@ -536,7 +536,33 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    if (!isActive)
+                                    if (isActive) ...[
+                                      _buildActionButton(
+                                        icon: Icons.edit,
+                                        label: 'Edit Options',
+                                        onPressed: () =>
+                                            _editRoulette(rouletteId),
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildActionButton(
+                                        icon: Icons.copy,
+                                        label: 'Duplicate',
+                                        onPressed: () =>
+                                            _duplicateRoulette(rouletteId),
+                                        color: theme.colorScheme.tertiary,
+                                      ),
+                                      if (_roulettes.length > 1) ...[
+                                        const SizedBox(height: 8),
+                                        _buildActionButton(
+                                          icon: Icons.delete,
+                                          label: 'Delete',
+                                          onPressed: () =>
+                                              _deleteRoulette(rouletteId),
+                                          color: theme.colorScheme.error,
+                                        ),
+                                      ],
+                                    ] else ...[
                                       _buildActionButton(
                                         icon: Icons.star,
                                         label: 'Set as Active',
@@ -544,40 +570,25 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                                             _setActiveRoulette(rouletteId),
                                         color: theme.colorScheme.tertiary,
                                       ),
-                                    if (!isActive) const SizedBox(height: 8),
-                                    _buildActionButton(
-                                      icon: Icons.edit,
-                                      label: 'Edit Options',
-                                      onPressed: () =>
-                                          _editRoulette(rouletteId),
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildActionButton(
-                                      icon: Icons.edit_outlined,
-                                      label: 'Rename',
-                                      onPressed: () =>
-                                          _renameRoulette(rouletteId),
-                                      color: theme.colorScheme.secondary,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildActionButton(
-                                      icon: Icons.copy,
-                                      label: 'Duplicate',
-                                      onPressed: () =>
-                                          _duplicateRoulette(rouletteId),
-                                      color: theme.colorScheme.tertiary,
-                                    ),
-                                    if (_roulettes.length > 1)
                                       const SizedBox(height: 8),
-                                    if (_roulettes.length > 1)
                                       _buildActionButton(
-                                        icon: Icons.delete,
-                                        label: 'Delete',
+                                        icon: Icons.copy,
+                                        label: 'Duplicate',
                                         onPressed: () =>
-                                            _deleteRoulette(rouletteId),
-                                        color: theme.colorScheme.error,
+                                            _duplicateRoulette(rouletteId),
+                                        color: theme.colorScheme.tertiary,
                                       ),
+                                      if (_roulettes.length > 1) ...[
+                                        const SizedBox(height: 8),
+                                        _buildActionButton(
+                                          icon: Icons.delete,
+                                          label: 'Delete',
+                                          onPressed: () =>
+                                              _deleteRoulette(rouletteId),
+                                          color: theme.colorScheme.error,
+                                        ),
+                                      ],
+                                    ],
                                   ],
                                 ),
                               ),
