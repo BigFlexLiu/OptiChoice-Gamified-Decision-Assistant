@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'roulette_wheel.dart';
-import '../storage/color_storage_service.dart';
+import '../storage/roulette_storage_service.dart';
+import '../storage/roulette_wheel_model.dart';
 import '../enums/roulette_paint_mode.dart';
 
 class RoulettePreview extends StatefulWidget {
   final List<String> options;
   final double? size;
   final bool showSpinButton;
+  final String? rouletteId; // Optional: preview specific roulette by ID
 
   const RoulettePreview({
     Key? key,
     required this.options,
     this.size,
     this.showSpinButton = false,
+    this.rouletteId,
   }) : super(key: key);
 
   @override
@@ -23,87 +26,95 @@ class _RoulettePreviewState extends State<RoulettePreview> {
   List<List<Color>> _gradientColors = [];
   List<Color> _solidColors = [];
   RoulettePaintMode _paintMode = RoulettePaintMode.gradient;
+  int _colorThemeIndex = 0;
   bool _colorsLoaded = false;
 
   // Static cache to avoid reloading colors for multiple instances
-  static List<List<Color>>? _cachedGradientColors;
-  static List<Color>? _cachedSolidColors;
-  static RoulettePaintMode? _cachedPaintMode;
+  static RouletteWheelModel? _cachedActiveRoulette;
   static bool _cacheInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadColors();
+    _loadRouletteData();
   }
 
-  Future<void> _loadColors() async {
-    // Use cached colors if available
-    if (_cacheInitialized &&
-        _cachedGradientColors != null &&
-        _cachedSolidColors != null &&
-        _cachedPaintMode != null) {
-      setState(() {
-        _gradientColors = _cachedGradientColors!;
-        _solidColors = _cachedSolidColors!;
-        _paintMode = _cachedPaintMode!;
-        _colorsLoaded = true;
-      });
-      return;
-    }
-
+  Future<void> _loadRouletteData() async {
     try {
-      final futures = await Future.wait([
-        ColorStorageService.gradientColors,
-        ColorStorageService.solidColors,
-      ]);
+      RouletteWheelModel? roulette;
 
-      // Cache the results for other instances
-      _cachedGradientColors = futures[0] as List<List<Color>>;
-      _cachedSolidColors = futures[1] as List<Color>;
-      _cachedPaintMode = RoulettePaintMode.gradient;
-      _cacheInitialized = true;
+      if (widget.rouletteId != null) {
+        // Load specific roulette by ID
+        roulette = await RouletteStorageService.loadRouletteById(
+          widget.rouletteId!,
+        );
+      } else {
+        // Use cached active roulette if available
+        if (_cacheInitialized && _cachedActiveRoulette != null) {
+          roulette = _cachedActiveRoulette;
+        } else {
+          // Load active roulette and cache it
+          roulette = await RouletteStorageService.loadActiveRoulette();
+          if (roulette != null) {
+            _cachedActiveRoulette = roulette;
+            _cacheInitialized = true;
+          }
+        }
+      }
 
-      setState(() {
-        _gradientColors = _cachedGradientColors!;
-        _solidColors = _cachedSolidColors!;
-        _paintMode = _cachedPaintMode!;
-        _colorsLoaded = true;
-      });
+      if (roulette != null) {
+        setState(() {
+          _gradientColors = roulette!.gradientColors;
+          _solidColors = roulette.solidColors;
+          _paintMode = roulette.paintMode;
+          _colorThemeIndex = roulette.colorThemeIndex;
+          _colorsLoaded = true;
+        });
+      } else {
+        // Use default colors if no roulette is found
+        _useDefaultColors();
+      }
     } catch (e) {
       // Use default colors if loading fails
       _useDefaultColors();
-      print(e);
+      debugPrint('RoulettePreview: Failed to load roulette data: $e');
     }
   }
 
   void _useDefaultColors() {
     setState(() {
       _gradientColors = [
-        [Colors.red, Colors.pink],
+        [Colors.red, Colors.orange],
         [Colors.blue, Colors.cyan],
-        [Colors.green, Colors.lightGreen],
+        [Colors.green, Colors.lime],
+        [Colors.purple, Colors.pink],
         [Colors.orange, Colors.yellow],
-        [Colors.purple, Colors.purpleAccent],
+        [Colors.teal, Colors.blue],
       ];
       _solidColors = [
         Colors.red,
         Colors.blue,
         Colors.green,
-        Colors.orange,
         Colors.purple,
+        Colors.orange,
+        Colors.teal,
       ];
       _paintMode = RoulettePaintMode.gradient;
+      _colorThemeIndex = 0;
       _colorsLoaded = true;
     });
   }
 
-  /// Clear the static cache (useful when colors are updated in settings)
+  /// Clear the static cache (useful when active roulette is updated)
   static void clearCache() {
-    _cachedGradientColors = null;
-    _cachedSolidColors = null;
-    _cachedPaintMode = null;
+    _cachedActiveRoulette = null;
     _cacheInitialized = false;
+  }
+
+  /// Update cache with new active roulette (call this when active roulette changes)
+  static void updateCache(RouletteWheelModel roulette) {
+    _cachedActiveRoulette = roulette;
+    _cacheInitialized = true;
   }
 
   @override

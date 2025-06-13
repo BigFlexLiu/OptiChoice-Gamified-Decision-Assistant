@@ -1,4 +1,4 @@
-import 'package:decision_spin/views/roulette_options_view.dart';
+import 'package:decision_spin/views/roulette_manager.dart';
 import 'package:flutter/material.dart';
 import '../enums/roulette_paint_mode.dart';
 

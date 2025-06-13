@@ -1,33 +1,33 @@
-import 'package:decision_spin/storage/color_storage_service.dart';
 import 'package:flutter/material.dart';
-import '../storage/options_storage_service.dart';
+import '../storage/roulette_storage_service.dart';
+import '../storage/roulette_wheel_model.dart';
+import '../enums/roulette_paint_mode.dart';
 
-class RouletteOptionsView extends StatefulWidget {
-  final List<String> initialOptions;
-  final Function(List<String>)? onOptionsChanged;
+class RouletteManager extends StatefulWidget {
+  final String? rouletteId; // Optional: if null, edits active roulette
+  final Function(RouletteWheelModel)? onRouletteChanged;
 
-  const RouletteOptionsView({
-    Key? key,
-    required this.initialOptions,
-    this.onOptionsChanged,
-  }) : super(key: key);
+  const RouletteManager({Key? key, this.rouletteId, this.onRouletteChanged})
+    : super(key: key);
 
   @override
-  _RouletteOptionsViewState createState() => _RouletteOptionsViewState();
+  _RouletteManagerState createState() => _RouletteManagerState();
 }
 
-class _RouletteOptionsViewState extends State<RouletteOptionsView> {
+class _RouletteManagerState extends State<RouletteManager> {
+  RouletteWheelModel? _roulette;
   late List<RouletteOption> _options;
-  String _rouletteName = 'My Roulette';
+  String _rouletteName = '';
   final TextEditingController _textController = TextEditingController();
   bool _hasChanges = false;
   bool _isLoading = false;
   int _selectedTheme = 0;
+  RoulettePaintMode _paintMode = RoulettePaintMode.gradient;
 
   final List<ColorTheme> _colorThemes = [
     ColorTheme(
       name: 'Vibrant',
-      colors: [
+      gradientColors: [
         [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
         [Color(0xFF4ECDC4), Color(0xFF44A08D)],
         [Color(0xFF667eea), Color(0xFF764ba2)],
@@ -37,10 +37,20 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         [Color(0xFFfa709a), Color(0xFFfee140)],
         [Color(0xFF30cfd0), Color(0xFF91a7ff)],
       ],
+      solidColors: [
+        Color(0xFFFF6B6B),
+        Color(0xFF4ECDC4),
+        Color(0xFF667eea),
+        Color(0xFFf093fb),
+        Color(0xFF4facfe),
+        Color(0xFF43e97b),
+        Color(0xFFfa709a),
+        Color(0xFF30cfd0),
+      ],
     ),
     ColorTheme(
       name: 'Ocean',
-      colors: [
+      gradientColors: [
         [Color(0xFF2E86AB), Color(0xFF72DBD9)],
         [Color(0xFF00B4DB), Color(0xFF0083B0)],
         [Color(0xFF1CB5E0), Color(0xFF000851)],
@@ -50,10 +60,20 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         [Color(0xFF4FC3F7), Color(0xFF29B6F6)],
         [Color(0xFF00ACC1), Color(0xFF26C6DA)],
       ],
+      solidColors: [
+        Color(0xFF2E86AB),
+        Color(0xFF00B4DB),
+        Color(0xFF1CB5E0),
+        Color(0xFF4481EB),
+        Color(0xFF5B73C4),
+        Color(0xFF2196F3),
+        Color(0xFF4FC3F7),
+        Color(0xFF00ACC1),
+      ],
     ),
     ColorTheme(
       name: 'Sunset',
-      colors: [
+      gradientColors: [
         [Color(0xFFFF9A8B), Color(0xFFA890FE)],
         [Color(0xFFFFAD84), Color(0xFFFF6B6B)],
         [Color(0xFFFFA726), Color(0xFFFF7043)],
@@ -63,10 +83,20 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         [Color(0xFFFF5722), Color(0xFFE91E63)],
         [Color(0xFFF57F17), Color(0xFFFF6F00)],
       ],
+      solidColors: [
+        Color(0xFFFF9A8B),
+        Color(0xFFFFAD84),
+        Color(0xFFFFA726),
+        Color(0xFFFF8A65),
+        Color(0xFFFFB74D),
+        Color(0xFFFFCC02),
+        Color(0xFFFF5722),
+        Color(0xFFF57F17),
+      ],
     ),
     ColorTheme(
       name: 'Forest',
-      colors: [
+      gradientColors: [
         [Color(0xFF56AB2F), Color(0xFFA8E6CF)],
         [Color(0xFF11998E), Color(0xFF38EF7D)],
         [Color(0xFF00B09B), Color(0xFF96C93D)],
@@ -76,10 +106,20 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         [Color(0xFF4CAF50), Color(0xFF8BC34A)],
         [Color(0xFF388E3C), Color(0xFF66BB6A)],
       ],
+      solidColors: [
+        Color(0xFF56AB2F),
+        Color(0xFF11998E),
+        Color(0xFF00B09B),
+        Color(0xFF2E8B57),
+        Color(0xFF228B22),
+        Color(0xFF006400),
+        Color(0xFF4CAF50),
+        Color(0xFF388E3C),
+      ],
     ),
     ColorTheme(
       name: 'Purple',
-      colors: [
+      gradientColors: [
         [Color(0xFF667eea), Color(0xFF764ba2)],
         [Color(0xFF9C27B0), Color(0xFFE1BEE7)],
         [Color(0xFF673AB7), Color(0xFF9575CD)],
@@ -88,6 +128,16 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         [Color(0xFF7B1FA2), Color(0xFFBA68C8)],
         [Color(0xFF8E24AA), Color(0xFFCE93D8)],
         [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
+      ],
+      solidColors: [
+        Color(0xFF667eea),
+        Color(0xFF9C27B0),
+        Color(0xFF673AB7),
+        Color(0xFF3F51B5),
+        Color(0xFF5E35B1),
+        Color(0xFF7B1FA2),
+        Color(0xFF8E24AA),
+        Color(0xFF6A1B9A),
       ],
     ),
   ];
@@ -99,33 +149,41 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
   }
 
   Future<void> _loadRouletteData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final activeRoulette = await OptionsStorageService.getActiveRoulette();
-      final savedTheme = await OptionsStorageService.getColorTheme();
+      RouletteWheelModel? roulette;
 
-      _rouletteName = activeRoulette.isNotEmpty
-          ? activeRoulette
-          : 'My Roulette';
+      if (widget.rouletteId != null) {
+        roulette = await RouletteStorageService.loadRouletteById(
+          widget.rouletteId!,
+        );
+      } else {
+        roulette = await RouletteStorageService.loadActiveRoulette();
+      }
 
-      _options = widget.initialOptions
-          .map((option) => RouletteOption(text: option, weight: 1.0))
-          .toList();
-
-      _selectedTheme = savedTheme;
+      if (roulette != null) {
+        setState(() {
+          _roulette = roulette;
+          _rouletteName = roulette!.name;
+          _options = List.from(roulette.options);
+          _selectedTheme = roulette.colorThemeIndex;
+          _paintMode = roulette.paintMode;
+        });
+      } else {
+        // This shouldn't happen, but handle gracefully
+        Navigator.of(context).pop();
+      }
     } catch (e) {
-      _rouletteName = 'My Roulette';
-      _options = widget.initialOptions
-          .map((option) => RouletteOption(text: option, weight: 1.0))
-          .toList();
-      _selectedTheme = 0; // Default to first theme
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load roulette data'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      Navigator.of(context).pop();
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -147,7 +205,10 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
   void _editOption(int index, String newValue) {
     if (newValue.trim().isNotEmpty && newValue.trim() != _options[index].text) {
       setState(() {
-        _options[index].text = newValue.trim();
+        _options[index] = RouletteOption(
+          text: newValue.trim(),
+          weight: _options[index].weight,
+        );
         _hasChanges = true;
       });
     }
@@ -155,7 +216,10 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
 
   void _updateOptionWeight(int index, double weight) {
     setState(() {
-      _options[index].weight = weight;
+      _options[index] = RouletteOption(
+        text: _options[index].text,
+        weight: weight,
+      );
       _hasChanges = true;
     });
   }
@@ -180,36 +244,75 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
     }
   }
 
-  Future<void> _saveChanges() async {
+  void _updateColorTheme(int themeIndex) {
     setState(() {
-      _isLoading = true;
+      _selectedTheme = themeIndex;
+      _hasChanges = true;
     });
+  }
+
+  void _updatePaintMode(RoulettePaintMode mode) {
+    setState(() {
+      _paintMode = mode;
+      _hasChanges = true;
+    });
+  }
+
+  Future<void> _saveChanges() async {
+    if (_roulette == null) return;
+
+    setState(() => _isLoading = true);
 
     try {
-      final optionTexts = _options.map((option) => option.text).toList();
+      // Check if name already exists (for other roulettes)
+      if (_rouletteName != _roulette!.name) {
+        final nameExists = await RouletteStorageService.rouletteNameExists(
+          _rouletteName,
+        );
+        if (nameExists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('A roulette with this name already exists'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
 
-      // Save both options and color theme preferences
-      final futures = await Future.wait([
-        OptionsStorageService.saveOptions(optionTexts),
-        OptionsStorageService.saveColorTheme(_selectedTheme),
-        ColorStorageService.saveGradientColors(
-          _colorThemes[_selectedTheme].colors,
-        ),
-      ]);
+      // Update the roulette model
+      final updatedRoulette = RouletteWheelModel(
+        id: _roulette!.id,
+        name: _rouletteName,
+        options: List.from(_options),
+        colorThemeIndex: _selectedTheme,
+        gradientColors: _colorThemes[_selectedTheme].gradientColors,
+        solidColors: _colorThemes[_selectedTheme].solidColors,
+        paintMode: _paintMode,
+        createdAt: _roulette!.createdAt,
+        updatedAt: DateTime.now(),
+      );
 
-      final optionsSaved = futures[0];
-      final themeSaved = futures[1];
+      final success = await RouletteStorageService.saveRoulette(
+        updatedRoulette,
+      );
 
-      if (optionsSaved && themeSaved) {
-        widget.onOptionsChanged?.call(optionTexts);
+      if (success) {
+        setState(() {
+          _roulette = updatedRoulette;
+          _hasChanges = false;
+        });
+
+        widget.onRouletteChanged?.call(updatedRoulette);
 
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Roulette saved successfully!')));
 
-        Navigator.of(context).pop(optionTexts);
+        Navigator.of(context).pop(updatedRoulette);
       } else {
-        throw Exception('Failed to save options or theme');
+        throw Exception('Failed to save roulette');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -219,9 +322,7 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
         ),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -264,6 +365,8 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    _buildPaintModeSection(),
+                    const SizedBox(height: 16),
                     _buildColorThemeSection(),
                     const SizedBox(height: 16),
                     _buildOptionsListSection(),
@@ -312,6 +415,95 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
     );
   }
 
+  Widget _buildPaintModeSection() {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.brush_outlined),
+              const SizedBox(width: 8),
+              Text('Paint Style', style: theme.textTheme.titleSmall),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildPaintModeOption(
+                  RoulettePaintMode.gradient,
+                  'Gradient',
+                  Icons.gradient,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPaintModeOption(
+                  RoulettePaintMode.solid,
+                  'Solid',
+                  Icons.circle,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaintModeOption(
+    RoulettePaintMode mode,
+    String label,
+    IconData icon,
+  ) {
+    final theme = Theme.of(context);
+    final isSelected = _paintMode == mode;
+
+    return GestureDetector(
+      onTap: () => _updatePaintMode(mode),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
+              : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.textTheme.bodySmall?.color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildColorThemeSection() {
     final theme = Theme.of(context);
 
@@ -337,12 +529,7 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
               final isSelected = _selectedTheme == index;
 
               return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedTheme = index;
-                    _hasChanges = true;
-                  });
-                },
+                onTap: () => _updateColorTheme(index),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -363,26 +550,41 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: colorTheme.colors.take(4).map((colors) {
-                          return Container(
-                            width: 16,
-                            height: 16,
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: colors),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.shadowColor.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            (_paintMode == RoulettePaintMode.gradient
+                                    ? colorTheme.gradientColors
+                                    : colorTheme.solidColors
+                                          .map((c) => [c])
+                                          .toList())
+                                .take(4)
+                                .map((colors) {
+                                  return Container(
+                                    width: 16,
+                                    height: 16,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: colors.length > 1
+                                          ? LinearGradient(colors: colors)
+                                          : null,
+                                      color: colors.length == 1
+                                          ? colors[0]
+                                          : null,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: theme.shadowColor.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                })
+                                .toList(),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -451,8 +653,10 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
 
   Widget _buildOptionListItem(int index, RouletteOption option) {
     final theme = Theme.of(context);
-    final themeColors = _colorThemes[_selectedTheme]
-        .colors[index % _colorThemes[_selectedTheme].colors.length];
+    final colorTheme = _colorThemes[_selectedTheme];
+    final colors = _paintMode == RoulettePaintMode.gradient
+        ? colorTheme.gradientColors[index % colorTheme.gradientColors.length]
+        : [colorTheme.solidColors[index % colorTheme.solidColors.length]];
 
     return Container(
       key: ValueKey(option.text + index.toString()),
@@ -483,15 +687,18 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: themeColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: colors.length > 1
+                      ? LinearGradient(
+                          colors: colors,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: colors.length == 1 ? colors[0] : null,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: themeColors[0].withValues(alpha: 0.3),
+                      color: colors[0].withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -784,35 +991,6 @@ class _RouletteOptionsViewState extends State<RouletteOptionsView> {
     );
   }
 
-  void _showEditDialog(int index, String currentValue) {
-    final controller = TextEditingController(text: currentValue);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit Option'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: 'Option text'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _editOption(index, controller.text);
-              Navigator.of(context).pop();
-            },
-            child: Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDeleteConfirmation(int index) {
     showDialog(
       context: context,
@@ -852,7 +1030,12 @@ class RouletteOption {
 
 class ColorTheme {
   final String name;
-  final List<List<Color>> colors;
+  final List<List<Color>> gradientColors;
+  final List<Color> solidColors;
 
-  ColorTheme({required this.name, required this.colors});
+  ColorTheme({
+    required this.name,
+    required this.gradientColors,
+    required this.solidColors,
+  });
 }

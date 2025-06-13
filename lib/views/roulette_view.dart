@@ -1,9 +1,9 @@
-import 'package:decision_spin/storage/color_storage_service.dart';
 import 'package:decision_spin/views/all_roulette_view.dart';
+import 'package:decision_spin/views/roulette_manager.dart';
 import 'package:decision_spin/widget/roulette_wheel.dart';
-import 'package:decision_spin/views/roulette_options_view.dart';
-import 'package:decision_spin/storage/options_storage_service.dart';
 import 'package:flutter/material.dart';
+import '../storage/roulette_storage_service.dart';
+import '../storage/roulette_wheel_model.dart';
 
 class RouletteView extends StatefulWidget {
   @override
@@ -12,53 +12,16 @@ class RouletteView extends StatefulWidget {
 
 class _RouletteViewState extends State<RouletteView>
     with WidgetsBindingObserver {
-  List<String> _options = [];
-  List<List<Color>> _gradientColors = [];
-  String _activeRouletteName = '';
+  RouletteWheelModel? _activeWheel;
   String _currentPointingOption = '';
   bool _isSpinning = false;
   bool _isLoading = true;
-  List<Color> _solidColors = [];
-  bool _colorsLoaded = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadOptions();
-    _loadColors();
-  }
-
-  Future<void> _loadColors() async {
-    try {
-      final gradientColors = await ColorStorageService.gradientColors;
-      final solidColors = await ColorStorageService.solidColors;
-
-      setState(() {
-        _gradientColors = gradientColors;
-        _solidColors = solidColors;
-        _colorsLoaded = true;
-      });
-    } catch (e) {
-      // Handle error - use default colors if loading fails
-      setState(() {
-        _gradientColors = [
-          [Colors.red, Colors.pink],
-          [Colors.blue, Colors.cyan],
-          [Colors.green, Colors.lightGreen],
-          [Colors.orange, Colors.yellow],
-          [Colors.purple, Colors.purpleAccent],
-        ];
-        _solidColors = [
-          Colors.red,
-          Colors.blue,
-          Colors.green,
-          Colors.orange,
-          Colors.purple,
-        ];
-        _colorsLoaded = true;
-      });
-    }
+    _loadActiveWheel();
   }
 
   @override
@@ -70,26 +33,39 @@ class _RouletteViewState extends State<RouletteView>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadOptions();
+      _loadActiveWheel();
     }
   }
 
-  Future<void> _loadOptions() async {
-    try {
-      final options = await OptionsStorageService.loadOptions();
-      final activeRoulette = await OptionsStorageService.getActiveRoulette();
+  Future<void> _loadActiveWheel() async {
+    setState(() => _isLoading = true);
 
-      setState(() {
-        _options = options;
-        _activeRouletteName = activeRoulette;
-        _currentPointingOption = options.isNotEmpty ? options[0] : '';
-        _isLoading = false;
-      });
+    try {
+      // Load the active wheel from the storage service
+      final wheel = await RouletteStorageService.loadActiveRoulette();
+
+      if (wheel != null) {
+        setState(() {
+          _activeWheel = wheel;
+          _currentPointingOption = wheel.options.isNotEmpty
+              ? wheel.options[0].text
+              : '';
+          _isLoading = false;
+        });
+      } else {
+        // This shouldn't happen as RouletteStorageService creates default if none exist
+        // But handle it gracefully just in case
+        setState(() {
+          _activeWheel = null;
+          _currentPointingOption = '';
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      // Handle error by setting loading to false and showing empty state
       setState(() {
-        _options = ['Pizza', 'Burger', 'Thai', 'Taco', 'Soup'];
-        _activeRouletteName = 'Food Options';
-        _currentPointingOption = 'Pizza';
+        _activeWheel = null;
+        _currentPointingOption = '';
         _isLoading = false;
       });
     }
@@ -116,41 +92,58 @@ class _RouletteViewState extends State<RouletteView>
     }
   }
 
-  void _navigateToOptionsScreen() async {
-    final result = await Navigator.of(context).push<List<String>>(
-      MaterialPageRoute(
-        builder: (context) => RouletteOptionsView(
-          initialOptions: _options,
-          onOptionsChanged: (newOptions) {
-            setState(() {
-              _options = newOptions;
-            });
-          },
-        ),
-      ),
-    );
-
-    if (result != null) {
-      setState(() {
-        _options = result;
-      });
-    }
-
-    _loadOptions();
-  }
-
-  void _navigateToAllRouletteScreen() async {
+  void _navigateToWheelsManagement() async {
+    // Navigate to RouletteManager and reload active wheel when returning
     await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (context) => const AllRouletteView()));
+    ).push(MaterialPageRoute(builder: (context) => RouletteManager()));
 
-    _loadOptions();
+    // Reload active wheel when returning from management screen
+    await _loadActiveWheel();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_activeWheel == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Decision Roulette'),
+          actions: [
+            Tooltip(
+              message: 'Manage Wheels',
+              child: IconButton(
+                icon: Icon(Icons.settings),
+                onPressed: _navigateToWheelsManagement,
+              ),
+            ),
+          ],
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'No roulette wheel found',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Please check your settings or try restarting the app',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(onPressed: _loadActiveWheel, child: Text('Retry')),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -170,20 +163,26 @@ class _RouletteViewState extends State<RouletteView>
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: Text('Decision Roulette'),
+      title: Text(_activeWheel?.name ?? 'Decision Roulette'),
       actions: [
         Tooltip(
           message: 'All Roulettes',
           child: IconButton(
-            icon: Icon(Icons.view_list),
-            onPressed: _navigateToAllRouletteScreen,
+            icon: Icon(Icons.list),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => AllRouletteView()),
+              );
+              // Reload active wheel when returning from all roulettes view
+              await _loadActiveWheel();
+            },
           ),
         ),
         Tooltip(
-          message: 'Manage Options',
+          message: 'Manage Wheels',
           child: IconButton(
             icon: Icon(Icons.settings),
-            onPressed: _navigateToOptionsScreen,
+            onPressed: _navigateToWheelsManagement,
           ),
         ),
       ],
@@ -193,7 +192,15 @@ class _RouletteViewState extends State<RouletteView>
   Widget _buildCurrentPointingOption() {
     final theme = Theme.of(context);
 
-    if (_options.isEmpty) return const SizedBox.shrink();
+    if (_activeWheel!.options.isEmpty) {
+      return Center(
+        child: Text(
+          'No options available',
+          style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
 
     return Center(
       child: Text(
@@ -205,28 +212,46 @@ class _RouletteViewState extends State<RouletteView>
   }
 
   Widget _buildRouletteWheelSection() {
-    if (!_colorsLoaded) {
+    if (_activeWheel!.options.isEmpty) {
       return Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
+            Icon(Icons.casino_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Loading roulette...'),
+            Text(
+              'No options to spin',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Add some options to get started',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
           ],
         ),
       );
     }
+
+    // Convert RouletteOption objects to just the text strings for the wheel
+    final optionTexts = _activeWheel!.options
+        .map((option) => option.text)
+        .toList();
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: RouletteWheel(
-        options: _options,
+        options: optionTexts,
         isSpinning: _isSpinning,
         onSpinStart: _onSpinStart,
         onSpinComplete: _onSpinComplete,
         onPointingOptionChanged: _onPointingOptionChanged,
-        gradientColors: _gradientColors,
-        solidColors: _solidColors,
+        gradientColors: _activeWheel!.gradientColors,
+        solidColors: _activeWheel!.solidColors,
+        paintMode: _activeWheel!.paintMode,
       ),
     );
   }

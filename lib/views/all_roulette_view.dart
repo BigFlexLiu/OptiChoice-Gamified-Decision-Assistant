@@ -1,7 +1,10 @@
 import 'package:decision_spin/widget/roulette_preview.dart';
 import 'package:decision_spin/widget/roulette_wheel.dart';
 import 'package:flutter/material.dart';
-import '../storage/options_storage_service.dart';
+import '../storage/roulette_storage_service.dart';
+import '../storage/roulette_wheel_model.dart';
+import '../enums/roulette_paint_mode.dart';
+import 'roulette_manager.dart';
 
 class AllRouletteView extends StatefulWidget {
   const AllRouletteView({super.key});
@@ -11,8 +14,8 @@ class AllRouletteView extends StatefulWidget {
 }
 
 class _AllRouletteViewState extends State<AllRouletteView> {
-  Map<String, List<String>> _roulettes = {};
-  String _activeRoulette = '';
+  Map<String, RouletteWheelModel> _roulettes = {};
+  String? _activeRouletteId;
   bool _isLoading = true;
 
   @override
@@ -24,14 +27,20 @@ class _AllRouletteViewState extends State<AllRouletteView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    final roulettes = await OptionsStorageService.loadAllRoulettes();
-    final activeRoulette = await OptionsStorageService.getActiveRoulette();
+    try {
+      final roulettes = await RouletteStorageService.loadAllRoulettes();
+      final activeRouletteId =
+          await RouletteStorageService.getActiveRouletteId();
 
-    setState(() {
-      _roulettes = roulettes;
-      _activeRoulette = activeRoulette;
-      _isLoading = false;
-    });
+      setState(() {
+        _roulettes = roulettes;
+        _activeRouletteId = activeRouletteId;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Failed to load roulettes');
+    }
   }
 
   Future<void> _createNewRoulette() async {
@@ -53,18 +62,22 @@ class _AllRouletteViewState extends State<AllRouletteView> {
       }
 
       // Check if name already exists
-      nameExists = await OptionsStorageService.rouletteExists(name);
+      nameExists = await RouletteStorageService.rouletteNameExists(name);
 
       if (!nameExists) {
         // Create default options
-        final defaultOptions = ['Option 1', 'Option 2', 'Option 3'];
+        final defaultOptions = [
+          RouletteOption(text: 'Option 1', weight: 1.0),
+          RouletteOption(text: 'Option 2', weight: 1.0),
+          RouletteOption(text: 'Option 3', weight: 1.0),
+        ];
 
-        final success = await OptionsStorageService.createRoulette(
+        final newRoulette = await RouletteStorageService.createRoulette(
           name,
           defaultOptions,
         );
 
-        if (success) {
+        if (newRoulette != null) {
           _loadData();
           _showSnackBar('Roulette "$name" created and set as active');
         } else {
@@ -75,7 +88,10 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     } while (nameExists);
   }
 
-  Future<void> _deleteRoulette(String name) async {
+  Future<void> _deleteRoulette(String id) async {
+    final roulette = _roulettes[id];
+    if (roulette == null) return;
+
     final theme = Theme.of(context);
 
     final confirmed = await showDialog<bool>(
@@ -88,7 +104,7 @@ class _AllRouletteViewState extends State<AllRouletteView> {
           ),
         ),
         content: Text(
-          'Are you sure you want to delete "$name"?',
+          'Are you sure you want to delete "${roulette.name}"?',
           style: theme.textTheme.bodyMedium,
         ),
         actions: [
@@ -108,30 +124,33 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     );
 
     if (confirmed == true) {
-      final success = await OptionsStorageService.deleteRoulette(name);
+      final success = await RouletteStorageService.deleteRoulette(id);
       if (success) {
         _loadData();
-        _showSnackBar('Roulette "$name" deleted');
+        _showSnackBar('Roulette "${roulette.name}" deleted');
       } else {
         _showSnackBar('Cannot delete the last roulette');
       }
     }
   }
 
-  Future<void> _duplicateRoulette(String originalName) async {
+  Future<void> _duplicateRoulette(String originalId) async {
+    final originalRoulette = _roulettes[originalId];
+    if (originalRoulette == null) return;
+
     final newName = await _showTextInputDialog(
       'Duplicate Roulette',
       'Enter name for the copy:',
-      '$originalName (Copy)',
+      '${originalRoulette.name} (Copy)',
     );
 
     if (newName != null && newName.isNotEmpty) {
-      final success = await OptionsStorageService.duplicateRoulette(
-        originalName,
+      final duplicatedRoulette = await RouletteStorageService.duplicateRoulette(
+        originalId,
         newName,
       );
 
-      if (success) {
+      if (duplicatedRoulette != null) {
         _loadData();
         _showSnackBar('Roulette duplicated as "$newName"');
       } else {
@@ -140,18 +159,18 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     }
   }
 
-  Future<void> _renameRoulette(String oldName) async {
+  Future<void> _renameRoulette(String id) async {
+    final roulette = _roulettes[id];
+    if (roulette == null) return;
+
     final newName = await _showTextInputDialog(
       'Rename Roulette',
       'Enter new name:',
-      oldName,
+      roulette.name,
     );
 
-    if (newName != null && newName.isNotEmpty && newName != oldName) {
-      final success = await OptionsStorageService.renameRoulette(
-        oldName,
-        newName,
-      );
+    if (newName != null && newName.isNotEmpty && newName != roulette.name) {
+      final success = await RouletteStorageService.renameRoulette(id, newName);
 
       if (success) {
         _loadData();
@@ -263,11 +282,31 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     );
   }
 
-  Future<void> _setActiveRoulette(String name) async {
-    final success = await OptionsStorageService.setActiveRoulette(name);
+  Future<void> _setActiveRoulette(String id) async {
+    final success = await RouletteStorageService.setActiveRouletteId(id);
     if (success) {
       _loadData();
-      _showSnackBar('Active roulette set to "$name"');
+      final rouletteName = _roulettes[id]?.name ?? 'Unknown';
+      _showSnackBar('Active roulette set to "$rouletteName"');
+    }
+  }
+
+  Future<void> _editRoulette(String id) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => RouletteManager(
+          rouletteId: id,
+          onRouletteChanged: (updatedRoulette) {
+            setState(() {
+              _roulettes[id] = updatedRoulette;
+            });
+          },
+        ),
+      ),
+    );
+
+    if (result != null) {
+      _loadData(); // Reload to ensure consistency
     }
   }
 
@@ -333,20 +372,20 @@ class _AllRouletteViewState extends State<AllRouletteView> {
         newIndex -= 1;
       }
 
-      final keys = _roulettes.keys.toList();
-      final item = keys.removeAt(oldIndex);
-      keys.insert(newIndex, item);
+      final rouletteIds = _roulettes.keys.toList();
+      final itemId = rouletteIds.removeAt(oldIndex);
+      rouletteIds.insert(newIndex, itemId);
 
       // Rebuild the map with the new order
-      final reorderedRoulettes = <String, List<String>>{};
-      for (final key in keys) {
-        reorderedRoulettes[key] = _roulettes[key]!;
+      final reorderedRoulettes = <String, RouletteWheelModel>{};
+      for (final id in rouletteIds) {
+        reorderedRoulettes[id] = _roulettes[id]!;
       }
       _roulettes = reorderedRoulettes;
     });
 
     // Save the new order to storage
-    await OptionsStorageService.saveRouletteOrder(_roulettes.keys.toList());
+    await RouletteStorageService.saveRouletteOrder(_roulettes.keys.toList());
   }
 
   @override
@@ -384,12 +423,12 @@ class _AllRouletteViewState extends State<AllRouletteView> {
               itemCount: _roulettes.length,
               onReorder: _reorderRoulettes,
               itemBuilder: (context, index) {
-                final rouletteName = _roulettes.keys.elementAt(index);
-                final options = _roulettes[rouletteName]!;
-                final isActive = rouletteName == _activeRoulette;
+                final rouletteId = _roulettes.keys.elementAt(index);
+                final roulette = _roulettes[rouletteId]!;
+                final isActive = rouletteId == _activeRouletteId;
 
                 return Card(
-                  key: ValueKey(rouletteName),
+                  key: ValueKey(rouletteId),
                   elevation: isActive ? 8 : 2,
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Container(
@@ -428,7 +467,7 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                         children: [
                           Expanded(
                             child: Text(
-                              rouletteName,
+                              roulette.name,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: isActive
                                     ? FontWeight.bold
@@ -459,11 +498,22 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                             ),
                         ],
                       ),
-                      subtitle: Text(
-                        '${options.length} options',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${roulette.options.length} options',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            'Created ${_formatDate(roulette.createdAt)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                       children: [
                         Padding(
@@ -471,8 +521,14 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Roulette Preview - Updated to use RoulettePreview
-                              RoulettePreview(options: options, size: 196),
+                              // Roulette Preview - Updated to use RoulettePreview with rouletteId
+                              RoulettePreview(
+                                options: roulette.options
+                                    .map((option) => option.text)
+                                    .toList(),
+                                size: 196,
+                                rouletteId: rouletteId,
+                              ),
                               const SizedBox(width: 16),
                               // Action Buttons
                               Expanded(
@@ -485,15 +541,23 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                                         icon: Icons.star,
                                         label: 'Set as Active',
                                         onPressed: () =>
-                                            _setActiveRoulette(rouletteName),
+                                            _setActiveRoulette(rouletteId),
                                         color: theme.colorScheme.tertiary,
                                       ),
                                     if (!isActive) const SizedBox(height: 8),
                                     _buildActionButton(
                                       icon: Icons.edit,
+                                      label: 'Edit Options',
+                                      onPressed: () =>
+                                          _editRoulette(rouletteId),
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildActionButton(
+                                      icon: Icons.edit_outlined,
                                       label: 'Rename',
                                       onPressed: () =>
-                                          _renameRoulette(rouletteName),
+                                          _renameRoulette(rouletteId),
                                       color: theme.colorScheme.secondary,
                                     ),
                                     const SizedBox(height: 8),
@@ -501,8 +565,8 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                                       icon: Icons.copy,
                                       label: 'Duplicate',
                                       onPressed: () =>
-                                          _duplicateRoulette(rouletteName),
-                                      color: theme.colorScheme.primary,
+                                          _duplicateRoulette(rouletteId),
+                                      color: theme.colorScheme.tertiary,
                                     ),
                                     if (_roulettes.length > 1)
                                       const SizedBox(height: 8),
@@ -511,7 +575,7 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                                         icon: Icons.delete,
                                         label: 'Delete',
                                         onPressed: () =>
-                                            _deleteRoulette(rouletteName),
+                                            _deleteRoulette(rouletteId),
                                         color: theme.colorScheme.error,
                                       ),
                                   ],
@@ -532,5 +596,20 @@ class _AllRouletteViewState extends State<AllRouletteView> {
         child: Icon(Icons.add),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else {
+      return 'Just now';
+    }
   }
 }
