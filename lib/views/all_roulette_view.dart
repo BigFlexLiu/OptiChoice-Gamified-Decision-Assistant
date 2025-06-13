@@ -1,9 +1,7 @@
 import 'package:decision_spin/widget/roulette_preview.dart';
-import 'package:decision_spin/widget/roulette_wheel.dart';
 import 'package:flutter/material.dart';
 import '../storage/roulette_storage_service.dart';
 import '../storage/roulette_wheel_model.dart';
-import '../enums/roulette_paint_mode.dart';
 import 'roulette_manager.dart';
 
 class AllRouletteView extends StatefulWidget {
@@ -155,28 +153,6 @@ class _AllRouletteViewState extends State<AllRouletteView> {
         _showSnackBar('Roulette duplicated as "$newName"');
       } else {
         _showSnackBar('Failed to duplicate. Name might already exist.');
-      }
-    }
-  }
-
-  Future<void> _renameRoulette(String id) async {
-    final roulette = _roulettes[id];
-    if (roulette == null) return;
-
-    final newName = await _showTextInputDialog(
-      'Rename Roulette',
-      'Enter new name:',
-      roulette.name,
-    );
-
-    if (newName != null && newName.isNotEmpty && newName != roulette.name) {
-      final success = await RouletteStorageService.renameRoulette(id, newName);
-
-      if (success) {
-        _loadData();
-        _showSnackBar('Roulette renamed to "$newName"');
-      } else {
-        _showSnackBar('Failed to rename. Name might already exist.');
       }
     }
   }
@@ -453,7 +429,7 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                           CircleAvatar(
                             backgroundColor: isActive
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.surfaceVariant,
+                                : theme.colorScheme.surface,
                             child: Icon(
                               isActive ? Icons.star : Icons.casino,
                               color: isActive

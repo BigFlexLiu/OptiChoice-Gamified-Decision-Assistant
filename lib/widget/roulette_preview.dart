@@ -11,12 +11,12 @@ class RoulettePreview extends StatefulWidget {
   final String? rouletteId; // Optional: preview specific roulette by ID
 
   const RoulettePreview({
-    Key? key,
+    super.key,
     required this.options,
     this.size,
     this.showSpinButton = false,
     this.rouletteId,
-  }) : super(key: key);
+  });
 
   @override
   State<RoulettePreview> createState() => _RoulettePreviewState();
@@ -26,7 +26,6 @@ class _RoulettePreviewState extends State<RoulettePreview> {
   List<List<Color>> _gradientColors = [];
   List<Color> _solidColors = [];
   RoulettePaintMode _paintMode = RoulettePaintMode.gradient;
-  int _colorThemeIndex = 0;
   bool _colorsLoaded = false;
 
   // Static cache to avoid reloading colors for multiple instances
@@ -67,7 +66,6 @@ class _RoulettePreviewState extends State<RoulettePreview> {
           _gradientColors = roulette!.gradientColors;
           _solidColors = roulette.solidColors;
           _paintMode = roulette.paintMode;
-          _colorThemeIndex = roulette.colorThemeIndex;
           _colorsLoaded = true;
         });
       } else {
@@ -100,21 +98,8 @@ class _RoulettePreviewState extends State<RoulettePreview> {
         Colors.teal,
       ];
       _paintMode = RoulettePaintMode.gradient;
-      _colorThemeIndex = 0;
       _colorsLoaded = true;
     });
-  }
-
-  /// Clear the static cache (useful when active roulette is updated)
-  static void clearCache() {
-    _cachedActiveRoulette = null;
-    _cacheInitialized = false;
-  }
-
-  /// Update cache with new active roulette (call this when active roulette changes)
-  static void updateCache(RouletteWheelModel roulette) {
-    _cachedActiveRoulette = roulette;
-    _cacheInitialized = true;
   }
 
   @override
@@ -125,7 +110,7 @@ class _RoulettePreviewState extends State<RoulettePreview> {
         height: widget.size ?? 196,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: SizedBox(

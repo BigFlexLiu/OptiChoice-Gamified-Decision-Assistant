@@ -16,7 +16,7 @@ class RouletteWheel extends StatefulWidget {
   final List<Color> solidColors; // Add solid colors parameter
 
   const RouletteWheel({
-    Key? key,
+    super.key,
     required this.options,
     required this.isSpinning,
     required this.onSpinStart,
@@ -27,11 +27,11 @@ class RouletteWheel extends StatefulWidget {
     this.size,
     this.showSpinButton = true,
     this.paintMode = RoulettePaintMode.gradient,
-  }) : super(key: key);
+  });
 
   /// Factory constructor for gradient mode
   const RouletteWheel.gradient({
-    Key? key,
+    super.key,
     required this.options,
     required this.isSpinning,
     required this.onSpinStart,
@@ -45,7 +45,7 @@ class RouletteWheel extends StatefulWidget {
 
   /// Factory constructor for solid color mode
   const RouletteWheel.solid({
-    Key? key,
+    super.key,
     required this.options,
     required this.isSpinning,
     required this.onSpinStart,
@@ -58,10 +58,10 @@ class RouletteWheel extends StatefulWidget {
   }) : paintMode = RoulettePaintMode.solid;
 
   @override
-  _RouletteWheelState createState() => _RouletteWheelState();
+  RouletteWheelState createState() => RouletteWheelState();
 }
 
-class _RouletteWheelState extends State<RouletteWheel>
+class RouletteWheelState extends State<RouletteWheel>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -196,7 +196,7 @@ class _RouletteWheelState extends State<RouletteWheel>
     final shadowSize = containerHeight * 0.914; // 320/350 ratio
     final wheelSize = containerHeight * 0.857; // 300/350 ratio
 
-    return Container(
+    return SizedBox(
       height: containerHeight,
       child: Stack(
         alignment: Alignment.center,

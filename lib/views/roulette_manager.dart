@@ -7,14 +7,13 @@ class RouletteManager extends StatefulWidget {
   final String? rouletteId; // Optional: if null, edits active roulette
   final Function(RouletteWheelModel)? onRouletteChanged;
 
-  const RouletteManager({Key? key, this.rouletteId, this.onRouletteChanged})
-    : super(key: key);
+  const RouletteManager({super.key, this.rouletteId, this.onRouletteChanged});
 
   @override
-  _RouletteManagerState createState() => _RouletteManagerState();
+  RouletteManagerState createState() => RouletteManagerState();
 }
 
-class _RouletteManagerState extends State<RouletteManager> {
+class RouletteManagerState extends State<RouletteManager> {
   RouletteWheelModel? _roulette;
   late List<RouletteOption> _options;
   String _rouletteName = '';
@@ -148,6 +147,12 @@ class _RouletteManagerState extends State<RouletteManager> {
     _loadRouletteData();
   }
 
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadRouletteData() async {
     setState(() => _isLoading = true);
 
@@ -172,25 +177,101 @@ class _RouletteManagerState extends State<RouletteManager> {
         });
       } else {
         // This shouldn't happen, but handle gracefully
-        Navigator.of(context).pop();
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load roulette data'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load roulette data'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
+  Future<void> _saveChanges() async {
+    if (_roulette == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Check if name already exists (for other roulettes)
+      if (_rouletteName != _roulette!.name) {
+        final nameExists = await RouletteStorageService.rouletteNameExists(
+          _rouletteName,
+        );
+        if (nameExists) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('A roulette with this name already exists'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+            setState(() => _isLoading = false);
+          }
+          return;
+        }
+      }
+
+      // Update the roulette model
+      final updatedRoulette = RouletteWheelModel(
+        id: _roulette!.id,
+        name: _rouletteName,
+        options: List.from(_options),
+        colorThemeIndex: _selectedTheme,
+        gradientColors: _colorThemes[_selectedTheme].gradientColors,
+        solidColors: _colorThemes[_selectedTheme].solidColors,
+        paintMode: _paintMode,
+        createdAt: _roulette!.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      final success = await RouletteStorageService.saveRoulette(
+        updatedRoulette,
+      );
+
+      if (mounted) {
+        if (success) {
+          setState(() {
+            _roulette = updatedRoulette;
+            _hasChanges = false;
+          });
+
+          widget.onRouletteChanged?.call(updatedRoulette);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Roulette saved successfully!')),
+          );
+
+          Navigator.of(context).pop(updatedRoulette);
+        } else {
+          throw Exception('Failed to save roulette');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save roulette. Please try again.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _removeOption(int index) {
@@ -258,105 +339,40 @@ class _RouletteManagerState extends State<RouletteManager> {
     });
   }
 
-  Future<void> _saveChanges() async {
-    if (_roulette == null) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Check if name already exists (for other roulettes)
-      if (_rouletteName != _roulette!.name) {
-        final nameExists = await RouletteStorageService.rouletteNameExists(
-          _rouletteName,
-        );
-        if (nameExists) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('A roulette with this name already exists'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-          setState(() => _isLoading = false);
-          return;
-        }
-      }
-
-      // Update the roulette model
-      final updatedRoulette = RouletteWheelModel(
-        id: _roulette!.id,
-        name: _rouletteName,
-        options: List.from(_options),
-        colorThemeIndex: _selectedTheme,
-        gradientColors: _colorThemes[_selectedTheme].gradientColors,
-        solidColors: _colorThemes[_selectedTheme].solidColors,
-        paintMode: _paintMode,
-        createdAt: _roulette!.createdAt,
-        updatedAt: DateTime.now(),
-      );
-
-      final success = await RouletteStorageService.saveRoulette(
-        updatedRoulette,
-      );
-
-      if (success) {
-        setState(() {
-          _roulette = updatedRoulette;
-          _hasChanges = false;
-        });
-
-        widget.onRouletteChanged?.call(updatedRoulette);
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Roulette saved successfully!')));
-
-        Navigator.of(context).pop(updatedRoulette);
-      } else {
-        throw Exception('Failed to save roulette');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save roulette. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<bool> _onWillPop() async {
-    if (!_hasChanges) return true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Unsaved Changes'),
-        content: Text('You have unsaved changes. Do you want to save them?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Discard'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop(true);
-              await _saveChanges();
-            },
-            child: Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    return result == false;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop && _hasChanges) {
+          final dialogResult = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Unsaved Changes'),
+              content: Text(
+                'You have unsaved changes. Do you want to save them?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Discard'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop(true);
+                    await _saveChanges();
+                  },
+                  child: Text('Save'),
+                ),
+              ],
+            ),
+          );
+
+          if (dialogResult == false && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
       child: Scaffold(
         appBar: _buildAppBar(),
         body: _isLoading

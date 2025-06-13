@@ -23,8 +23,8 @@ class RouletteWheelModel {
     this.paintMode = RoulettePaintMode.gradient,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : this.createdAt = createdAt ?? DateTime.now(),
-       this.updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,9 +35,11 @@ class RouletteWheelModel {
           .toList(),
       'colorThemeIndex': colorThemeIndex,
       'gradientColors': gradientColors
-          .map((colorList) => colorList.map((color) => color.value).toList())
+          .map(
+            (colorList) => colorList.map((color) => color.toARGB32()).toList(),
+          )
           .toList(),
-      'solidColors': solidColors.map((color) => color.value).toList(),
+      'solidColors': solidColors.map((color) => color.toARGB32()).toList(),
       'paintMode': paintMode.index,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),

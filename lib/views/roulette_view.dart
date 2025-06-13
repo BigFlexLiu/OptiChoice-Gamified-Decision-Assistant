@@ -6,11 +6,13 @@ import '../storage/roulette_storage_service.dart';
 import '../storage/roulette_wheel_model.dart';
 
 class RouletteView extends StatefulWidget {
+  const RouletteView({super.key});
+
   @override
-  _RouletteViewState createState() => _RouletteViewState();
+  RouletteViewState createState() => RouletteViewState();
 }
 
-class _RouletteViewState extends State<RouletteView>
+class RouletteViewState extends State<RouletteView>
     with WidgetsBindingObserver {
   RouletteWheelModel? _activeWheel;
   String _currentPointingOption = '';

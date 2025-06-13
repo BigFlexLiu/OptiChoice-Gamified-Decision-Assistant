@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'base_storage_service.dart';
 import 'storage_constants.dart';
@@ -103,9 +102,7 @@ class RouletteStorageService extends BaseStorageService {
 
   /// Load all roulettes with caching
   static Future<Map<String, RouletteWheelModel>> loadAllRoulettes() async {
-    if (_cachedRoulettes == null) {
-      _cachedRoulettes = await _loadAllRoulettesFromStorage();
-    }
+    _cachedRoulettes ??= await _loadAllRoulettesFromStorage();
     // Return a copy to prevent external modifications
     return Map<String, RouletteWheelModel>.from(_cachedRoulettes!);
   }

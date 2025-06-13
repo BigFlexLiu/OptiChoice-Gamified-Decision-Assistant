@@ -7,6 +7,8 @@ void main() {
 }
 
 class RouletteApp extends StatelessWidget {
+  const RouletteApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

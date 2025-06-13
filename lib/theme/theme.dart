@@ -16,7 +16,7 @@ extension ErrorContainerColors on ColorScheme {
 // No built-in theme, would need custom styling
 extension AvatarStyles on ThemeData {
   Color get activeAvatarBackground => colorScheme.primary;
-  Color get inactiveAvatarBackground => colorScheme.surfaceVariant;
+  Color get inactiveAvatarBackground => colorScheme.surface;
   Color get activeAvatarForeground => colorScheme.onPrimary;
   Color get inactiveAvatarForeground => colorScheme.onSurfaceVariant;
 } // Custom button theme extension
