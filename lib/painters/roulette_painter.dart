@@ -1,21 +1,16 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../enums/roulette_paint_mode.dart';
 
 class RoulettePainter extends CustomPainter {
   final List<String> options;
   final double rotation;
   final String? selectedOption;
-  final RoulettePaintMode paintMode;
-  final List<List<Color>> gradientColors;
-  final List<Color> solidColors;
+  final List<Color> colors;
 
   RoulettePainter({
     required this.options,
     required this.rotation,
-    required this.paintMode,
-    required this.gradientColors,
-    required this.solidColors,
+    required this.colors,
     this.selectedOption,
   });
 
@@ -91,28 +86,14 @@ class RoulettePainter extends CustomPainter {
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
-    switch (paintMode) {
-      case RoulettePaintMode.gradient:
-        final colors = _getGradientColorsForIndex(index);
-        return Paint()
-          ..shader = RadialGradient(
-            colors: colors,
-          ).createShader(Rect.fromCircle(center: center, radius: radius));
-
-      case RoulettePaintMode.solid:
-        final color = _getSolidColorForIndex(index);
-        return Paint()
-          ..color = color
-          ..style = PaintingStyle.fill;
-    }
-  }
-
-  List<Color> _getGradientColorsForIndex(int index) {
-    return gradientColors[index % gradientColors.length];
+    final color = _getSolidColorForIndex(index);
+    return Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
   }
 
   Color _getSolidColorForIndex(int index) {
-    return solidColors[index % solidColors.length];
+    return colors[index % colors.length];
   }
 
   void _drawText(
@@ -173,8 +154,6 @@ class RoulettePainter extends CustomPainter {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.paintMode != paintMode ||
-        oldDelegate.gradientColors != gradientColors ||
-        oldDelegate.solidColors != solidColors;
+        oldDelegate.colors != colors;
   }
 }

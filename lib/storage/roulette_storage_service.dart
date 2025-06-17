@@ -1,66 +1,57 @@
-import 'package:uuid/uuid.dart';
 import 'base_storage_service.dart';
-import 'storage_constants.dart';
+import '../consts/storage_constants.dart';
 import 'roulette_wheel_model.dart';
-import '../views/roulette_manager.dart';
-import '../enums/roulette_paint_mode.dart';
+import '../views/roulette_options_view.dart';
 import 'package:flutter/material.dart';
 
 class RouletteStorageService extends BaseStorageService {
   // Cache for all roulettes data
-  static Map<String, RouletteWheelModel>? _cachedRoulettes;
+  static Map<String, RouletteModel>? _cachedRoulettes;
   static String? _cachedActiveRouletteId;
-  static const _uuid = Uuid();
 
   /// Internal method to load all roulettes from storage
-  static Future<Map<String, RouletteWheelModel>>
-  _loadAllRoulettesFromStorage() async {
+  static Future<Map<String, RouletteModel>> loadAllRoulettes() async {
+    // Return cached data if available
+    if (_cachedRoulettes != null) {
+      return _cachedRoulettes!;
+    }
+
     try {
       final roulettesData = await BaseStorageService.getJson(
         StorageConstants.roulettesKey,
       );
 
       if (roulettesData == null) {
-        // Create default roulette if none exist
-        final defaultRoulette = _createDefaultRouletteModel();
-        final defaultRoulettes = {defaultRoulette.id: defaultRoulette};
-        await _saveAllRoulettesToStorage(defaultRoulettes);
-        await _setActiveRouletteInStorage(defaultRoulette.id);
-        return Map.from(defaultRoulettes);
+        throw Exception("NO ROULETTE");
       }
 
       final roulettesMap = Map<String, dynamic>.from(roulettesData);
-      return roulettesMap.map(
-        (key, value) => MapEntry(key, RouletteWheelModel.fromJson(value)),
+      final loadedRoulettes = roulettesMap.map(
+        (key, value) => MapEntry(key, RouletteModel.fromJson(value)),
       );
+
+      // Cache the loaded data
+      _cachedRoulettes = loadedRoulettes;
+      return loadedRoulettes;
     } catch (e) {
       // Return default roulette if there's an error
       final defaultRoulette = _createDefaultRouletteModel();
       final defaultRoulettes = {defaultRoulette.id: defaultRoulette};
-      await _saveAllRoulettesToStorage(defaultRoulettes);
-      await _setActiveRouletteInStorage(defaultRoulette.id);
+      await saveAllRoulettes(defaultRoulettes);
+      await setActiveRouletteId(defaultRoulette.id);
       return defaultRoulettes;
     }
   }
 
   /// Create default roulette model
-  static RouletteWheelModel _createDefaultRouletteModel() {
-    return RouletteWheelModel(
-      id: _uuid.v4(),
+  static RouletteModel _createDefaultRouletteModel() {
+    return RouletteModel(
       name: StorageConstants.defaultRouletteName,
       options: StorageConstants.defaultOptions
           .map((text) => RouletteOption(text: text, weight: 1.0))
           .toList(),
-      colorThemeIndex: 0,
-      gradientColors: [
-        [Colors.red, Colors.orange],
-        [Colors.blue, Colors.cyan],
-        [Colors.green, Colors.lime],
-        [Colors.purple, Colors.pink],
-        [Colors.orange, Colors.yellow],
-        [Colors.teal, Colors.blue],
-      ],
-      solidColors: [
+      colorThemeIndex: -1,
+      colors: [
         Colors.red,
         Colors.blue,
         Colors.green,
@@ -68,84 +59,52 @@ class RouletteStorageService extends BaseStorageService {
         Colors.orange,
         Colors.teal,
       ],
-      paintMode: RoulettePaintMode.gradient,
-    );
-  }
-
-  /// Internal method to save all roulettes to storage
-  static Future<bool> _saveAllRoulettesToStorage(
-    Map<String, RouletteWheelModel> roulettes,
-  ) async {
-    final jsonData = roulettes.map(
-      (key, value) => MapEntry(key, value.toJson()),
-    );
-    return await BaseStorageService.saveJson(
-      StorageConstants.roulettesKey,
-      jsonData,
     );
   }
 
   /// Internal method to get active roulette ID from storage
-  static Future<String?> _getActiveRouletteFromStorage() async {
+  static Future<String?> _getActiveRouletteId() async {
     return await BaseStorageService.getString(
       StorageConstants.activeRouletteKey,
     );
   }
 
-  /// Internal method to set active roulette ID in storage
-  static Future<bool> _setActiveRouletteInStorage(String rouletteId) async {
-    return await BaseStorageService.saveString(
-      StorageConstants.activeRouletteKey,
-      rouletteId,
-    );
-  }
-
-  /// Load all roulettes with caching
-  static Future<Map<String, RouletteWheelModel>> loadAllRoulettes() async {
-    _cachedRoulettes ??= await _loadAllRoulettesFromStorage();
-    // Return a copy to prevent external modifications
-    return Map<String, RouletteWheelModel>.from(_cachedRoulettes!);
-  }
-
   /// Save all roulettes and update cache
   static Future<bool> saveAllRoulettes(
-    Map<String, RouletteWheelModel> roulettes,
+    Map<String, RouletteModel> roulettes,
   ) async {
-    // Update timestamps
-    final updatedRoulettes = roulettes.map((key, roulette) {
-      roulette.updatedAt = DateTime.now();
-      return MapEntry(key, roulette);
-    });
-
-    final success = await _saveAllRoulettesToStorage(updatedRoulettes);
+    final jsonData = roulettes.map(
+      (key, value) => MapEntry(key, value.toJson()),
+    );
+    final success = await BaseStorageService.saveJson(
+      StorageConstants.roulettesKey,
+      jsonData,
+    );
     if (success) {
       // Update cache with a copy
-      _cachedRoulettes = Map<String, RouletteWheelModel>.from(updatedRoulettes);
+      _cachedRoulettes = roulettes;
     }
     return success;
   }
 
   /// Load the active roulette model
-  static Future<RouletteWheelModel?> loadActiveRoulette() async {
+  static Future<RouletteModel?> loadActiveRoulette() async {
     final activeId = await getActiveRouletteId();
-    if (activeId == null) return null;
 
     final allRoulettes = await loadAllRoulettes();
     return allRoulettes[activeId];
   }
 
   /// Load a specific roulette model by ID
-  static Future<RouletteWheelModel?> loadRouletteById(String id) async {
+  static Future<RouletteModel?> loadRouletteById(String id) async {
     final allRoulettes = await loadAllRoulettes();
     return allRoulettes[id];
   }
 
   /// Save a roulette model
-  static Future<bool> saveRoulette(RouletteWheelModel roulette) async {
+  static Future<bool> saveRoulette(RouletteModel roulette) async {
     // Use cached data if available
-    final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
-        : await loadAllRoulettes();
+    final allRoulettes = await loadAllRoulettes();
 
     roulette.updatedAt = DateTime.now();
     allRoulettes[roulette.id] = roulette;
@@ -153,16 +112,13 @@ class RouletteStorageService extends BaseStorageService {
   }
 
   /// Create a new roulette
-  static Future<RouletteWheelModel?> createRoulette(
+  static Future<RouletteModel?> createRoulette(
     String name,
     List<RouletteOption> options, {
     int colorThemeIndex = 0,
-    RoulettePaintMode paintMode = RoulettePaintMode.gradient,
   }) async {
     // Use cached data if available
-    final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
-        : await loadAllRoulettes();
+    final allRoulettes = await loadAllRoulettes();
 
     // Check if name already exists
     final existingNames = allRoulettes.values.map((r) => r.name).toSet();
@@ -170,20 +126,11 @@ class RouletteStorageService extends BaseStorageService {
       return null; // Roulette with this name already exists
     }
 
-    final newRoulette = RouletteWheelModel(
-      id: _uuid.v4(),
+    final newRoulette = RouletteModel(
       name: name,
       options: options,
       colorThemeIndex: colorThemeIndex,
-      gradientColors: [
-        [Colors.red, Colors.orange],
-        [Colors.blue, Colors.cyan],
-        [Colors.green, Colors.lime],
-        [Colors.purple, Colors.pink],
-        [Colors.orange, Colors.yellow],
-        [Colors.teal, Colors.blue],
-      ],
-      solidColors: [
+      colors: [
         Colors.red,
         Colors.blue,
         Colors.green,
@@ -191,7 +138,6 @@ class RouletteStorageService extends BaseStorageService {
         Colors.orange,
         Colors.teal,
       ],
-      paintMode: paintMode,
     );
 
     allRoulettes[newRoulette.id] = newRoulette;
@@ -208,9 +154,7 @@ class RouletteStorageService extends BaseStorageService {
   /// Delete a roulette
   static Future<bool> deleteRoulette(String id) async {
     // Use cached data if available
-    final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
-        : await loadAllRoulettes();
+    final allRoulettes = await loadAllRoulettes();
 
     if (allRoulettes.length <= 1) {
       return false; // Cannot delete the last roulette
@@ -236,9 +180,7 @@ class RouletteStorageService extends BaseStorageService {
   /// Rename a roulette
   static Future<bool> renameRoulette(String id, String newName) async {
     // Use cached data if available
-    final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
-        : await loadAllRoulettes();
+    final allRoulettes = await loadAllRoulettes();
 
     if (!allRoulettes.containsKey(id)) {
       return false; // Roulette doesn't exist
@@ -261,33 +203,32 @@ class RouletteStorageService extends BaseStorageService {
   }
 
   /// Get the active roulette ID with caching
-  static Future<String?> getActiveRouletteId() async {
+  static Future<String> getActiveRouletteId() async {
     if (_cachedActiveRouletteId == null) {
-      _cachedActiveRouletteId = await _getActiveRouletteFromStorage();
+      _cachedActiveRouletteId = await _getActiveRouletteId();
 
       // If no active roulette is set, set the first available one
       if (_cachedActiveRouletteId == null) {
         final allRoulettes = await loadAllRoulettes();
         if (allRoulettes.isNotEmpty) {
           _cachedActiveRouletteId = allRoulettes.keys.first;
-          await _setActiveRouletteInStorage(_cachedActiveRouletteId!);
+          await setActiveRouletteId(_cachedActiveRouletteId!);
         }
       }
     }
-    return _cachedActiveRouletteId;
+    return _cachedActiveRouletteId!;
   }
 
   /// Set the active roulette and update cache
   static Future<bool> setActiveRouletteId(String rouletteId) async {
-    final success = await _setActiveRouletteInStorage(rouletteId);
-    if (success) {
-      _cachedActiveRouletteId = rouletteId;
-    }
-    return success;
+    return await BaseStorageService.saveString(
+      StorageConstants.activeRouletteKey,
+      rouletteId,
+    );
   }
 
   /// Get list of all roulette models
-  static Future<List<RouletteWheelModel>> getAllRoulettes() async {
+  static Future<List<RouletteModel>> getAllRoulettes() async {
     final allRoulettes = await loadAllRoulettes();
     return allRoulettes.values.toList();
   }
@@ -299,9 +240,11 @@ class RouletteStorageService extends BaseStorageService {
   }
 
   /// Check if a roulette name exists
-  static Future<bool> rouletteNameExists(String name) async {
+  static Future<bool> rouletteNameExists(String name, {String? id}) async {
     final allRoulettes = await loadAllRoulettes();
-    return allRoulettes.values.any((roulette) => roulette.name == name);
+    return allRoulettes.values.any(
+      (roulette) => roulette.name == name && roulette.id != id,
+    );
   }
 
   /// Check if a roulette ID exists
@@ -311,14 +254,12 @@ class RouletteStorageService extends BaseStorageService {
   }
 
   /// Duplicate a roulette
-  static Future<RouletteWheelModel?> duplicateRoulette(
+  static Future<RouletteModel?> duplicateRoulette(
     String originalId,
     String newName,
   ) async {
     // Use cached data if available
-    final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
-        : await loadAllRoulettes();
+    final allRoulettes = await loadAllRoulettes();
 
     if (!allRoulettes.containsKey(originalId)) {
       return null; // Original roulette doesn't exist
@@ -331,8 +272,7 @@ class RouletteStorageService extends BaseStorageService {
     }
 
     final originalRoulette = allRoulettes[originalId]!;
-    final duplicatedRoulette = RouletteWheelModel(
-      id: _uuid.v4(),
+    final duplicatedRoulette = RouletteModel(
       name: newName,
       options: originalRoulette.options
           .map(
@@ -341,11 +281,7 @@ class RouletteStorageService extends BaseStorageService {
           )
           .toList(),
       colorThemeIndex: originalRoulette.colorThemeIndex,
-      gradientColors: originalRoulette.gradientColors
-          .map((colorList) => List<Color>.from(colorList))
-          .toList(),
-      solidColors: List<Color>.from(originalRoulette.solidColors),
-      paintMode: originalRoulette.paintMode,
+      colors: List<Color>.from(originalRoulette.colors),
     );
 
     allRoulettes[duplicatedRoulette.id] = duplicatedRoulette;
@@ -372,18 +308,10 @@ class RouletteStorageService extends BaseStorageService {
     }
   }
 
-  /// Reset active roulette to defaults
-  static Future<bool> resetActiveRouletteToDefaults() async {
-    final activeId = await getActiveRouletteId();
-    if (activeId == null) return false;
-
-    return await resetRouletteToDefaults(activeId);
-  }
-
   /// Reset a specific roulette to defaults
   static Future<bool> resetRouletteToDefaults(String id) async {
     final allRoulettes = _cachedRoulettes != null
-        ? Map<String, RouletteWheelModel>.from(_cachedRoulettes!)
+        ? Map<String, RouletteModel>.from(_cachedRoulettes!)
         : await loadAllRoulettes();
 
     if (!allRoulettes.containsKey(id)) {
@@ -406,7 +334,7 @@ class RouletteStorageService extends BaseStorageService {
       final currentRoulettes = await loadAllRoulettes();
 
       // Create a new ordered map
-      final orderedRoulettes = <String, RouletteWheelModel>{};
+      final orderedRoulettes = <String, RouletteModel>{};
 
       // Add roulettes in the specified order
       for (final id in orderedIds) {

@@ -1,61 +1,27 @@
 import 'dart:math' as math;
+import 'package:decision_spin/storage/roulette_wheel_model.dart';
 import 'package:flutter/material.dart';
 import '../painters/roulette_painter.dart';
-import '../enums/roulette_paint_mode.dart';
 
 class RouletteWheel extends StatefulWidget {
-  final List<String> options;
+  final RouletteModel rouletteModel;
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
   final Function(String)? onPointingOptionChanged;
   final double? size;
   final bool showSpinButton;
-  final RoulettePaintMode paintMode;
-  final List<List<Color>> gradientColors; // Add gradient colors parameter
-  final List<Color> solidColors; // Add solid colors parameter
 
   const RouletteWheel({
     super.key,
-    required this.options,
+    required this.rouletteModel,
     required this.isSpinning,
     required this.onSpinStart,
     required this.onSpinComplete,
-    required this.gradientColors,
-    required this.solidColors,
     this.onPointingOptionChanged,
     this.size,
     this.showSpinButton = true,
-    this.paintMode = RoulettePaintMode.gradient,
   });
-
-  /// Factory constructor for gradient mode
-  const RouletteWheel.gradient({
-    super.key,
-    required this.options,
-    required this.isSpinning,
-    required this.onSpinStart,
-    required this.onSpinComplete,
-    required this.gradientColors,
-    required this.solidColors,
-    this.onPointingOptionChanged,
-    this.size,
-    this.showSpinButton = true,
-  }) : paintMode = RoulettePaintMode.gradient;
-
-  /// Factory constructor for solid color mode
-  const RouletteWheel.solid({
-    super.key,
-    required this.options,
-    required this.isSpinning,
-    required this.onSpinStart,
-    required this.onSpinComplete,
-    required this.gradientColors,
-    required this.solidColors,
-    this.onPointingOptionChanged,
-    this.size,
-    this.showSpinButton = true,
-  }) : paintMode = RoulettePaintMode.solid;
 
   @override
   RouletteWheelState createState() => RouletteWheelState();
@@ -67,13 +33,18 @@ class RouletteWheelState extends State<RouletteWheel>
   late Animation<double> _animation;
   double _currentRotation = 0;
 
+  List<String> get rouletteTextOptions =>
+      widget.rouletteModel.options.map((e) => e.text).toList();
+
   @override
   void initState() {
     super.initState();
     _initializeAnimation();
     // Initialize with the first option pointing
-    if (widget.options.isNotEmpty && widget.onPointingOptionChanged != null) {
-      widget.onPointingOptionChanged!(widget.options[0]);
+    final firstOption = widget.rouletteModel.options.firstOrNull;
+
+    if (firstOption != null && widget.onPointingOptionChanged != null) {
+      widget.onPointingOptionChanged!(firstOption.text);
     }
   }
 
@@ -109,19 +80,19 @@ class RouletteWheelState extends State<RouletteWheel>
   }
 
   void _updatePointingOption() {
-    if (widget.options.isEmpty) return;
+    if (rouletteTextOptions.isEmpty) return;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / widget.options.length;
+    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % widget.options.length;
+        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
 
-    widget.onPointingOptionChanged!(widget.options[pointingIndex]);
+    widget.onPointingOptionChanged!(rouletteTextOptions[pointingIndex]);
   }
 
   void _spin() {
-    if (widget.isSpinning || widget.options.length < 2) return;
+    if (widget.isSpinning || rouletteTextOptions.length < 2) return;
 
     widget.onSpinStart();
     _startSpinAnimation();
@@ -150,27 +121,27 @@ class RouletteWheelState extends State<RouletteWheel>
   }
 
   void _determineWinner() {
-    if (widget.options.isEmpty) return;
+    if (rouletteTextOptions.isEmpty) return;
 
     final normalizedRotation = _currentRotation % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / widget.options.length;
+    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final winnerIndex =
-        (pointerAngle / sectionAngle).floor() % widget.options.length;
+        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
 
-    widget.onSpinComplete(widget.options[winnerIndex]);
+    widget.onSpinComplete(rouletteTextOptions[winnerIndex]);
   }
 
   String? _getCurrentPointingOption() {
-    if (widget.options.isEmpty) return null;
+    if (rouletteTextOptions.isEmpty) return null;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / widget.options.length;
+    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % widget.options.length;
+        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
 
-    return widget.options[pointingIndex];
+    return rouletteTextOptions[pointingIndex];
   }
 
   @override
@@ -248,11 +219,9 @@ class RouletteWheelState extends State<RouletteWheel>
             ),
             child: CustomPaint(
               painter: RoulettePainter(
-                options: widget.options,
+                options: rouletteTextOptions,
                 rotation: 0, // Rotation is handled by Transform.rotate
-                paintMode: widget.paintMode,
-                gradientColors: widget.gradientColors,
-                solidColors: widget.solidColors,
+                colors: widget.rouletteModel.colors,
                 selectedOption: _getCurrentPointingOption(),
               ),
               size: Size(size, size),

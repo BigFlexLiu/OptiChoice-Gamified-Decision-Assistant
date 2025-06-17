@@ -1,150 +1,32 @@
+import 'package:decision_spin/consts/color_themes.dart';
 import 'package:flutter/material.dart';
 import '../storage/roulette_storage_service.dart';
 import '../storage/roulette_wheel_model.dart';
-import '../enums/roulette_paint_mode.dart';
 
-class RouletteManager extends StatefulWidget {
-  final String? rouletteId; // Optional: if null, edits active roulette
-  final Function(RouletteWheelModel)? onRouletteChanged;
+class RouletteOptionsView extends StatefulWidget {
+  final RouletteModel roulette;
+  final Function(RouletteModel)? onRouletteChanged;
 
-  const RouletteManager({super.key, this.rouletteId, this.onRouletteChanged});
+  const RouletteOptionsView({
+    super.key,
+    required this.roulette,
+    this.onRouletteChanged,
+  });
 
   @override
-  RouletteManagerState createState() => RouletteManagerState();
+  RouletteOptionsViewState createState() => RouletteOptionsViewState();
 }
 
-class RouletteManagerState extends State<RouletteManager> {
-  RouletteWheelModel? _roulette;
-  late List<RouletteOption> _options;
-  String _rouletteName = '';
+class RouletteOptionsViewState extends State<RouletteOptionsView> {
   final TextEditingController _textController = TextEditingController();
   bool _hasChanges = false;
   bool _isLoading = false;
-  int _selectedTheme = 0;
-  RoulettePaintMode _paintMode = RoulettePaintMode.gradient;
 
-  final List<ColorTheme> _colorThemes = [
-    ColorTheme(
-      name: 'Vibrant',
-      gradientColors: [
-        [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-        [Color(0xFF4ECDC4), Color(0xFF44A08D)],
-        [Color(0xFF667eea), Color(0xFF764ba2)],
-        [Color(0xFFf093fb), Color(0xFFf5576c)],
-        [Color(0xFF4facfe), Color(0xFF00f2fe)],
-        [Color(0xFF43e97b), Color(0xFF38f9d7)],
-        [Color(0xFFfa709a), Color(0xFFfee140)],
-        [Color(0xFF30cfd0), Color(0xFF91a7ff)],
-      ],
-      solidColors: [
-        Color(0xFFFF6B6B),
-        Color(0xFF4ECDC4),
-        Color(0xFF667eea),
-        Color(0xFFf093fb),
-        Color(0xFF4facfe),
-        Color(0xFF43e97b),
-        Color(0xFFfa709a),
-        Color(0xFF30cfd0),
-      ],
-    ),
-    ColorTheme(
-      name: 'Ocean',
-      gradientColors: [
-        [Color(0xFF2E86AB), Color(0xFF72DBD9)],
-        [Color(0xFF00B4DB), Color(0xFF0083B0)],
-        [Color(0xFF1CB5E0), Color(0xFF000851)],
-        [Color(0xFF4481EB), Color(0xFF04BEFE)],
-        [Color(0xFF5B73C4), Color(0xFF9198E5)],
-        [Color(0xFF2196F3), Color(0xFF21CBF3)],
-        [Color(0xFF4FC3F7), Color(0xFF29B6F6)],
-        [Color(0xFF00ACC1), Color(0xFF26C6DA)],
-      ],
-      solidColors: [
-        Color(0xFF2E86AB),
-        Color(0xFF00B4DB),
-        Color(0xFF1CB5E0),
-        Color(0xFF4481EB),
-        Color(0xFF5B73C4),
-        Color(0xFF2196F3),
-        Color(0xFF4FC3F7),
-        Color(0xFF00ACC1),
-      ],
-    ),
-    ColorTheme(
-      name: 'Sunset',
-      gradientColors: [
-        [Color(0xFFFF9A8B), Color(0xFFA890FE)],
-        [Color(0xFFFFAD84), Color(0xFFFF6B6B)],
-        [Color(0xFFFFA726), Color(0xFFFF7043)],
-        [Color(0xFFFF8A65), Color(0xFFFF5722)],
-        [Color(0xFFFFB74D), Color(0xFFFF9800)],
-        [Color(0xFFFFCC02), Color(0xFFFF6F00)],
-        [Color(0xFFFF5722), Color(0xFFE91E63)],
-        [Color(0xFFF57F17), Color(0xFFFF6F00)],
-      ],
-      solidColors: [
-        Color(0xFFFF9A8B),
-        Color(0xFFFFAD84),
-        Color(0xFFFFA726),
-        Color(0xFFFF8A65),
-        Color(0xFFFFB74D),
-        Color(0xFFFFCC02),
-        Color(0xFFFF5722),
-        Color(0xFFF57F17),
-      ],
-    ),
-    ColorTheme(
-      name: 'Forest',
-      gradientColors: [
-        [Color(0xFF56AB2F), Color(0xFFA8E6CF)],
-        [Color(0xFF11998E), Color(0xFF38EF7D)],
-        [Color(0xFF00B09B), Color(0xFF96C93D)],
-        [Color(0xFF2E8B57), Color(0xFF90EE90)],
-        [Color(0xFF228B22), Color(0xFF32CD32)],
-        [Color(0xFF006400), Color(0xFF7CFC00)],
-        [Color(0xFF4CAF50), Color(0xFF8BC34A)],
-        [Color(0xFF388E3C), Color(0xFF66BB6A)],
-      ],
-      solidColors: [
-        Color(0xFF56AB2F),
-        Color(0xFF11998E),
-        Color(0xFF00B09B),
-        Color(0xFF2E8B57),
-        Color(0xFF228B22),
-        Color(0xFF006400),
-        Color(0xFF4CAF50),
-        Color(0xFF388E3C),
-      ],
-    ),
-    ColorTheme(
-      name: 'Purple',
-      gradientColors: [
-        [Color(0xFF667eea), Color(0xFF764ba2)],
-        [Color(0xFF9C27B0), Color(0xFFE1BEE7)],
-        [Color(0xFF673AB7), Color(0xFF9575CD)],
-        [Color(0xFF3F51B5), Color(0xFF7986CB)],
-        [Color(0xFF5E35B1), Color(0xFF9575CD)],
-        [Color(0xFF7B1FA2), Color(0xFFBA68C8)],
-        [Color(0xFF8E24AA), Color(0xFFCE93D8)],
-        [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
-      ],
-      solidColors: [
-        Color(0xFF667eea),
-        Color(0xFF9C27B0),
-        Color(0xFF673AB7),
-        Color(0xFF3F51B5),
-        Color(0xFF5E35B1),
-        Color(0xFF7B1FA2),
-        Color(0xFF8E24AA),
-        Color(0xFF6A1B9A),
-      ],
-    ),
-  ];
+  RouletteModel get roulette => widget.roulette;
 
   @override
   void initState() {
     super.initState();
-    _loadRouletteData();
   }
 
   @override
@@ -153,110 +35,44 @@ class RouletteManagerState extends State<RouletteManager> {
     super.dispose();
   }
 
-  Future<void> _loadRouletteData() async {
-    setState(() => _isLoading = true);
-
-    try {
-      RouletteWheelModel? roulette;
-
-      if (widget.rouletteId != null) {
-        roulette = await RouletteStorageService.loadRouletteById(
-          widget.rouletteId!,
-        );
-      } else {
-        roulette = await RouletteStorageService.loadActiveRoulette();
-      }
-
-      if (roulette != null) {
-        setState(() {
-          _roulette = roulette;
-          _rouletteName = roulette!.name;
-          _options = List.from(roulette.options);
-          _selectedTheme = roulette.colorThemeIndex;
-          _paintMode = roulette.paintMode;
-        });
-      } else {
-        // This shouldn't happen, but handle gracefully
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load roulette data'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-        Navigator.of(context).pop();
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   Future<void> _saveChanges() async {
-    if (_roulette == null) return;
-
     setState(() => _isLoading = true);
 
     try {
-      // Check if name already exists (for other roulettes)
-      if (_rouletteName != _roulette!.name) {
-        final nameExists = await RouletteStorageService.rouletteNameExists(
-          _rouletteName,
-        );
-        if (nameExists) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('A roulette with this name already exists'),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
-            setState(() => _isLoading = false);
-          }
-          return;
+      final nameExists = await RouletteStorageService.rouletteNameExists(
+        roulette.name,
+        id: roulette.id,
+      );
+
+      if (nameExists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('A roulette with this name already exists'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          setState(() {
+            _isLoading = false;
+          });
         }
+        return;
       }
 
-      // Update the roulette model
-      final updatedRoulette = RouletteWheelModel(
-        id: _roulette!.id,
-        name: _rouletteName,
-        options: List.from(_options),
-        colorThemeIndex: _selectedTheme,
-        gradientColors: _colorThemes[_selectedTheme].gradientColors,
-        solidColors: _colorThemes[_selectedTheme].solidColors,
-        paintMode: _paintMode,
-        createdAt: _roulette!.createdAt,
-        updatedAt: DateTime.now(),
-      );
+      final success = await RouletteStorageService.saveRoulette(roulette);
 
-      final success = await RouletteStorageService.saveRoulette(
-        updatedRoulette,
-      );
+      if (mounted && !success) {
+        throw Exception('Failed to save roulette');
+      }
 
-      if (mounted) {
-        if (success) {
-          setState(() {
-            _roulette = updatedRoulette;
-            _hasChanges = false;
-          });
+      if (mounted && success) {
+        widget.onRouletteChanged?.call(roulette);
 
-          widget.onRouletteChanged?.call(updatedRoulette);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Roulette saved successfully!')));
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Roulette saved successfully!')),
-          );
-
-          Navigator.of(context).pop(updatedRoulette);
-        } else {
-          throw Exception('Failed to save roulette');
-        }
+        Navigator.of(context).pop(roulette);
       }
     } catch (e) {
       if (mounted) {
@@ -269,27 +85,27 @@ class RouletteManagerState extends State<RouletteManager> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
 
   void _removeOption(int index) {
-    if (_options.length > 2) {
+    if (roulette.options.length > 2) {
       setState(() {
-        _options.removeAt(index);
+        roulette.options.removeAt(index);
         _hasChanges = true;
       });
     }
   }
 
   void _editOption(int index, String newValue) {
-    if (newValue.trim().isNotEmpty && newValue.trim() != _options[index].text) {
+    if (newValue.trim().isNotEmpty &&
+        newValue.trim() != roulette.options[index].text) {
       setState(() {
-        _options[index] = RouletteOption(
-          text: newValue.trim(),
-          weight: _options[index].weight,
-        );
+        roulette.options[index].text = newValue;
         _hasChanges = true;
       });
     }
@@ -297,10 +113,7 @@ class RouletteManagerState extends State<RouletteManager> {
 
   void _updateOptionWeight(int index, double weight) {
     setState(() {
-      _options[index] = RouletteOption(
-        text: _options[index].text,
-        weight: weight,
-      );
+      roulette.options[index].weight = weight;
       _hasChanges = true;
     });
   }
@@ -310,16 +123,16 @@ class RouletteManagerState extends State<RouletteManager> {
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
-      final item = _options.removeAt(oldIndex);
-      _options.insert(newIndex, item);
+      final item = roulette.options.removeAt(oldIndex);
+      roulette.options.insert(newIndex, item);
       _hasChanges = true;
     });
   }
 
   void _editRouletteName(String newName) {
-    if (newName.trim().isNotEmpty && newName.trim() != _rouletteName) {
+    if (newName.trim().isNotEmpty && newName.trim() != roulette.name) {
       setState(() {
-        _rouletteName = newName.trim();
+        roulette.name = newName.trim();
         _hasChanges = true;
       });
     }
@@ -327,14 +140,8 @@ class RouletteManagerState extends State<RouletteManager> {
 
   void _updateColorTheme(int themeIndex) {
     setState(() {
-      _selectedTheme = themeIndex;
-      _hasChanges = true;
-    });
-  }
-
-  void _updatePaintMode(RoulettePaintMode mode) {
-    setState(() {
-      _paintMode = mode;
+      roulette.colorThemeIndex = themeIndex;
+      roulette.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
       _hasChanges = true;
     });
   }
@@ -381,8 +188,6 @@ class RouletteManagerState extends State<RouletteManager> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _buildPaintModeSection(),
-                    const SizedBox(height: 16),
                     _buildColorThemeSection(),
                     const SizedBox(height: 16),
                     _buildOptionsListSection(),
@@ -402,7 +207,7 @@ class RouletteManagerState extends State<RouletteManager> {
           children: [
             Flexible(
               child: Text(
-                _rouletteName,
+                roulette.name,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
@@ -431,95 +236,6 @@ class RouletteManagerState extends State<RouletteManager> {
     );
   }
 
-  Widget _buildPaintModeSection() {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.brush_outlined),
-              const SizedBox(width: 8),
-              Text('Paint Style', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildPaintModeOption(
-                  RoulettePaintMode.gradient,
-                  'Gradient',
-                  Icons.gradient,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPaintModeOption(
-                  RoulettePaintMode.solid,
-                  'Solid',
-                  Icons.circle,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaintModeOption(
-    RoulettePaintMode mode,
-    String label,
-    IconData icon,
-  ) {
-    final theme = Theme.of(context);
-    final isSelected = _paintMode == mode;
-
-    return GestureDetector(
-      onTap: () => _updatePaintMode(mode),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline,
-            width: isSelected ? 2 : 1,
-          ),
-          color: isSelected
-              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
-              : null,
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.textTheme.bodySmall?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildColorThemeSection() {
     final theme = Theme.of(context);
 
@@ -539,10 +255,10 @@ class RouletteManagerState extends State<RouletteManager> {
           Wrap(
             spacing: 12,
             runSpacing: 8,
-            children: _colorThemes.asMap().entries.map((entry) {
+            children: DefaultColorThemes.all.asMap().entries.map((entry) {
               final index = entry.key;
               final colorTheme = entry.value;
-              final isSelected = _selectedTheme == index;
+              final isSelected = roulette.colorThemeIndex == index;
 
               return GestureDetector(
                 onTap: () => _updateColorTheme(index),
@@ -566,41 +282,34 @@ class RouletteManagerState extends State<RouletteManager> {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children:
-                            (_paintMode == RoulettePaintMode.gradient
-                                    ? colorTheme.gradientColors
-                                    : colorTheme.solidColors
-                                          .map((c) => [c])
-                                          .toList())
-                                .take(4)
-                                .map((colors) {
-                                  return Container(
-                                    width: 16,
-                                    height: 16,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 2,
+                        children: (colorTheme.colors.map((c) => [c]).toList())
+                            .take(4)
+                            .map((colors) {
+                              return Container(
+                                width: 16,
+                                height: 16,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: colors.length > 1
+                                      ? LinearGradient(colors: colors)
+                                      : null,
+                                  color: colors.length == 1 ? colors[0] : null,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.shadowColor.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      blurRadius: 2,
+                                      offset: const Offset(0, 1),
                                     ),
-                                    decoration: BoxDecoration(
-                                      gradient: colors.length > 1
-                                          ? LinearGradient(colors: colors)
-                                          : null,
-                                      color: colors.length == 1
-                                          ? colors[0]
-                                          : null,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: theme.shadowColor.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          blurRadius: 2,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                })
-                                .toList(),
+                                  ],
+                                ),
+                              );
+                            })
+                            .toList(),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -638,7 +347,7 @@ class RouletteManagerState extends State<RouletteManager> {
               Icon(Icons.list),
               const SizedBox(width: 8),
               Text(
-                'Options (${_options.length})',
+                'Options (${roulette.options.length})',
                 style: theme.textTheme.titleSmall,
               ),
               const Spacer(),
@@ -648,18 +357,18 @@ class RouletteManagerState extends State<RouletteManager> {
               ),
             ],
           ),
-          if (_options.isNotEmpty) ...[Divider(height: 24)],
+          if (roulette.options.isNotEmpty) ...[Divider(height: 24)],
           const SizedBox(height: 12),
-          if (_options.isEmpty)
+          if (roulette.options.isEmpty)
             _buildEmptyState()
           else
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _options.length,
+              itemCount: roulette.options.length,
               onReorder: _reorderOptions,
               itemBuilder: (context, index) {
-                return _buildOptionListItem(index, _options[index]);
+                return _buildOptionListItem(index, roulette.options[index]);
               },
             ),
         ],
@@ -669,10 +378,7 @@ class RouletteManagerState extends State<RouletteManager> {
 
   Widget _buildOptionListItem(int index, RouletteOption option) {
     final theme = Theme.of(context);
-    final colorTheme = _colorThemes[_selectedTheme];
-    final colors = _paintMode == RoulettePaintMode.gradient
-        ? colorTheme.gradientColors[index % colorTheme.gradientColors.length]
-        : [colorTheme.solidColors[index % colorTheme.solidColors.length]];
+    final color = roulette.colors[index % roulette.colors.length];
 
     return Container(
       key: ValueKey(option.text + index.toString()),
@@ -703,18 +409,11 @@ class RouletteManagerState extends State<RouletteManager> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  gradient: colors.length > 1
-                      ? LinearGradient(
-                          colors: colors,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: colors.length == 1 ? colors[0] : null,
+                  color: color,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: colors[0].withValues(alpha: 0.3),
+                      color: color.withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -775,15 +474,6 @@ class RouletteManagerState extends State<RouletteManager> {
                     ),
                   ),
                 ),
-
-              const SizedBox(width: 8),
-
-              // Arrow indicator
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
             ],
           ),
         ),
@@ -803,7 +493,7 @@ class RouletteManagerState extends State<RouletteManager> {
             children: [
               Text('Edit Option'),
               const Spacer(),
-              if (_options.length > 2)
+              if (roulette.options.length > 2)
                 IconButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -834,44 +524,6 @@ class RouletteManagerState extends State<RouletteManager> {
                   maxLength: 100,
                 ),
                 const SizedBox(height: 24),
-
-                // Weight section
-                // Text('Weight', style: Theme.of(context).textTheme.titleSmall),
-                // const SizedBox(height: 8),
-                // Row(
-                //   children: [
-                //     Icon(
-                //       Icons.tune,
-                //       size: 18,
-                //       color: Theme.of(context).colorScheme.onSurfaceVariant,
-                //     ),
-                //     const SizedBox(width: 8),
-                //     Expanded(
-                //       child: Slider(
-                //         value: tempWeight,
-                //         min: 1.0,
-                //         max: 10.0,
-                //         divisions: 9,
-                //         label: tempWeight.toStringAsFixed(1),
-                //         onChanged: (value) {
-                //           setDialogState(() {
-                //             tempWeight = value;
-                //           });
-                //         },
-                //       ),
-                //     ),
-                //     Container(
-                //       width: 50,
-                //       child: Text(
-                //         '${tempWeight.toStringAsFixed(1)}x',
-                //         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                //           fontWeight: FontWeight.bold,
-                //         ),
-                //         textAlign: TextAlign.end,
-                //       ),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),
@@ -914,7 +566,7 @@ class RouletteManagerState extends State<RouletteManager> {
           onSubmitted: (_) {
             if (controller.text.trim().isNotEmpty) {
               setState(() {
-                _options.add(
+                roulette.options.add(
                   RouletteOption(text: controller.text.trim(), weight: 1.0),
                 );
                 _hasChanges = true;
@@ -932,7 +584,7 @@ class RouletteManagerState extends State<RouletteManager> {
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 setState(() {
-                  _options.add(
+                  roulette.options.add(
                     RouletteOption(text: controller.text.trim(), weight: 1.0),
                   );
                   _hasChanges = true;
@@ -979,7 +631,7 @@ class RouletteManagerState extends State<RouletteManager> {
   }
 
   void _showEditNameDialog() {
-    final controller = TextEditingController(text: _rouletteName);
+    final controller = TextEditingController(text: roulette.name);
 
     showDialog(
       context: context,
@@ -1013,7 +665,7 @@ class RouletteManagerState extends State<RouletteManager> {
       builder: (context) => AlertDialog(
         title: Text('Delete Option'),
         content: Text(
-          'Are you sure you want to delete "${_options[index].text}"?',
+          'Are you sure you want to delete "${roulette.options[index].text}"?',
         ),
         actions: [
           TextButton(
@@ -1042,16 +694,4 @@ class RouletteOption {
   double weight;
 
   RouletteOption({required this.text, this.weight = 1.0});
-}
-
-class ColorTheme {
-  final String name;
-  final List<List<Color>> gradientColors;
-  final List<Color> solidColors;
-
-  ColorTheme({
-    required this.name,
-    required this.gradientColors,
-    required this.solidColors,
-  });
 }
