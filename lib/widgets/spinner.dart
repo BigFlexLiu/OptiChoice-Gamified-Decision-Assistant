@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import '../storage/roulette_wheel_model.dart';
-import 'roulette_preview.dart';
+import '../storage/spinner_wheel_model.dart';
+import 'spinner_preview.dart';
 
-class RouletteCard extends StatelessWidget {
-  final String rouletteId;
-  final RouletteModel roulette;
+class SpinnerCard extends StatelessWidget {
+  final String spinnerId;
+  final SpinnerModel spinner;
   final bool isActive;
   final bool canReorder;
-  final List<RouletteCardAction> actions;
+  final List<SpinnerCardAction> actions;
   final String? subtitle;
 
-  const RouletteCard({
+  const SpinnerCard({
     super.key,
-    required this.rouletteId,
-    required this.roulette,
+    required this.spinnerId,
+    required this.spinner,
     this.isActive = false,
     this.canReorder = false,
     required this.actions,
@@ -25,7 +25,7 @@ class RouletteCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      // Remove this line: key: ValueKey(rouletteId),
+      // Remove this line: key: ValueKey(spinnerId),
       elevation: isActive ? 8 : 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -63,7 +63,7 @@ class RouletteCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  roulette.name,
+                  spinner.name,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                     color: isActive
@@ -96,7 +96,7 @@ class RouletteCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${roulette.options.length} options',
+                '${spinner.options.length} options',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -116,8 +116,8 @@ class RouletteCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Roulette Preview
-                  RoulettePreview(size: 196, roulette: roulette),
+                  // Spinner Preview
+                  SpinnerPreview(size: 196, spinner: spinner),
                   const SizedBox(width: 16),
                   // Action Buttons
                   Expanded(
@@ -200,13 +200,13 @@ class RouletteCard extends StatelessWidget {
   }
 }
 
-class RouletteCardAction {
+class SpinnerCardAction {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
   final Color color;
 
-  const RouletteCardAction({
+  const SpinnerCardAction({
     required this.icon,
     required this.label,
     required this.onPressed,

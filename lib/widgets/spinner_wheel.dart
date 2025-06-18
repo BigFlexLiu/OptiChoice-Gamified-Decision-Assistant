@@ -1,10 +1,10 @@
 import 'dart:math' as math;
-import 'package:decision_spin/storage/roulette_wheel_model.dart';
+import 'package:decision_spinner/storage/spinner_wheel_model.dart';
 import 'package:flutter/material.dart';
-import '../painters/roulette_painter.dart';
+import '../painters/spinner_painter.dart';
 
-class RouletteWheel extends StatefulWidget {
-  final RouletteModel rouletteModel;
+class SpinnerWheel extends StatefulWidget {
+  final SpinnerModel spinnerModel;
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
@@ -12,9 +12,9 @@ class RouletteWheel extends StatefulWidget {
   final double? size;
   final bool showSpinButton;
 
-  const RouletteWheel({
+  const SpinnerWheel({
     super.key,
-    required this.rouletteModel,
+    required this.spinnerModel,
     required this.isSpinning,
     required this.onSpinStart,
     required this.onSpinComplete,
@@ -24,24 +24,24 @@ class RouletteWheel extends StatefulWidget {
   });
 
   @override
-  RouletteWheelState createState() => RouletteWheelState();
+  SpinnerWheelState createState() => SpinnerWheelState();
 }
 
-class RouletteWheelState extends State<RouletteWheel>
+class SpinnerWheelState extends State<SpinnerWheel>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
 
-  List<String> get rouletteTextOptions =>
-      widget.rouletteModel.options.map((e) => e.text).toList();
+  List<String> get spinnerTextOptions =>
+      widget.spinnerModel.options.map((e) => e.text).toList();
 
   @override
   void initState() {
     super.initState();
     _initializeAnimation();
     // Initialize with the first option pointing
-    final firstOption = widget.rouletteModel.options.firstOrNull;
+    final firstOption = widget.spinnerModel.options.firstOrNull;
 
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       widget.onPointingOptionChanged!(firstOption.text);
@@ -80,19 +80,19 @@ class RouletteWheelState extends State<RouletteWheel>
   }
 
   void _updatePointingOption() {
-    if (rouletteTextOptions.isEmpty) return;
+    if (spinnerTextOptions.isEmpty) return;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    widget.onPointingOptionChanged!(rouletteTextOptions[pointingIndex]);
+    widget.onPointingOptionChanged!(spinnerTextOptions[pointingIndex]);
   }
 
   void _spin() {
-    if (widget.isSpinning || rouletteTextOptions.length < 2) return;
+    if (widget.isSpinning || spinnerTextOptions.length < 2) return;
 
     widget.onSpinStart();
     _startSpinAnimation();
@@ -121,27 +121,27 @@ class RouletteWheelState extends State<RouletteWheel>
   }
 
   void _determineWinner() {
-    if (rouletteTextOptions.isEmpty) return;
+    if (spinnerTextOptions.isEmpty) return;
 
     final normalizedRotation = _currentRotation % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final winnerIndex =
-        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    widget.onSpinComplete(rouletteTextOptions[winnerIndex]);
+    widget.onSpinComplete(spinnerTextOptions[winnerIndex]);
   }
 
   String? _getCurrentPointingOption() {
-    if (rouletteTextOptions.isEmpty) return null;
+    if (spinnerTextOptions.isEmpty) return null;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / rouletteTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % rouletteTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    return rouletteTextOptions[pointingIndex];
+    return spinnerTextOptions[pointingIndex];
   }
 
   @override
@@ -150,7 +150,7 @@ class RouletteWheelState extends State<RouletteWheel>
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          _buildRouletteWheel(),
+          _buildSpinnerWheel(),
           if (widget.showSpinButton) ...[
             SizedBox(
               height: (widget.size ?? 350) * 0.2,
@@ -162,7 +162,7 @@ class RouletteWheelState extends State<RouletteWheel>
     );
   }
 
-  Widget _buildRouletteWheel() {
+  Widget _buildSpinnerWheel() {
     final containerHeight = widget.size ?? 350;
     final shadowSize = containerHeight * 0.914; // 320/350 ratio
     final wheelSize = containerHeight * 0.857; // 300/350 ratio
@@ -218,10 +218,10 @@ class RouletteWheelState extends State<RouletteWheel>
               ],
             ),
             child: CustomPaint(
-              painter: RoulettePainter(
-                options: rouletteTextOptions,
+              painter: SpinnerPainter(
+                options: spinnerTextOptions,
                 rotation: 0, // Rotation is handled by Transform.rotate
-                colors: widget.rouletteModel.colors,
+                colors: widget.spinnerModel.colors,
                 selectedOption: _getCurrentPointingOption(),
               ),
               size: Size(size, size),
@@ -235,7 +235,7 @@ class RouletteWheelState extends State<RouletteWheel>
   Widget _buildPointer(double containerHeight) {
     final pointerTop = containerHeight * 0.357; // 125/350 ratio
     final pointerSize =
-        containerHeight * 0.057; // Scale pointer relative to roulette size
+        containerHeight * 0.057; // Scale pointer relative to spinner size
 
     return Positioned(
       top: pointerTop,

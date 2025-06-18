@@ -1,7 +1,7 @@
-import 'package:decision_spin/theme/color_schemes.dart';
-import 'package:decision_spin/theme/component_theme.dart';
-import 'package:decision_spin/theme/text_themes.dart';
-import 'package:decision_spin/theme/theme_extensions.dart';
+import 'package:decision_spinner/theme/color_schemes.dart';
+import 'package:decision_spinner/theme/component_theme.dart';
+import 'package:decision_spinner/theme/text_themes.dart';
+import 'package:decision_spinner/theme/theme_extensions.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -42,7 +42,7 @@ class AppTheme {
 
     // Custom Extensions
     extensions: [
-      RouletteThemeExtension.light,
+      SpinnerThemeExtension.light,
       CustomButtonExtension.light,
       AppConstants.standard,
     ],
@@ -72,7 +72,7 @@ class AppTheme {
 
     // Custom Extensions
     extensions: [
-      RouletteThemeExtension.dark,
+      SpinnerThemeExtension.dark,
       CustomButtonExtension.dark,
       AppConstants.standard,
     ],

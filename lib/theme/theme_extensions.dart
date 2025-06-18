@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 // Custom theme extensions for app-specific styling
 @immutable
-class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
-  const RouletteThemeExtension({
+class SpinnerThemeExtension extends ThemeExtension<SpinnerThemeExtension> {
+  const SpinnerThemeExtension({
     required this.wheelBackgroundColor,
     required this.wheelBorderColor,
     required this.segmentBorderColor,
@@ -20,7 +20,7 @@ class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
   final Color spinButtonColor;
 
   @override
-  RouletteThemeExtension copyWith({
+  SpinnerThemeExtension copyWith({
     Color? wheelBackgroundColor,
     Color? wheelBorderColor,
     Color? segmentBorderColor,
@@ -28,7 +28,7 @@ class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
     Color? resultTextColor,
     Color? spinButtonColor,
   }) {
-    return RouletteThemeExtension(
+    return SpinnerThemeExtension(
       wheelBackgroundColor: wheelBackgroundColor ?? this.wheelBackgroundColor,
       wheelBorderColor: wheelBorderColor ?? this.wheelBorderColor,
       segmentBorderColor: segmentBorderColor ?? this.segmentBorderColor,
@@ -39,11 +39,11 @@ class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
   }
 
   @override
-  RouletteThemeExtension lerp(RouletteThemeExtension? other, double t) {
-    if (other is! RouletteThemeExtension) {
+  SpinnerThemeExtension lerp(SpinnerThemeExtension? other, double t) {
+    if (other is! SpinnerThemeExtension) {
       return this;
     }
-    return RouletteThemeExtension(
+    return SpinnerThemeExtension(
       wheelBackgroundColor: Color.lerp(
         wheelBackgroundColor,
         other.wheelBackgroundColor,
@@ -69,7 +69,7 @@ class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
     );
   }
 
-  static RouletteThemeExtension light = RouletteThemeExtension(
+  static SpinnerThemeExtension light = SpinnerThemeExtension(
     wheelBackgroundColor: Colors.white,
     wheelBorderColor: Colors.deepPurple,
     segmentBorderColor: Colors.white,
@@ -78,7 +78,7 @@ class RouletteThemeExtension extends ThemeExtension<RouletteThemeExtension> {
     spinButtonColor: Colors.deepPurple,
   );
 
-  static RouletteThemeExtension dark = RouletteThemeExtension(
+  static SpinnerThemeExtension dark = SpinnerThemeExtension(
     wheelBackgroundColor: Colors.grey[800]!,
     wheelBorderColor: Colors.deepPurple[300]!,
     segmentBorderColor: Colors.grey[900]!,

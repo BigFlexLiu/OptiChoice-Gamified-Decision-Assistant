@@ -1,24 +1,24 @@
-import 'package:decision_spin/consts/premade_roulette_definitions.dart';
-import 'package:decision_spin/storage/roulette_wheel_model.dart';
-import 'package:decision_spin/storage/roulette_storage_service.dart';
-import 'package:decision_spin/widgets/roulette_card.dart';
+import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
+import 'package:decision_spinner/storage/spinner_wheel_model.dart';
+import 'package:decision_spinner/storage/spinner_storage_service.dart';
+import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
 
-class PremadeRoulettesView extends StatelessWidget {
-  const PremadeRoulettesView({super.key});
+class PremadeSpinnersView extends StatelessWidget {
+  const PremadeSpinnersView({super.key});
 
   static const _tabs = [
     _TabConfig(
       icon: Icons.quiz,
       label: 'Common Decisions',
       title: 'Common Decisions',
-      description: 'Premade roulettes for everyday decisions',
+      description: 'Premade spinners for everyday decisions',
     ),
     _TabConfig(
       icon: Icons.party_mode,
       label: 'Party Games',
       title: 'Party Games',
-      description: 'Fun roulettes for parties and groups',
+      description: 'Fun spinners for parties and groups',
     ),
   ];
 
@@ -30,7 +30,7 @@ class PremadeRoulettesView extends StatelessWidget {
       length: _tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Premade Roulettes'),
+          title: const Text('Premade Spinners'),
           bottom: TabBar(
             tabs: _tabs
                 .map((tab) => Tab(icon: Icon(tab.icon), text: tab.label))
@@ -39,11 +39,11 @@ class PremadeRoulettesView extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _PremadeRouletteTabView(
+            _PremadeSpinnerTabView(
               config: _tabs[0],
-              rouletteWheels: [PremadeRouletteDefinitions.yesNoRoulette],
+              spinnerWheels: [PremadeSpinnerDefinitions.yesNoSpinner],
             ),
-            _PremadeRouletteTabView(config: _tabs[1], rouletteWheels: const []),
+            _PremadeSpinnerTabView(config: _tabs[1], spinnerWheels: const []),
           ],
         ),
       ),
@@ -65,81 +65,78 @@ class _TabConfig {
   final String description;
 }
 
-class _PremadeRouletteTabView extends StatelessWidget {
-  const _PremadeRouletteTabView({
+class _PremadeSpinnerTabView extends StatelessWidget {
+  const _PremadeSpinnerTabView({
     required this.config,
-    required this.rouletteWheels,
+    required this.spinnerWheels,
   });
 
   final _TabConfig config;
-  final List<RouletteModel> rouletteWheels;
+  final List<SpinnerModel> spinnerWheels;
 
   @override
   Widget build(BuildContext context) {
-    if (rouletteWheels.isEmpty) {
+    if (spinnerWheels.isEmpty) {
       return _EmptyStateWidget(config: config);
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: rouletteWheels.length,
+      itemCount: spinnerWheels.length,
       itemBuilder: (context, index) {
-        final roulette = rouletteWheels[index];
+        final spinner = spinnerWheels[index];
 
-        return RouletteCard(
-          rouletteId: 'premade_${index}_${roulette.name}',
-          roulette: roulette,
+        return SpinnerCard(
+          spinnerId: 'premade_${index}_${spinner.name}',
+          spinner: spinner,
           isActive: false,
           canReorder: false,
-          subtitle: '${roulette.options.length} options • Premade',
-          actions: _buildActions(context, roulette),
+          subtitle: '${spinner.options.length} options • Premade',
+          actions: _buildActions(context, spinner),
         );
       },
     );
   }
 
-  List<RouletteCardAction> _buildActions(
+  List<SpinnerCardAction> _buildActions(
     BuildContext context,
-    RouletteModel roulette,
+    SpinnerModel spinner,
   ) {
     final theme = Theme.of(context);
 
     return [
-      RouletteCardAction(
+      SpinnerCardAction(
         icon: Icons.add_circle,
-        label: 'Add to My Roulettes',
-        onPressed: () => _addRoulette(context, roulette),
+        label: 'Add to My Spinners',
+        onPressed: () => _addSpinner(context, spinner),
         color: theme.colorScheme.primary,
       ),
-      RouletteCardAction(
+      SpinnerCardAction(
         icon: Icons.preview,
         label: 'Preview Options',
-        onPressed: () => _showPreview(context, roulette),
+        onPressed: () => _showPreview(context, spinner),
         color: theme.colorScheme.secondary,
       ),
     ];
   }
 
-  Future<void> _addRoulette(
-    BuildContext context,
-    RouletteModel roulette,
-  ) async {
+  Future<void> _addSpinner(BuildContext context, SpinnerModel spinner) async {
     try {
-      final finalName = await _generateUniqueName(roulette.name);
+      final finalName = await _generateUniqueName(spinner.name);
 
-      final createdRoulette = await RouletteStorageService.createRoulette(
+      final createdSpinner = await SpinnerStorageService.createSpinner(
         finalName,
-        roulette.options,
-        colorThemeIndex: roulette.colorThemeIndex,
+        spinner.options,
+        colorThemeIndex: spinner.colorThemeIndex,
       );
 
-      if (createdRoulette != null && context.mounted) {
-        RouletteStorageService.clearCache();
+      if (createdSpinner != null && context.mounted) {
+        SpinnerStorageService.clearCache();
         Navigator.of(context).pop(true);
       } else if (context.mounted) {
         _showErrorSnackBar(
           context,
-          'Failed to create roulette. Please try again.',
+          'Failed to create spinner. Please try again.',
         );
       }
     } catch (e) {
@@ -150,7 +147,7 @@ class _PremadeRouletteTabView extends StatelessWidget {
   }
 
   Future<String> _generateUniqueName(String baseName) async {
-    if (!await RouletteStorageService.rouletteNameExists(baseName)) {
+    if (!await SpinnerStorageService.spinnerNameExists(baseName)) {
       return baseName;
     }
 
@@ -159,15 +156,15 @@ class _PremadeRouletteTabView extends StatelessWidget {
     do {
       candidateName = '$baseName ($counter)';
       counter++;
-    } while (await RouletteStorageService.rouletteNameExists(candidateName));
+    } while (await SpinnerStorageService.spinnerNameExists(candidateName));
 
     return candidateName;
   }
 
-  void _showPreview(BuildContext context, RouletteModel roulette) {
+  void _showPreview(BuildContext context, SpinnerModel spinner) {
     showDialog(
       context: context,
-      builder: (context) => _PreviewDialog(roulette: roulette),
+      builder: (context) => _PreviewDialog(spinner: spinner),
     );
   }
 
@@ -221,23 +218,23 @@ class _EmptyStateWidget extends StatelessWidget {
 }
 
 class _PreviewDialog extends StatelessWidget {
-  const _PreviewDialog({required this.roulette});
+  const _PreviewDialog({required this.spinner});
 
-  final RouletteModel roulette;
+  final SpinnerModel spinner;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: Text('${roulette.name} - Options'),
+      title: Text('${spinner.name} - Options'),
       content: SizedBox(
         width: double.maxFinite,
         child: ListView.builder(
           shrinkWrap: true,
-          itemCount: roulette.options.length,
+          itemCount: spinner.options.length,
           itemBuilder: (context, index) {
-            final option = roulette.options[index];
+            final option = spinner.options[index];
             return ListTile(
               leading: CircleAvatar(
                 radius: 12,

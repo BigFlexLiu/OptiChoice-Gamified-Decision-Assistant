@@ -1,20 +1,20 @@
-import 'package:decision_spin/views/premade_roulette_view.dart';
-import 'package:decision_spin/widgets/roulette_card.dart';
+import 'package:decision_spinner/views/premade_spinners_view.dart';
+import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
-import '../storage/roulette_storage_service.dart';
-import '../storage/roulette_wheel_model.dart';
-import 'roulette_options_view.dart';
+import '../storage/spinner_storage_service.dart';
+import '../storage/spinner_wheel_model.dart';
+import 'spinner_options_view.dart';
 
-class AllRouletteView extends StatefulWidget {
-  const AllRouletteView({super.key});
+class AllSpinnerView extends StatefulWidget {
+  const AllSpinnerView({super.key});
 
   @override
-  State<AllRouletteView> createState() => _AllRouletteViewState();
+  State<AllSpinnerView> createState() => _AllSpinnerViewState();
 }
 
-class _AllRouletteViewState extends State<AllRouletteView> {
-  Map<String, RouletteModel> _roulettes = {};
-  late String _activeRouletteId;
+class _AllSpinnerViewState extends State<AllSpinnerView> {
+  Map<String, SpinnerModel> _spinners = {};
+  late String _activeSpinnerId;
   bool _isLoading = true;
   bool _isSearching = false;
   String _searchQuery = '';
@@ -49,32 +49,31 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     setState(() => _isLoading = true);
 
     try {
-      final roulettes = await RouletteStorageService.loadAllRoulettes();
-      final activeRouletteId =
-          await RouletteStorageService.getActiveRouletteId();
+      final spinners = await SpinnerStorageService.loadAllSpinners();
+      final activeSpinnerId = await SpinnerStorageService.getActiveSpinnerId();
 
       setState(() {
-        _roulettes = roulettes;
-        _activeRouletteId = activeRouletteId;
+        _spinners = spinners;
+        _activeSpinnerId = activeSpinnerId;
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('Failed to load roulettes');
+      _showSnackBar('Failed to load spinners');
     }
   }
 
-  Future<void> _createNewRoulette() async {
+  Future<void> _createNewSpinner() async {
     String? name;
     bool nameExists = false;
 
     do {
       name = await _showTextInputDialog(
-        'Create New Roulette',
-        'Enter roulette name:',
-        nameExists ? '' : 'New Roulette',
+        'Create New Spinner',
+        'Enter spinner name:',
+        nameExists ? '' : 'New Spinner',
         errorMessage: nameExists
-            ? 'A roulette with this name already exists. Please choose a different name.'
+            ? 'A spinner with this name already exists. Please choose a different name.'
             : null,
       );
 
@@ -83,26 +82,26 @@ class _AllRouletteViewState extends State<AllRouletteView> {
       }
 
       // Check if name already exists
-      nameExists = await RouletteStorageService.rouletteNameExists(name);
+      nameExists = await SpinnerStorageService.spinnerNameExists(name);
 
       if (!nameExists) {
         // Create default options
         final defaultOptions = [
-          RouletteOption(text: 'Option 1', weight: 1.0),
-          RouletteOption(text: 'Option 2', weight: 1.0),
-          RouletteOption(text: 'Option 3', weight: 1.0),
+          SpinnerOption(text: 'Option 1', weight: 1.0),
+          SpinnerOption(text: 'Option 2', weight: 1.0),
+          SpinnerOption(text: 'Option 3', weight: 1.0),
         ];
 
-        final newRoulette = await RouletteStorageService.createRoulette(
+        final newSpinner = await SpinnerStorageService.createSpinner(
           name,
           defaultOptions,
         );
 
-        if (newRoulette != null) {
+        if (newSpinner != null) {
           _loadData();
-          _showSnackBar('Roulette "$name" created and set as active');
+          _showSnackBar('Spinner "$name" created and set as active');
         } else {
-          _showSnackBar('Failed to create roulette. Please try again.');
+          _showSnackBar('Failed to create spinner. Please try again.');
         }
         return;
       }
@@ -126,21 +125,21 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     });
   }
 
-  Map<String, RouletteModel> get _filteredRoulettes {
+  Map<String, SpinnerModel> get _filteredSpinners {
     if (_searchQuery.isEmpty) {
-      return _roulettes;
+      return _spinners;
     }
 
     return Map.fromEntries(
-      _roulettes.entries.where(
+      _spinners.entries.where(
         (entry) => entry.value.name.toLowerCase().contains(_searchQuery),
       ),
     );
   }
 
-  Future<void> _deleteRoulette(String id) async {
-    final roulette = _roulettes[id];
-    if (roulette == null) return;
+  Future<void> _deleteSpinner(String id) async {
+    final spinner = _spinners[id];
+    if (spinner == null) return;
 
     final theme = Theme.of(context);
 
@@ -148,13 +147,13 @@ class _AllRouletteViewState extends State<AllRouletteView> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete Roulette',
+          'Delete Spinner',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
-          'Are you sure you want to delete "${roulette.name}"?',
+          'Are you sure you want to delete "${spinner.name}"?',
           style: theme.textTheme.bodyMedium,
         ),
         actions: [
@@ -174,35 +173,35 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     );
 
     if (confirmed == true) {
-      final success = await RouletteStorageService.deleteRoulette(id);
+      final success = await SpinnerStorageService.deleteSpinner(id);
       if (success) {
         _loadData();
-        _showSnackBar('Roulette "${roulette.name}" deleted');
+        _showSnackBar('Spinner "${spinner.name}" deleted');
       } else {
-        _showSnackBar('Cannot delete the last roulette');
+        _showSnackBar('Cannot delete the last spinner');
       }
     }
   }
 
-  Future<void> _duplicateRoulette(String originalId) async {
-    final originalRoulette = _roulettes[originalId];
-    if (originalRoulette == null) return;
+  Future<void> _duplicateSpinner(String originalId) async {
+    final originalSpinner = _spinners[originalId];
+    if (originalSpinner == null) return;
 
     final newName = await _showTextInputDialog(
-      'Duplicate Roulette',
+      'Duplicate Spinner',
       'Enter name for the copy:',
-      '${originalRoulette.name} (Copy)',
+      '${originalSpinner.name} (Copy)',
     );
 
     if (newName != null && newName.isNotEmpty) {
-      final duplicatedRoulette = await RouletteStorageService.duplicateRoulette(
+      final duplicatedSpinner = await SpinnerStorageService.duplicateSpinner(
         originalId,
         newName,
       );
 
-      if (duplicatedRoulette != null) {
+      if (duplicatedSpinner != null) {
         _loadData();
-        _showSnackBar('Roulette duplicated as "$newName"');
+        _showSnackBar('Spinner duplicated as "$newName"');
       } else {
         _showSnackBar('Failed to duplicate. Name might already exist.');
       }
@@ -310,35 +309,35 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     );
   }
 
-  Future<void> _setActiveRoulette(String id) async {
-    final success = await RouletteStorageService.setActiveRouletteId(id);
+  Future<void> _setActiveSpinner(String id) async {
+    final success = await SpinnerStorageService.setActiveSpinnerId(id);
     if (success) {
       // Clear cache to force reload
-      RouletteStorageService.clearCache();
+      SpinnerStorageService.clearCache();
 
       // Update the local state immediately
       setState(() {
-        _activeRouletteId = id;
+        _activeSpinnerId = id;
       });
 
-      final rouletteName = _roulettes[id]?.name ?? 'Unknown';
-      _showSnackBar('Active roulette set to "$rouletteName"');
+      final spinnerName = _spinners[id]?.name ?? 'Unknown';
+      _showSnackBar('Active spinner set to "$spinnerName"');
     } else {
-      _showSnackBar('Failed to set active roulette');
+      _showSnackBar('Failed to set active spinner');
     }
   }
 
-  Future<void> _editRoulette(String id) async {
-    final roulette = _roulettes[id];
-    if (roulette == null) return; // Add null check
+  Future<void> _editSpinner(String id) async {
+    final spinner = _spinners[id];
+    if (spinner == null) return; // Add null check
 
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => RouletteOptionsView(
-          roulette: _roulettes[id]!,
-          onRouletteChanged: (updatedRoulette) {
+        builder: (context) => SpinnerOptionsView(
+          spinner: _spinners[id]!,
+          onSpinnerChanged: (updatedSpinner) {
             setState(() {
-              _roulettes[id] = updatedRoulette;
+              _spinners[id] = updatedSpinner;
             });
           },
         ),
@@ -356,10 +355,10 @@ class _AllRouletteViewState extends State<AllRouletteView> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _reorderRoulettes(
+  Future<void> _reorderSpinners(
     int oldIndex,
     int newIndex, [
-    Map<String, RouletteModel>? sourceMap,
+    Map<String, SpinnerModel>? sourceMap,
   ]) async {
     // If we're in search mode, don't allow reordering
     if (_searchQuery.isNotEmpty) {
@@ -372,26 +371,26 @@ class _AllRouletteViewState extends State<AllRouletteView> {
         newIndex -= 1;
       }
 
-      final rouletteIds = _roulettes.keys.toList();
-      final itemId = rouletteIds.removeAt(oldIndex);
-      rouletteIds.insert(newIndex, itemId);
+      final spinnerIds = _spinners.keys.toList();
+      final itemId = spinnerIds.removeAt(oldIndex);
+      spinnerIds.insert(newIndex, itemId);
 
       // Rebuild the map with the new order
-      final reorderedRoulettes = <String, RouletteModel>{};
-      for (final id in rouletteIds) {
-        reorderedRoulettes[id] = _roulettes[id]!;
+      final reorderedSpinners = <String, SpinnerModel>{};
+      for (final id in spinnerIds) {
+        reorderedSpinners[id] = _spinners[id]!;
       }
-      _roulettes = reorderedRoulettes;
+      _spinners = reorderedSpinners;
     });
 
     // Save the new order to storage
-    await RouletteStorageService.saveRouletteOrder(_roulettes.keys.toList());
+    await SpinnerStorageService.saveSpinnerOrder(_spinners.keys.toList());
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredRoulettes = _filteredRoulettes;
+    final filteredSpinners = _filteredSpinners;
 
     return Scaffold(
       appBar: AppBar(
@@ -401,7 +400,7 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                 focusNode: _searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: 'Search roulettes...',
+                  hintText: 'Search spinners...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -410,42 +409,42 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                 style: theme.textTheme.titleLarge,
                 onChanged: _onSearchChanged,
               )
-            : Text('All Roulettes'),
+            : Text('All Spinners'),
         actions: [
           IconButton(
             icon: const Icon(Icons.library_books),
             onPressed: () async {
-              // Navigate to premade roulettes and wait for result
+              // Navigate to premade spinners and wait for result
               final result = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
-                  builder: (context) => const PremadeRoulettesView(),
+                  builder: (context) => const PremadeSpinnersView(),
                 ),
               );
 
-              // If a roulette was successfully added, reload the data
+              // If a spinner was successfully added, reload the data
               if (result == true) {
                 await _loadData();
-                // Get the name of the newly active roulette for the success message
-                final activeRoulette = _roulettes[_activeRouletteId];
-                if (activeRoulette != null) {
+                // Get the name of the newly active spinner for the success message
+                final activeSpinner = _spinners[_activeSpinnerId];
+                if (activeSpinner != null) {
                   _showSnackBar(
-                    'Roulette "${activeRoulette.name}" has been added and set as active!',
+                    'Spinner "${activeSpinner.name}" has been added and set as active!',
                   );
                 }
               }
             },
-            tooltip: 'Premade roulettes',
+            tooltip: 'Premade spinners',
           ),
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,
-            tooltip: _isSearching ? 'Close search' : 'Search roulettes',
+            tooltip: _isSearching ? 'Close search' : 'Search spinners',
           ),
         ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
-          : filteredRoulettes.isEmpty
+          : filteredSpinners.isEmpty
           ? SafeArea(
               child: Center(
                 child: Column(
@@ -461,8 +460,8 @@ class _AllRouletteViewState extends State<AllRouletteView> {
                     const SizedBox(height: 16),
                     Text(
                       _searchQuery.isNotEmpty
-                          ? 'No roulettes match "$_searchQuery"'
-                          : 'No roulettes found',
+                          ? 'No spinners match "$_searchQuery"'
+                          : 'No spinners found',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -485,88 +484,88 @@ class _AllRouletteViewState extends State<AllRouletteView> {
             )
           : ReorderableListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: filteredRoulettes.length,
+              itemCount: filteredSpinners.length,
               onReorder: (oldIndex, newIndex) =>
-                  _reorderRoulettes(oldIndex, newIndex, filteredRoulettes),
+                  _reorderSpinners(oldIndex, newIndex, filteredSpinners),
               itemBuilder: (context, index) {
-                final rouletteId = filteredRoulettes.keys.elementAt(index);
-                final roulette = filteredRoulettes[rouletteId]!;
-                final isActive = rouletteId == _activeRouletteId;
+                final spinnerId = filteredSpinners.keys.elementAt(index);
+                final spinner = filteredSpinners[spinnerId]!;
+                final isActive = spinnerId == _activeSpinnerId;
 
-                return RouletteCard(
-                  key: ValueKey(rouletteId), // Explicitly set the key here
-                  rouletteId: rouletteId,
-                  roulette: roulette,
+                return SpinnerCard(
+                  key: ValueKey(spinnerId), // Explicitly set the key here
+                  spinnerId: spinnerId,
+                  spinner: spinner,
                   isActive: isActive,
                   canReorder: _searchQuery.isEmpty,
-                  subtitle: 'Created ${_formatDate(roulette.createdAt)}',
-                  actions: _buildRouletteActions(rouletteId, isActive, theme),
+                  subtitle: 'Created ${_formatDate(spinner.createdAt)}',
+                  actions: _buildSpinnerActions(spinnerId, isActive, theme),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _createNewRoulette,
-        tooltip: 'Create New Roulette',
+        onPressed: _createNewSpinner,
+        tooltip: 'Create New Spinner',
         child: Icon(Icons.add),
       ),
     );
   }
 
-  List<RouletteCardAction> _buildRouletteActions(
-    String rouletteId,
+  List<SpinnerCardAction> _buildSpinnerActions(
+    String spinnerId,
     bool isActive,
     ThemeData theme,
   ) {
-    final actions = <RouletteCardAction>[];
+    final actions = <SpinnerCardAction>[];
 
     if (isActive) {
       actions.addAll([
-        RouletteCardAction(
+        SpinnerCardAction(
           icon: Icons.edit,
           label: 'Edit Options',
-          onPressed: () => _editRoulette(rouletteId),
+          onPressed: () => _editSpinner(spinnerId),
           color: theme.colorScheme.primary,
         ),
-        RouletteCardAction(
+        SpinnerCardAction(
           icon: Icons.copy,
           label: 'Duplicate',
-          onPressed: () => _duplicateRoulette(rouletteId),
+          onPressed: () => _duplicateSpinner(spinnerId),
           color: theme.colorScheme.tertiary,
         ),
       ]);
 
-      if (_roulettes.length > 1) {
+      if (_spinners.length > 1) {
         actions.add(
-          RouletteCardAction(
+          SpinnerCardAction(
             icon: Icons.delete,
             label: 'Delete',
-            onPressed: () => _deleteRoulette(rouletteId),
+            onPressed: () => _deleteSpinner(spinnerId),
             color: theme.colorScheme.error,
           ),
         );
       }
     } else {
       actions.addAll([
-        RouletteCardAction(
+        SpinnerCardAction(
           icon: Icons.star,
           label: 'Set as Active',
-          onPressed: () => _setActiveRoulette(rouletteId),
+          onPressed: () => _setActiveSpinner(spinnerId),
           color: theme.colorScheme.tertiary,
         ),
-        RouletteCardAction(
+        SpinnerCardAction(
           icon: Icons.copy,
           label: 'Duplicate',
-          onPressed: () => _duplicateRoulette(rouletteId),
+          onPressed: () => _duplicateSpinner(spinnerId),
           color: theme.colorScheme.tertiary,
         ),
       ]);
 
-      if (_roulettes.length > 1) {
+      if (_spinners.length > 1) {
         actions.add(
-          RouletteCardAction(
+          SpinnerCardAction(
             icon: Icons.delete,
             label: 'Delete',
-            onPressed: () => _deleteRoulette(rouletteId),
+            onPressed: () => _deleteSpinner(spinnerId),
             color: theme.colorScheme.error,
           ),
         );

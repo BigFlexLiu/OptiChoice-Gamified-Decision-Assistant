@@ -1,20 +1,19 @@
-import 'package:decision_spin/views/all_roulette_view.dart';
-import 'package:decision_spin/views/roulette_options_view.dart';
-import 'package:decision_spin/widgets/roulette_wheel.dart';
+import 'package:decision_spinner/views/all_spinners_view.dart';
+import 'package:decision_spinner/views/spinner_options_view.dart';
+import 'package:decision_spinner/widgets/spinner_wheel.dart';
 import 'package:flutter/material.dart';
-import '../storage/roulette_storage_service.dart';
-import '../storage/roulette_wheel_model.dart';
+import '../storage/spinner_storage_service.dart';
+import '../storage/spinner_wheel_model.dart';
 
-class RouletteView extends StatefulWidget {
-  const RouletteView({super.key});
+class SpinnerView extends StatefulWidget {
+  const SpinnerView({super.key});
 
   @override
-  RouletteViewState createState() => RouletteViewState();
+  SpinnerViewState createState() => SpinnerViewState();
 }
 
-class RouletteViewState extends State<RouletteView>
-    with WidgetsBindingObserver {
-  RouletteModel? _activeRoulette;
+class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
+  SpinnerModel? _activeSpinner;
   String _currentPointingOption = '';
   bool _isSpinning = false;
   bool _isLoading = true;
@@ -44,21 +43,21 @@ class RouletteViewState extends State<RouletteView>
 
     try {
       // Load the active wheel from the storage service
-      final wheel = await RouletteStorageService.loadActiveRoulette();
+      final wheel = await SpinnerStorageService.loadActiveSpinner();
 
       if (wheel != null) {
         setState(() {
-          _activeRoulette = wheel;
+          _activeSpinner = wheel;
           _currentPointingOption = wheel.options.isNotEmpty
               ? wheel.options[0].text
               : '';
           _isLoading = false;
         });
       } else {
-        // This shouldn't happen as RouletteStorageService creates default if none exist
+        // This shouldn't happen as SpinnerStorageService creates default if none exist
         // But handle it gracefully just in case
         setState(() {
-          _activeRoulette = null;
+          _activeSpinner = null;
           _currentPointingOption = '';
           _isLoading = false;
         });
@@ -66,7 +65,7 @@ class RouletteViewState extends State<RouletteView>
     } catch (e) {
       // Handle error by setting loading to false and showing empty state
       setState(() {
-        _activeRoulette = null;
+        _activeSpinner = null;
         _currentPointingOption = '';
         _isLoading = false;
       });
@@ -95,14 +94,14 @@ class RouletteViewState extends State<RouletteView>
   }
 
   void _navigateToWheelsManagement() async {
-    // Do nothing if no active roulette
-    if (_activeRoulette == null) {
+    // Do nothing if no active spinner
+    if (_activeSpinner == null) {
       return;
     }
-    // Navigate to RouletteManager and reload active wheel when returning
+    // Navigate to SpinnerManager and reload active wheel when returning
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => RouletteOptionsView(roulette: _activeRoulette!),
+        builder: (context) => SpinnerOptionsView(spinner: _activeSpinner!),
       ),
     );
 
@@ -116,13 +115,13 @@ class RouletteViewState extends State<RouletteView>
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (_activeRoulette == null) {
+    if (_activeSpinner == null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Decision Roulette'),
+          title: Text('Decision Spinner'),
           actions: [
             Tooltip(
-              message: 'Manage Roulette',
+              message: 'Manage Spinner',
               child: IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: _navigateToWheelsManagement,
@@ -137,7 +136,7 @@ class RouletteViewState extends State<RouletteView>
               Icon(Icons.error_outline, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text(
-                'No Active roulette wheel found',
+                'No Active spinner wheel found',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 8),
@@ -162,7 +161,7 @@ class RouletteViewState extends State<RouletteView>
           children: [
             _buildCurrentPointingOption(),
             const SizedBox(height: 16),
-            _buildRouletteWheelSection(),
+            _buildSpinnerWheelSection(),
           ],
         ),
       ),
@@ -171,17 +170,17 @@ class RouletteViewState extends State<RouletteView>
 
   AppBar _buildAppBar() {
     return AppBar(
-      title: Text(_activeRoulette?.name ?? 'Decision Roulette'),
+      title: Text(_activeSpinner?.name ?? 'Decision Spinner'),
       actions: [
         Tooltip(
-          message: 'All Roulettes',
+          message: 'All Spinners',
           child: IconButton(
             icon: Icon(Icons.list),
             onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => AllRouletteView()),
-              );
-              // Reload active wheel when returning from all roulettes view
+              await Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => AllSpinnerView()));
+              // Reload active wheel when returning from all spinners view
               await _loadActiveWheel();
             },
           ),
@@ -200,7 +199,7 @@ class RouletteViewState extends State<RouletteView>
   Widget _buildCurrentPointingOption() {
     final theme = Theme.of(context);
 
-    if (_activeRoulette!.options.isEmpty) {
+    if (_activeSpinner!.options.isEmpty) {
       return Center(
         child: Text(
           'No options available',
@@ -219,8 +218,8 @@ class RouletteViewState extends State<RouletteView>
     );
   }
 
-  Widget _buildRouletteWheelSection() {
-    if (_activeRoulette!.options.isEmpty) {
+  Widget _buildSpinnerWheelSection() {
+    if (_activeSpinner!.options.isEmpty) {
       return Center(
         child: Column(
           children: [
@@ -246,8 +245,8 @@ class RouletteViewState extends State<RouletteView>
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: RouletteWheel(
-        rouletteModel: _activeRoulette!,
+      child: SpinnerWheel(
+        spinnerModel: _activeSpinner!,
         isSpinning: _isSpinning,
         onSpinStart: _onSpinStart,
         onSpinComplete: _onSpinComplete,

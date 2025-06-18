@@ -1,17 +1,17 @@
-import 'package:decision_spin/views/roulette_options_view.dart';
+import 'package:decision_spinner/views/spinner_options_view.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-class RouletteModel {
+class SpinnerModel {
   String id; // Unique identifier
   String name;
-  List<RouletteOption> options;
+  List<SpinnerOption> options;
   int colorThemeIndex;
   List<Color> colors;
   DateTime createdAt;
   DateTime updatedAt;
 
-  RouletteModel({
+  SpinnerModel({
     required this.name,
     required this.options,
     required this.colorThemeIndex,
@@ -39,14 +39,14 @@ class RouletteModel {
     };
   }
 
-  static RouletteModel fromJson(Map<String, dynamic> json) {
-    return RouletteModel(
+  static SpinnerModel fromJson(Map<String, dynamic> json) {
+    return SpinnerModel(
       newId: json['id'],
       name: json['name'],
       options: (json['options'] as List)
           .map(
             (option) =>
-                RouletteOption(text: option['text'], weight: option['weight']),
+                SpinnerOption(text: option['text'], weight: option['weight']),
           )
           .toList(),
       colorThemeIndex: json['colorThemeIndex'],
@@ -59,17 +59,16 @@ class RouletteModel {
   }
 
   // Create a duplicate with a new ID and updated timestamps
-  static RouletteModel duplicate(
-    RouletteModel original, {
+  static SpinnerModel duplicate(
+    SpinnerModel original, {
     String? newId,
     String? newName,
   }) {
-    return RouletteModel(
+    return SpinnerModel(
       name: newName ?? '${original.name} (Copy)',
       options: original.options
           .map(
-            (option) =>
-                RouletteOption(text: option.text, weight: option.weight),
+            (option) => SpinnerOption(text: option.text, weight: option.weight),
           )
           .toList(),
       colorThemeIndex: original.colorThemeIndex,

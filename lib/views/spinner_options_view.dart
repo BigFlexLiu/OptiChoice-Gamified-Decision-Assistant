@@ -1,28 +1,28 @@
-import 'package:decision_spin/consts/color_themes.dart';
+import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:flutter/material.dart';
-import '../storage/roulette_storage_service.dart';
-import '../storage/roulette_wheel_model.dart';
+import '../storage/spinner_storage_service.dart';
+import '../storage/spinner_wheel_model.dart';
 
-class RouletteOptionsView extends StatefulWidget {
-  final RouletteModel roulette;
-  final Function(RouletteModel)? onRouletteChanged;
+class SpinnerOptionsView extends StatefulWidget {
+  final SpinnerModel spinner;
+  final Function(SpinnerModel)? onSpinnerChanged;
 
-  const RouletteOptionsView({
+  const SpinnerOptionsView({
     super.key,
-    required this.roulette,
-    this.onRouletteChanged,
+    required this.spinner,
+    this.onSpinnerChanged,
   });
 
   @override
-  RouletteOptionsViewState createState() => RouletteOptionsViewState();
+  SpinnerOptionsViewState createState() => SpinnerOptionsViewState();
 }
 
-class RouletteOptionsViewState extends State<RouletteOptionsView> {
+class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   final TextEditingController _textController = TextEditingController();
   bool _hasChanges = false;
   bool _isLoading = false;
 
-  RouletteModel get roulette => widget.roulette;
+  SpinnerModel get spinner => widget.spinner;
 
   @override
   void initState() {
@@ -39,16 +39,16 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
     setState(() => _isLoading = true);
 
     try {
-      final nameExists = await RouletteStorageService.rouletteNameExists(
-        roulette.name,
-        id: roulette.id,
+      final nameExists = await SpinnerStorageService.spinnerNameExists(
+        spinner.name,
+        id: spinner.id,
       );
 
       if (nameExists) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('A roulette with this name already exists'),
+              content: Text('A spinner with this name already exists'),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -59,26 +59,26 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
         return;
       }
 
-      final success = await RouletteStorageService.saveRoulette(roulette);
+      final success = await SpinnerStorageService.saveSpinner(spinner);
 
       if (mounted && !success) {
-        throw Exception('Failed to save roulette');
+        throw Exception('Failed to save spinner');
       }
 
       if (mounted && success) {
-        widget.onRouletteChanged?.call(roulette);
+        widget.onSpinnerChanged?.call(spinner);
 
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Roulette saved successfully!')));
+        ).showSnackBar(SnackBar(content: Text('Spinner saved successfully!')));
 
-        Navigator.of(context).pop(roulette);
+        Navigator.of(context).pop(spinner);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save roulette. Please try again.'),
+            content: Text('Failed to save spinner. Please try again.'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -93,9 +93,9 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
   }
 
   void _removeOption(int index) {
-    if (roulette.options.length > 2) {
+    if (spinner.options.length > 2) {
       setState(() {
-        roulette.options.removeAt(index);
+        spinner.options.removeAt(index);
         _hasChanges = true;
       });
     }
@@ -103,9 +103,9 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
 
   void _editOption(int index, String newValue) {
     if (newValue.trim().isNotEmpty &&
-        newValue.trim() != roulette.options[index].text) {
+        newValue.trim() != spinner.options[index].text) {
       setState(() {
-        roulette.options[index].text = newValue;
+        spinner.options[index].text = newValue;
         _hasChanges = true;
       });
     }
@@ -113,7 +113,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
 
   void _updateOptionWeight(int index, double weight) {
     setState(() {
-      roulette.options[index].weight = weight;
+      spinner.options[index].weight = weight;
       _hasChanges = true;
     });
   }
@@ -123,16 +123,16 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
-      final item = roulette.options.removeAt(oldIndex);
-      roulette.options.insert(newIndex, item);
+      final item = spinner.options.removeAt(oldIndex);
+      spinner.options.insert(newIndex, item);
       _hasChanges = true;
     });
   }
 
-  void _editRouletteName(String newName) {
-    if (newName.trim().isNotEmpty && newName.trim() != roulette.name) {
+  void _editSpinnerName(String newName) {
+    if (newName.trim().isNotEmpty && newName.trim() != spinner.name) {
       setState(() {
-        roulette.name = newName.trim();
+        spinner.name = newName.trim();
         _hasChanges = true;
       });
     }
@@ -140,8 +140,8 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
 
   void _updateColorTheme(int themeIndex) {
     setState(() {
-      roulette.colorThemeIndex = themeIndex;
-      roulette.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
+      spinner.colorThemeIndex = themeIndex;
+      spinner.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
       _hasChanges = true;
     });
   }
@@ -207,7 +207,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
           children: [
             Flexible(
               child: Text(
-                roulette.name,
+                spinner.name,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).appBarTheme.titleTextStyle,
               ),
@@ -219,7 +219,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
         IconButton(
           icon: Icon(Icons.edit_outlined),
           onPressed: _isLoading ? null : () => _showEditNameDialog(),
-          tooltip: 'Edit roulette name',
+          tooltip: 'Edit spinner name',
         ),
         if (_hasChanges)
           TextButton(
@@ -258,7 +258,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
             children: DefaultColorThemes.all.asMap().entries.map((entry) {
               final index = entry.key;
               final colorTheme = entry.value;
-              final isSelected = roulette.colorThemeIndex == index;
+              final isSelected = spinner.colorThemeIndex == index;
 
               return GestureDetector(
                 onTap: () => _updateColorTheme(index),
@@ -347,7 +347,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
               Icon(Icons.list),
               const SizedBox(width: 8),
               Text(
-                'Options (${roulette.options.length})',
+                'Options (${spinner.options.length})',
                 style: theme.textTheme.titleSmall,
               ),
               const Spacer(),
@@ -357,18 +357,18 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
               ),
             ],
           ),
-          if (roulette.options.isNotEmpty) ...[Divider(height: 24)],
+          if (spinner.options.isNotEmpty) ...[Divider(height: 24)],
           const SizedBox(height: 12),
-          if (roulette.options.isEmpty)
+          if (spinner.options.isEmpty)
             _buildEmptyState()
           else
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: roulette.options.length,
+              itemCount: spinner.options.length,
               onReorder: _reorderOptions,
               itemBuilder: (context, index) {
-                return _buildOptionListItem(index, roulette.options[index]);
+                return _buildOptionListItem(index, spinner.options[index]);
               },
             ),
         ],
@@ -376,9 +376,9 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
     );
   }
 
-  Widget _buildOptionListItem(int index, RouletteOption option) {
+  Widget _buildOptionListItem(int index, SpinnerOption option) {
     final theme = Theme.of(context);
-    final color = roulette.colors[index % roulette.colors.length];
+    final color = spinner.colors[index % spinner.colors.length];
 
     return Container(
       key: ValueKey(option.text + index.toString()),
@@ -481,7 +481,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
     );
   }
 
-  void _showOptionDialog(int index, RouletteOption option) {
+  void _showOptionDialog(int index, SpinnerOption option) {
     final nameController = TextEditingController(text: option.text);
     double tempWeight = option.weight;
 
@@ -493,7 +493,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
             children: [
               Text('Edit Option'),
               const Spacer(),
-              if (roulette.options.length > 2)
+              if (spinner.options.length > 2)
                 IconButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -566,8 +566,8 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
           onSubmitted: (_) {
             if (controller.text.trim().isNotEmpty) {
               setState(() {
-                roulette.options.add(
-                  RouletteOption(text: controller.text.trim(), weight: 1.0),
+                spinner.options.add(
+                  SpinnerOption(text: controller.text.trim(), weight: 1.0),
                 );
                 _hasChanges = true;
               });
@@ -584,8 +584,8 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 setState(() {
-                  roulette.options.add(
-                    RouletteOption(text: controller.text.trim(), weight: 1.0),
+                  spinner.options.add(
+                    SpinnerOption(text: controller.text.trim(), weight: 1.0),
                   );
                   _hasChanges = true;
                 });
@@ -631,15 +631,15 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
   }
 
   void _showEditNameDialog() {
-    final controller = TextEditingController(text: roulette.name);
+    final controller = TextEditingController(text: spinner.name);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit Roulette Name'),
+        title: Text('Edit Spinner Name'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(labelText: 'Roulette name'),
+          decoration: InputDecoration(labelText: 'Spinner name'),
           autofocus: true,
         ),
         actions: [
@@ -649,7 +649,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
           ),
           ElevatedButton(
             onPressed: () {
-              _editRouletteName(controller.text);
+              _editSpinnerName(controller.text);
               Navigator.of(context).pop();
             },
             child: Text('Save'),
@@ -665,7 +665,7 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
       builder: (context) => AlertDialog(
         title: Text('Delete Option'),
         content: Text(
-          'Are you sure you want to delete "${roulette.options[index].text}"?',
+          'Are you sure you want to delete "${spinner.options[index].text}"?',
         ),
         actions: [
           TextButton(
@@ -689,9 +689,9 @@ class RouletteOptionsViewState extends State<RouletteOptionsView> {
   }
 }
 
-class RouletteOption {
+class SpinnerOption {
   String text;
   double weight;
 
-  RouletteOption({required this.text, this.weight = 1.0});
+  SpinnerOption({required this.text, this.weight = 1.0});
 }

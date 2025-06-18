@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-class RoulettePainter extends CustomPainter {
+class SpinnerPainter extends CustomPainter {
   final List<String> options;
   final double rotation;
   final String? selectedOption;
   final List<Color> colors;
 
-  RoulettePainter({
+  SpinnerPainter({
     required this.options,
     required this.rotation,
     required this.colors,
@@ -150,7 +150,7 @@ class RoulettePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant RoulettePainter oldDelegate) {
+  bool shouldRepaint(covariant SpinnerPainter oldDelegate) {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||

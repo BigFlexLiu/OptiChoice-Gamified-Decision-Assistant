@@ -1,17 +1,18 @@
 class StorageConstants {
-  // Roulette related keys
-  static const String roulettesKey = 'decision_spin_roulettes';
-  static const String activeRouletteKey = 'decision_spin_active_roulette';
+  // Spinner related keys
+  static const String spinnersKey = 'decision_spinner_spinners';
+  static const String activeSpinnerKey = 'decision_spinner_active_spinner';
 
   // Color related keys
   static const String savedGradientColorsKey =
-      'decision_spin_saved_gradient_colors';
-  static const String savedSolidColorsKey = 'decision_spin_saved_solid_colors';
-  static const String useGradientKey = 'decision_spin_use_gradient';
-  static const String colorThemeKey = 'decision_spin_color_theme';
+      'decision_spinner_saved_gradient_colors';
+  static const String savedSolidColorsKey =
+      'decision_spinner_saved_solid_colors';
+  static const String useGradientKey = 'decision_spinner_use_gradient';
+  static const String colorThemeKey = 'decision_spinner_color_theme';
 
   // Default values
-  static const String defaultRouletteName = 'Food Options';
+  static const String defaultSpinnerName = 'Food Options';
 
   static const List<String> defaultOptions = [
     'Pizza',
