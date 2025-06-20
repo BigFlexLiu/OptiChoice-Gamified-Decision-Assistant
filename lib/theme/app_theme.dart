@@ -12,8 +12,6 @@ class AppTheme {
 
     // Color Scheme
     colorScheme: AppColorSchemes.light,
-    primarySwatch: Colors.deepPurple,
-    primaryColor: Colors.deepPurple,
 
     // Background Colors
     scaffoldBackgroundColor: BackgroundColors.scaffoldLight,
@@ -23,22 +21,22 @@ class AppTheme {
     textTheme: AppTextThemes.light,
 
     // Component Themes
-    appBarTheme: AppComponentThemes.appBarLight,
-    elevatedButtonTheme: AppComponentThemes.elevatedButtonLight,
-    textButtonTheme: AppComponentThemes.textButtonLight,
-    outlinedButtonTheme: AppComponentThemes.outlinedButtonLight,
-    cardTheme: AppComponentThemes.cardLight,
-    inputDecorationTheme: AppComponentThemes.inputDecorationLight,
-    floatingActionButtonTheme: AppComponentThemes.fabLight,
-    dialogTheme: AppComponentThemes.dialogLight,
-    expansionTileTheme: AppComponentThemes.expansionTileLight,
-    snackBarTheme: AppComponentThemes.snackBarLight,
-    iconTheme: AppComponentThemes.iconLight,
-    primaryIconTheme: AppComponentThemes.primaryIconLight,
-    sliderTheme: AppComponentThemes.sliderLight,
-    tooltipTheme: AppComponentThemes.tooltipLight,
-    dividerTheme: AppComponentThemes.dividerLight,
-    badgeTheme: AppComponentThemes.badgeLight,
+    // appBarTheme: AppComponentThemes.appBarLight,
+    // elevatedButtonTheme: AppComponentThemes.elevatedButtonLight,
+    // textButtonTheme: AppComponentThemes.textButtonLight,
+    // outlinedButtonTheme: AppComponentThemes.outlinedButtonLight,
+    // cardTheme: AppComponentThemes.cardLight,
+    // inputDecorationTheme: AppComponentThemes.inputDecorationLight,
+    // floatingActionButtonTheme: AppComponentThemes.fabLight,
+    // dialogTheme: AppComponentThemes.dialogLight,
+    // expansionTileTheme: AppComponentThemes.expansionTileLight,
+    // snackBarTheme: AppComponentThemes.snackBarLight,
+    // iconTheme: AppComponentThemes.iconLight,
+    // primaryIconTheme: AppComponentThemes.primaryIconLight,
+    // sliderTheme: AppComponentThemes.sliderLight,
+    // tooltipTheme: AppComponentThemes.tooltipLight,
+    // dividerTheme: AppComponentThemes.dividerLight,
+    // badgeTheme: AppComponentThemes.badgeLight,
 
     // Custom Extensions
     extensions: [

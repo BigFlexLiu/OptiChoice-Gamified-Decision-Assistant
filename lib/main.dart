@@ -13,8 +13,12 @@ class SpinnerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Decision Spinner',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+
+      // theme: AppTheme.light,
+      // darkTheme: AppTheme.dark,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
       themeMode:
           ThemeMode.system, // Automatically switches based on system preference
       home: SpinnerView(),

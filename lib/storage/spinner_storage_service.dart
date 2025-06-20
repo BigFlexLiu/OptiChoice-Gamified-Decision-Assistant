@@ -1,6 +1,6 @@
 import 'base_storage_service.dart';
 import '../consts/storage_constants.dart';
-import 'spinner_wheel_model.dart';
+import 'spinner_model.dart';
 import '../views/spinner_options_view.dart';
 import 'package:flutter/material.dart';
 
@@ -242,6 +242,7 @@ class SpinnerStorageService extends BaseStorageService {
   /// Check if a spinner name exists
   static Future<bool> spinnerNameExists(String name, {String? id}) async {
     final allSpinners = await loadAllSpinners();
+    print(allSpinners);
     return allSpinners.values.any(
       (spinner) => spinner.name == name && spinner.id != id,
     );

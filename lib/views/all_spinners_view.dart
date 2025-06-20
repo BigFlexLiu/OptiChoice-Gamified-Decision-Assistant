@@ -2,7 +2,7 @@ import 'package:decision_spinner/views/premade_spinners_view.dart';
 import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
-import '../storage/spinner_wheel_model.dart';
+import '../storage/spinner_model.dart';
 import 'spinner_options_view.dart';
 
 class AllSpinnerView extends StatefulWidget {
@@ -394,6 +394,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: _isSearching
             ? TextField(
                 controller: _searchController,

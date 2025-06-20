@@ -1,5 +1,5 @@
 import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
-import 'package:decision_spinner/storage/spinner_wheel_model.dart';
+import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
@@ -9,15 +9,18 @@ class PremadeSpinnersView extends StatelessWidget {
 
   static const _tabs = [
     _TabConfig(
-      icon: Icons.quiz,
-      label: 'Common Decisions',
-      title: 'Common Decisions',
+      icon: Icons.person,
+      label: 'Solo',
       description: 'Premade spinners for everyday decisions',
     ),
     _TabConfig(
-      icon: Icons.party_mode,
-      label: 'Party Games',
-      title: 'Party Games',
+      icon: Icons.people,
+      label: 'Pair',
+      description: 'Fun spinners for parties and groups',
+    ),
+    _TabConfig(
+      icon: Icons.groups,
+      label: 'Group',
       description: 'Fun spinners for parties and groups',
     ),
   ];
@@ -30,20 +33,29 @@ class PremadeSpinnersView extends StatelessWidget {
       length: _tabs.length,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text('Premade Spinners'),
           bottom: TabBar(
             tabs: _tabs
                 .map((tab) => Tab(icon: Icon(tab.icon), text: tab.label))
                 .toList(),
+            indicatorColor: Theme.of(context).colorScheme.secondary,
           ),
         ),
         body: TabBarView(
           children: [
             _PremadeSpinnerTabView(
               config: _tabs[0],
-              spinnerWheels: [PremadeSpinnerDefinitions.yesNoSpinner],
+              spinnerWheels: PremadeSpinnerDefinitions.soloDecisions,
             ),
-            _PremadeSpinnerTabView(config: _tabs[1], spinnerWheels: const []),
+            _PremadeSpinnerTabView(
+              config: _tabs[1],
+              spinnerWheels: PremadeSpinnerDefinitions.pairDecisions,
+            ),
+            _PremadeSpinnerTabView(
+              config: _tabs[2],
+              spinnerWheels: PremadeSpinnerDefinitions.groupDecisions,
+            ),
           ],
         ),
       ),
@@ -55,13 +67,11 @@ class _TabConfig {
   const _TabConfig({
     required this.icon,
     required this.label,
-    required this.title,
     required this.description,
   });
 
   final IconData icon;
   final String label;
-  final String title;
   final String description;
 }
 
@@ -199,7 +209,7 @@ class _EmptyStateWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No ${config.title} Available',
+            'No ${config.label} Available',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

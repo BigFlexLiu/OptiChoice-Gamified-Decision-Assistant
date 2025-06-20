@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColorSchemes {
-  static const Color _primaryColor = Colors.deepPurple;
+  static const Color _primaryColor = Colors.blue;
 
   static ColorScheme light = ColorScheme.fromSeed(
     seedColor: _primaryColor,

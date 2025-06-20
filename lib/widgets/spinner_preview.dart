@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'spinner_wheel.dart';
-import '../storage/spinner_wheel_model.dart';
+import '../storage/spinner_model.dart';
 
 class SpinnerPreview extends StatefulWidget {
   final SpinnerModel spinner;

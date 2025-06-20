@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:decision_spinner/storage/spinner_wheel_model.dart';
+import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
 import '../painters/spinner_painter.dart';
 
@@ -32,6 +32,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
+  int? _currentPointingIndex; // Track the current pointing index
 
   List<String> get spinnerTextOptions =>
       widget.spinnerModel.options.map((e) => e.text).toList();
@@ -44,6 +45,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final firstOption = widget.spinnerModel.options.firstOrNull;
 
     if (firstOption != null && widget.onPointingOptionChanged != null) {
+      _currentPointingIndex = 0; // Set initial pointing index
       widget.onPointingOptionChanged!(firstOption.text);
     }
   }
@@ -55,8 +57,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _initializeAnimation() {
+    // Use the spinner's configured duration
     _controller = AnimationController(
-      duration: Duration(seconds: 4),
+      duration: widget.spinnerModel.spinDuration,
       vsync: this,
     );
 
@@ -88,7 +91,11 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final pointingIndex =
         (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    widget.onPointingOptionChanged!(spinnerTextOptions[pointingIndex]);
+    // Only call the callback if the pointing index has changed
+    if (_currentPointingIndex != pointingIndex) {
+      _currentPointingIndex = pointingIndex;
+      widget.onPointingOptionChanged!(spinnerTextOptions[pointingIndex]);
+    }
   }
 
   void _spin() {
@@ -100,8 +107,28 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   void _startSpinAnimation() {
     final random = math.Random();
-    final spins = 5 + random.nextDouble() * 3;
-    final finalRotation = _currentRotation + (spins * 2 * math.pi);
+
+    // Calculate spins based on duration - reduced speed for shorter durations
+    final durationSeconds =
+        widget.spinnerModel.spinDuration.inMilliseconds / 1000.0;
+
+    // Use a more conservative scaling for shorter durations
+    // Minimum 1.5 spins for shortest duration (0.5s), max 4 spins for longest (5s)
+    final baseSpins =
+        1 + (durationSeconds - 0.5) * (2.5 / 4.5); // Linear scale from 1.5 to 4
+    final randomSpins =
+        baseSpins + random.nextDouble() * 0.5; // Smaller random variance
+
+    // Add random offset to ensure any option can be selected regardless of duration
+    // This ensures equal probability for all options
+    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final randomOffset = random.nextDouble() * sectionAngle;
+
+    final finalRotation =
+        _currentRotation + (randomSpins * 2 * math.pi) + randomOffset;
+
+    // Update controller duration to match spinner's configured duration
+    _controller.duration = widget.spinnerModel.spinDuration;
 
     _animation = Tween<double>(
       begin: _currentRotation,
@@ -123,6 +150,28 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void _determineWinner() {
     if (spinnerTextOptions.isEmpty) return;
 
+    // Use weighted selection if options have different weights
+    final random = math.Random();
+    final totalWeight = widget.spinnerModel.options.fold<double>(
+      0,
+      (sum, option) => sum + option.weight,
+    );
+
+    if (totalWeight > 0) {
+      // Weighted random selection
+      final randomValue = random.nextDouble() * totalWeight;
+      double currentWeight = 0;
+
+      for (final option in widget.spinnerModel.options) {
+        currentWeight += option.weight;
+        if (randomValue <= currentWeight) {
+          widget.onSpinComplete(option.text);
+          return;
+        }
+      }
+    }
+
+    // Fallback to position-based selection (should rarely be reached)
     final normalizedRotation = _currentRotation % (2 * math.pi);
     final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
@@ -149,6 +198,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildSpinnerWheel(),
           if (widget.showSpinButton) ...[

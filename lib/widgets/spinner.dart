@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../storage/spinner_wheel_model.dart';
+import '../storage/spinner_model.dart';
 import 'spinner_preview.dart';
 
 class SpinnerCard extends StatelessWidget {
@@ -97,17 +97,10 @@ class SpinnerCard extends StatelessWidget {
             children: [
               Text(
                 '${spinner.options.length} options',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: theme.textTheme.bodyMedium,
               ),
               if (subtitle != null)
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith()),
             ],
           ),
           children: [
