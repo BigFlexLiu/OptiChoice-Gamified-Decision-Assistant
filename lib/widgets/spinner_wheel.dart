@@ -32,7 +32,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
-  int? _currentPointingIndex; // Track the current pointing index
+  int? _currentPointingIndex; // Track the current pointing indexfinal
+  double? wheelSize;
 
   List<String> get spinnerTextOptions =>
       widget.spinnerModel.options.map((e) => e.text).toList();
@@ -248,6 +249,19 @@ class SpinnerWheelState extends State<SpinnerWheel>
     );
   }
 
+  // In your SpinnerPainter paint method, calculate font size like this:
+  double _calculateFontSize() {
+    if (wheelSize == null) return 14.0; // Default size
+
+    // Scale font size based on wheel size
+    // Assuming default wheel size of 300 corresponds to 14pt font
+    final scaleFactor = wheelSize! / 300.0;
+    final scaledSize = 14.0 * scaleFactor;
+
+    // Clamp between 12 and 16
+    return scaledSize.clamp(12.0, 16.0);
+  }
+
   Widget _buildAnimatedWheel(double size) {
     return AnimatedBuilder(
       animation: _animation,
@@ -273,6 +287,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
                 rotation: 0, // Rotation is handled by Transform.rotate
                 colors: widget.spinnerModel.colors,
                 selectedOption: _getCurrentPointingOption(),
+                wheelSize: size, // Pass the wheel size for text scaling
               ),
               size: Size(size, size),
             ),

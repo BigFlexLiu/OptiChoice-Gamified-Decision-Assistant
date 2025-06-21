@@ -6,12 +6,14 @@ class SpinnerPainter extends CustomPainter {
   final double rotation;
   final String? selectedOption;
   final List<Color> colors;
+  final double? wheelSize;
 
   SpinnerPainter({
     required this.options,
     required this.rotation,
     required this.colors,
     this.selectedOption,
+    this.wheelSize,
   });
 
   @override
@@ -96,6 +98,18 @@ class SpinnerPainter extends CustomPainter {
     return colors[index % colors.length];
   }
 
+  double _calculateFontSize() {
+    if (wheelSize == null) return 14.0; // Default size
+
+    // Scale font size based on wheel size
+    // Assuming default wheel size of 300 corresponds to 14pt font
+    final scaleFactor = wheelSize! / 200.0;
+    final scaledSize = 14.0 * scaleFactor;
+
+    // Clamp between 12 and 16
+    return scaledSize.clamp(12.0, 20.0);
+  }
+
   void _drawText(
     Canvas canvas,
     String text,
@@ -105,48 +119,69 @@ class SpinnerPainter extends CustomPainter {
   ) {
     final textStyle = TextStyle(
       color: Colors.white,
-      fontSize: 14,
+      fontSize: _calculateFontSize(),
       fontWeight: FontWeight.w600,
       shadows: [
         Shadow(
           offset: const Offset(1, 1),
           blurRadius: 2,
-          color: Colors.black.withValues(alpha: 0.7),
+          color: Colors.black.withOpacity(0.7),
         ),
       ],
     );
 
     final textPainter = TextPainter(
-      text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
+      textAlign: TextAlign.left,
     );
 
+    final truncatedText = _truncateToFit(text, textPainter, textStyle, radius);
+
+    // Layout final text
+    textPainter.text = TextSpan(text: truncatedText, style: textStyle);
     textPainter.layout();
 
-    // Calculate text position - place it at 65% of the radius from center
-    final textRadius = radius * 0.65;
-
-    // Calculate position using the angle directly
-    final textX = center.dx + textRadius * math.cos(angle);
-    final textY = center.dy + textRadius * math.sin(angle);
+    // Calculate starting position (just inside border)
+    final textStartRadius = radius - 5;
+    final textStartX = center.dx + textStartRadius * math.cos(angle);
+    final textStartY = center.dy + textStartRadius * math.sin(angle);
 
     canvas.save();
-    canvas.translate(textX, textY);
+    canvas.translate(textStartX, textStartY);
+    canvas.rotate(angle + math.pi);
 
-    // Calculate rotation angle for vertical text
-    // Use the angle pointing outward from center and add π/2 for vertical orientation
-    double textRotation = angle + math.pi;
-
-    canvas.rotate(textRotation);
-
-    // Draw text centered at the calculated position
-    textPainter.paint(
-      canvas,
-      Offset(-textPainter.width / 2, -textPainter.height / 2),
-    );
+    textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
 
     canvas.restore();
+  }
+
+  // Binary search for the longest substring that fits maxTextWidth
+  String _truncateToFit(
+    String fullText,
+    TextPainter textPainter,
+    TextStyle textStyle,
+    double maxTextWidth,
+  ) {
+    int low = 0;
+    int high = fullText.length;
+    String result = '';
+
+    while (low <= high) {
+      final mid = (low + high) ~/ 2;
+      final candidate = fullText.substring(0, mid);
+
+      textPainter.text = TextSpan(text: candidate, style: textStyle);
+      textPainter.layout();
+
+      if (textPainter.width <= maxTextWidth) {
+        result = candidate;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return result;
   }
 
   @override
@@ -154,6 +189,7 @@ class SpinnerPainter extends CustomPainter {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.colors != colors;
+        oldDelegate.colors != colors ||
+        oldDelegate.wheelSize != wheelSize;
   }
 }

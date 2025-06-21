@@ -104,6 +104,21 @@ class SpinnerModel {
     spinDuration = other.spinDuration;
     updatedAt = other.updatedAt;
   }
+
+  @override
+  String toString() {
+    return 'SpinnerModel('
+        'id: $id, '
+        'name: $name, '
+        'options: [${options.length} items], '
+        'colorThemeIndex: $colorThemeIndex, '
+        'colors: [${colors.length} colors], '
+        'spinSound: ${spinSound ?? "null"}, '
+        'spinEndSound: ${spinEndSound ?? "null"}, '
+        'spinDuration: ${spinDuration.inMilliseconds}ms, '
+        'createdAt: ${createdAt.toIso8601String()}, '
+        'updatedAt: ${updatedAt.toIso8601String()})';
+  }
 }
 
 class SpinnerOption {

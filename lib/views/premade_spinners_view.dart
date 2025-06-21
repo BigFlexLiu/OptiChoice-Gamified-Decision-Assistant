@@ -258,7 +258,7 @@ class _PreviewDialog extends StatelessWidget {
                 ),
               ),
               title: Text(option.text),
-              subtitle: Text('Weight: ${option.weight}'),
+              // subtitle: Text('Weight: ${option.weight}'),
             );
           },
         ),

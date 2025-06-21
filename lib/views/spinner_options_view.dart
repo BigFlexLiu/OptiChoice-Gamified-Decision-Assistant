@@ -36,6 +36,8 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       newId: originalSpinner.id,
       newName: originalSpinner.name,
     );
+    print(originalSpinner);
+    print(spinner);
     _loadAudioFiles();
   }
 
@@ -737,21 +739,20 @@ class _EditOptionDialogState extends State<EditOptionDialog> {
               ),
               maxLength: 100,
             ),
-            const SizedBox(height: 24),
-
+            // const SizedBox(height: 24),
             // Weight slider
-            Text('Weight: ${_tempWeight.toStringAsFixed(1)}'),
-            Slider(
-              value: _tempWeight,
-              min: 0.1,
-              max: 5.0,
-              divisions: 49,
-              onChanged: (value) {
-                setState(() {
-                  _tempWeight = value;
-                });
-              },
-            ),
+            // Text('Weight: ${_tempWeight.toStringAsFixed(1)}'),
+            // Slider(
+            //   value: _tempWeight,
+            //   min: 0.1,
+            //   max: 5.0,
+            //   divisions: 49,
+            //   onChanged: (value) {
+            //     setState(() {
+            //       _tempWeight = value;
+            //     });
+            //   },
+            // ),
           ],
         ),
       ),
@@ -915,6 +916,8 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    print("HI");
+    print(widget.spinSound);
 
     return Padding(
       padding: const EdgeInsets.all(16),

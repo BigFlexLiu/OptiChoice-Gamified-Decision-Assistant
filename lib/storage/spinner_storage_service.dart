@@ -221,10 +221,15 @@ class SpinnerStorageService extends BaseStorageService {
 
   /// Set the active spinner and update cache
   static Future<bool> setActiveSpinnerId(String spinnerId) async {
-    return await BaseStorageService.saveString(
+    final success = await BaseStorageService.saveString(
       StorageConstants.activeSpinnerKey,
       spinnerId,
     );
+    // Update cache immediately if save was successful
+    if (success) {
+      _cachedActiveSpinnerId = spinnerId;
+    }
+    return success;
   }
 
   /// Get list of all spinner models
@@ -273,15 +278,9 @@ class SpinnerStorageService extends BaseStorageService {
     }
 
     final originalSpinner = allSpinners[originalId]!;
-    final duplicatedSpinner = SpinnerModel(
-      name: newName,
-      options: originalSpinner.options
-          .map(
-            (option) => SpinnerOption(text: option.text, weight: option.weight),
-          )
-          .toList(),
-      colorThemeIndex: originalSpinner.colorThemeIndex,
-      colors: List<Color>.from(originalSpinner.colors),
+    final duplicatedSpinner = SpinnerModel.duplicate(
+      originalSpinner,
+      newName: newName,
     );
 
     allSpinners[duplicatedSpinner.id] = duplicatedSpinner;
