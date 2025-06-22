@@ -7,17 +7,18 @@ class SpinnerModel {
   List<SpinnerOption> options;
   int colorThemeIndex;
   List<Color> colors;
+  List<Color> customColors;
   String? spinSound;
   String? spinEndSound;
   Duration spinDuration;
   DateTime createdAt;
   DateTime updatedAt;
-
   SpinnerModel({
     required this.name,
     required this.options,
     required this.colorThemeIndex,
     required this.colors,
+    List<Color>? customColors,
     this.spinSound,
     this.spinEndSound,
     Duration? spinDuration,
@@ -27,10 +28,10 @@ class SpinnerModel {
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now(),
        spinDuration = spinDuration ?? const Duration(seconds: 3),
+       customColors = customColors ?? [Colors.red, Colors.green, Colors.blue],
        id = newId ?? _uuid.v4();
 
   static const _uuid = Uuid();
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -40,6 +41,7 @@ class SpinnerModel {
           .toList(),
       'colorThemeIndex': colorThemeIndex,
       'colors': colors.map((color) => color.toARGB32()).toList(),
+      'customColors': customColors.map((color) => color.toARGB32()).toList(),
       'spinSound': spinSound,
       'spinEndSound': spinEndSound,
       'spinDuration': spinDuration.inMilliseconds,
@@ -62,6 +64,11 @@ class SpinnerModel {
       colors: (json['colors'] as List)
           .map((colorValue) => Color(colorValue as int))
           .toList(),
+      customColors: json['customColors'] != null
+          ? (json['customColors'] as List)
+                .map((colorValue) => Color(colorValue as int))
+                .toList()
+          : null,
       spinSound: json['spinSound'],
       spinEndSound: json['spinEndSound'],
       spinDuration: Duration(milliseconds: json['spinDuration'] ?? 3000),
@@ -86,6 +93,7 @@ class SpinnerModel {
           .toList(),
       colorThemeIndex: original.colorThemeIndex,
       colors: List<Color>.from(original.colors),
+      customColors: List<Color>.from(original.customColors),
       spinSound: original.spinSound,
       spinEndSound: original.spinEndSound,
       spinDuration: original.spinDuration,
@@ -99,6 +107,7 @@ class SpinnerModel {
     options = other.options;
     colorThemeIndex = other.colorThemeIndex;
     colors = other.colors;
+    customColors = other.customColors;
     spinSound = other.spinSound;
     spinEndSound = other.spinEndSound;
     spinDuration = other.spinDuration;

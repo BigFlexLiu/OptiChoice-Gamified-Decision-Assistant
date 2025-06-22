@@ -1,5 +1,6 @@
 import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
+import 'package:decision_spinner/views/custom_color_picker_view.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -36,8 +37,6 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       newId: originalSpinner.id,
       newName: originalSpinner.name,
     );
-    print(originalSpinner);
-    print(spinner);
     _loadAudioFiles();
   }
 
@@ -201,6 +200,14 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     });
   }
 
+  void _updateCustomColors(List<Color> customColors) {
+    setState(() {
+      spinner.colorThemeIndex = -1; // Use -1 to indicate custom theme
+      spinner.colors = customColors;
+      _hasChanges = true;
+    });
+  }
+
   void _addOption(String text) {
     setState(() {
       spinner.options.add(SpinnerOption(text: text.trim()));
@@ -298,7 +305,9 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   children: [
                     ColorThemeSelector(
                       selectedThemeIndex: spinner.colorThemeIndex,
+                      currentColors: spinner.colors,
                       onThemeChanged: _updateColorTheme,
+                      onCustomColorsChanged: _updateCustomColors,
                     ),
                     const SizedBox(height: 16),
                     AudioSettingsSection(
@@ -444,13 +453,35 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
 class ColorThemeSelector extends StatelessWidget {
   final int selectedThemeIndex;
+  final List<Color> currentColors;
   final Function(int) onThemeChanged;
+  final Function(List<Color>) onCustomColorsChanged;
 
   const ColorThemeSelector({
     super.key,
     required this.selectedThemeIndex,
+    required this.currentColors,
     required this.onThemeChanged,
+    required this.onCustomColorsChanged,
   });
+
+  void _showCustomColorPicker(BuildContext context) {
+    // Use current colors if it's a custom theme, otherwise use default colors
+    List<Color> initialColors = selectedThemeIndex == -1
+        ? currentColors
+        : DefaultColorThemes.getByIndex(0)?.colors ?? [];
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CustomColorPickerView(
+          initialColors: initialColors,
+          onColorsChanged: (colors) {
+            onCustomColorsChanged(colors);
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -472,17 +503,62 @@ class ColorThemeSelector extends StatelessWidget {
           Wrap(
             spacing: 12,
             runSpacing: 8,
-            children: DefaultColorThemes.all.asMap().entries.map((entry) {
-              final index = entry.key;
-              final colorTheme = entry.value;
-              final isSelected = selectedThemeIndex == index;
+            children: [
+              // Existing predefined themes
+              ...DefaultColorThemes.all.asMap().entries.map((entry) {
+                final index = entry.key;
+                final colorTheme = entry.value;
+                final isSelected = selectedThemeIndex == index;
 
-              return GestureDetector(
-                onTap: () => onThemeChanged(index),
+                return GestureDetector(
+                  onTap: () => onThemeChanged(index),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: isSelected
+                          ? Border.all(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            )
+                          : Border.all(
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.3,
+                              ),
+                              width: 1,
+                            ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: colorTheme.colors.take(4).map((color) {
+                            return Container(
+                              width: 16,
+                              height: 16,
+                              margin: const EdgeInsets.only(right: 2),
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(colorTheme.name, style: theme.textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+
+              // Custom theme option
+              GestureDetector(
+                onTap: () => _showCustomColorPicker(context),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    border: isSelected
+                    border: selectedThemeIndex == -1
                         ? Border.all(color: theme.colorScheme.primary, width: 2)
                         : Border.all(
                             color: theme.colorScheme.outline.withValues(
@@ -496,25 +572,80 @@ class ColorThemeSelector extends StatelessWidget {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: colorTheme.colors.take(4).map((color) {
-                          return Container(
-                            width: 16,
-                            height: 16,
-                            margin: const EdgeInsets.only(right: 2),
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            selectedThemeIndex == -1 && currentColors.isNotEmpty
+                            ? currentColors.take(4).map((color) {
+                                return Container(
+                                  width: 16,
+                                  height: 16,
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                );
+                              }).toList()
+                            : [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.red, Colors.blue],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.green, Colors.yellow],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.purple, Colors.orange],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.pink, Colors.cyan],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
                       ),
                       const SizedBox(height: 4),
-                      Text(colorTheme.name, style: theme.textTheme.bodySmall),
+                      Text('Custom', style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ],
       ),
