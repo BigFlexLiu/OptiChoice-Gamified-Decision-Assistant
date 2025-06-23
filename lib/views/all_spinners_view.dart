@@ -20,6 +20,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final Map<String, bool> _expansionStateByItemId = {};
 
   @override
   void initState() {
@@ -56,6 +57,11 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
         _spinners = spinners;
         _activeSpinnerId = activeSpinnerId;
         _isLoading = false;
+        for (var spinnerId in spinners.keys) {
+          if (!_expansionStateByItemId.containsKey(spinnerId)) {
+            _expansionStateByItemId[spinnerId] = false;
+          }
+        }
       });
     } catch (e) {
       setState(() => _isLoading = false);
@@ -492,12 +498,16 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                 final spinnerId = filteredSpinners.keys.elementAt(index);
                 final spinner = filteredSpinners[spinnerId]!;
                 final isActive = spinnerId == _activeSpinnerId;
+                final isExpanded = _expansionStateByItemId[spinnerId]!;
 
                 return SpinnerCard(
                   key: ValueKey(spinnerId), // Explicitly set the key here
                   spinnerId: spinnerId,
                   spinner: spinner,
                   isActive: isActive,
+                  isExpanded: isExpanded,
+                  onExpansionChanged: (bool value) =>
+                      _expansionStateByItemId[spinnerId] = value,
                   canReorder: _searchQuery.isEmpty,
                   subtitle: 'Created ${_formatDate(spinner.createdAt)}',
                   actions: _buildSpinnerActions(spinnerId, isActive, theme),

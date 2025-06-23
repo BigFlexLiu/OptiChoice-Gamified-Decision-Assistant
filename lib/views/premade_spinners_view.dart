@@ -44,15 +44,15 @@ class PremadeSpinnersView extends StatelessWidget {
           children: [
             _PremadeSpinnerTabView(
               config: _tabs[0],
-              spinnerWheels: PremadeSpinnerDefinitions.soloDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.soloDecisions,
             ),
             _PremadeSpinnerTabView(
               config: _tabs[1],
-              spinnerWheels: PremadeSpinnerDefinitions.pairDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.pairDecisions,
             ),
             _PremadeSpinnerTabView(
               config: _tabs[2],
-              spinnerWheels: PremadeSpinnerDefinitions.groupDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.groupDecisions,
             ),
           ],
         ),
@@ -73,30 +73,49 @@ class _TabConfig {
   final String description;
 }
 
-class _PremadeSpinnerTabView extends StatelessWidget {
+class _PremadeSpinnerTabView extends StatefulWidget {
   const _PremadeSpinnerTabView({
     required this.config,
-    required this.spinnerWheels,
+    required this.spinnerModels,
   });
 
   final _TabConfig config;
-  final List<SpinnerModel> spinnerWheels;
+  final List<SpinnerModel> spinnerModels;
+
+  @override
+  State<_PremadeSpinnerTabView> createState() => _PremadeSpinnerTabViewState();
+}
+
+class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
+  final Map<String, bool> _expansionStateByItemId = {};
+
+  @override
+  void initState() {
+    super.initState();
+    for (SpinnerModel spinnerModel in widget.spinnerModels) {
+      _expansionStateByItemId[spinnerModel.id] = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (spinnerWheels.isEmpty) {
-      return _EmptyStateWidget(config: config);
+    if (widget.spinnerModels.isEmpty) {
+      return _EmptyStateWidget(config: widget.config);
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: spinnerWheels.length,
+      itemCount: widget.spinnerModels.length,
       itemBuilder: (context, index) {
-        final spinner = spinnerWheels[index];
+        final spinner = widget.spinnerModels[index];
+        final isExpanded = _expansionStateByItemId[spinner.id]!;
 
         return SpinnerCard(
           spinnerId: 'premade_${index}_${spinner.name}',
           spinner: spinner,
+          isExpanded: isExpanded,
+          onExpansionChanged: (bool value) =>
+              _expansionStateByItemId[spinner.id] = value,
           isActive: false,
           canReorder: false,
           subtitle: '${spinner.options.length} options • Premade',

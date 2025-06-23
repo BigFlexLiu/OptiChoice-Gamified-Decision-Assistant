@@ -9,14 +9,18 @@ class SpinnerCard extends StatelessWidget {
   final bool canReorder;
   final List<SpinnerCardAction> actions;
   final String? subtitle;
+  final ValueChanged<bool>? onExpansionChanged;
+  final bool isExpanded;
 
   const SpinnerCard({
     super.key,
     required this.spinnerId,
     required this.spinner,
+    required this.actions,
+    required this.onExpansionChanged,
+    required this.isExpanded,
     this.isActive = false,
     this.canReorder = false,
-    required this.actions,
     this.subtitle,
   });
 
@@ -36,6 +40,8 @@ class SpinnerCard extends StatelessWidget {
               )
             : null,
         child: ExpansionTile(
+          onExpansionChanged: onExpansionChanged,
+          initiallyExpanded: isExpanded,
           leading: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
