@@ -2,6 +2,7 @@ import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
 import 'package:decision_spinner/views/custom_color_picker_view.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
+import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -828,61 +829,6 @@ class AddOptionItemWidget extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class EditNameDialog extends StatefulWidget {
-  final String initialName;
-  final Function(String) onNameChanged;
-
-  const EditNameDialog({
-    super.key,
-    required this.initialName,
-    required this.onNameChanged,
-  });
-
-  @override
-  State<EditNameDialog> createState() => _EditNameDialogState();
-}
-
-class _EditNameDialogState extends State<EditNameDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Edit Spinner Name'),
-      content: TextField(
-        controller: _controller,
-        decoration: InputDecoration(labelText: 'Spinner name'),
-        autofocus: true,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            widget.onNameChanged(_controller.text);
-            Navigator.of(context).pop();
-          },
-          child: Text('Save'),
-        ),
-      ],
     );
   }
 }
