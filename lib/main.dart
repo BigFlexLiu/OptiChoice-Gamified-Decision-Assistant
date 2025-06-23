@@ -1,23 +1,26 @@
-import 'package:decision_spin/views/roulette_view.dart';
+import 'package:decision_spinner/views/spinner_view.dart';
 import 'package:flutter/material.dart';
-import 'theme/app_theme.dart';
 
 void main() {
-  runApp(RouletteApp());
+  runApp(SpinnerApp());
 }
 
-class RouletteApp extends StatelessWidget {
-  const RouletteApp({super.key});
+class SpinnerApp extends StatelessWidget {
+  const SpinnerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Decision Roulette',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      title: 'Decision Spinner',
+
+      // theme: AppTheme.light,
+      // darkTheme: AppTheme.dark,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
       themeMode:
           ThemeMode.system, // Automatically switches based on system preference
-      home: RouletteView(),
+      home: SpinnerView(),
     );
   }
 }

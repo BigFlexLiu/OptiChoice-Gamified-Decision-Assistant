@@ -1,22 +1,19 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../enums/roulette_paint_mode.dart';
 
-class RoulettePainter extends CustomPainter {
+class SpinnerPainter extends CustomPainter {
   final List<String> options;
   final double rotation;
   final String? selectedOption;
-  final RoulettePaintMode paintMode;
-  final List<List<Color>> gradientColors;
-  final List<Color> solidColors;
+  final List<Color> colors;
+  final double? wheelSize;
 
-  RoulettePainter({
+  SpinnerPainter({
     required this.options,
     required this.rotation,
-    required this.paintMode,
-    required this.gradientColors,
-    required this.solidColors,
+    required this.colors,
     this.selectedOption,
+    this.wheelSize,
   });
 
   @override
@@ -91,28 +88,26 @@ class RoulettePainter extends CustomPainter {
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
-    switch (paintMode) {
-      case RoulettePaintMode.gradient:
-        final colors = _getGradientColorsForIndex(index);
-        return Paint()
-          ..shader = RadialGradient(
-            colors: colors,
-          ).createShader(Rect.fromCircle(center: center, radius: radius));
-
-      case RoulettePaintMode.solid:
-        final color = _getSolidColorForIndex(index);
-        return Paint()
-          ..color = color
-          ..style = PaintingStyle.fill;
-    }
-  }
-
-  List<Color> _getGradientColorsForIndex(int index) {
-    return gradientColors[index % gradientColors.length];
+    final color = _getSolidColorForIndex(index);
+    return Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
   }
 
   Color _getSolidColorForIndex(int index) {
-    return solidColors[index % solidColors.length];
+    return colors[index % colors.length];
+  }
+
+  double _calculateFontSize() {
+    if (wheelSize == null) return 14.0; // Default size
+
+    // Scale font size based on wheel size
+    // Assuming default wheel size of 300 corresponds to 14pt font
+    final scaleFactor = wheelSize! / 200.0;
+    final scaledSize = 14.0 * scaleFactor;
+
+    // Clamp between 12 and 16
+    return scaledSize.clamp(12.0, 20.0);
   }
 
   void _drawText(
@@ -124,7 +119,7 @@ class RoulettePainter extends CustomPainter {
   ) {
     final textStyle = TextStyle(
       color: Colors.white,
-      fontSize: 14,
+      fontSize: _calculateFontSize(),
       fontWeight: FontWeight.w600,
       shadows: [
         Shadow(
@@ -136,45 +131,65 @@ class RoulettePainter extends CustomPainter {
     );
 
     final textPainter = TextPainter(
-      text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
+      textAlign: TextAlign.left,
     );
 
+    final truncatedText = _truncateToFit(text, textPainter, textStyle, radius);
+
+    // Layout final text
+    textPainter.text = TextSpan(text: truncatedText, style: textStyle);
     textPainter.layout();
 
-    // Calculate text position - place it at 65% of the radius from center
-    final textRadius = radius * 0.65;
-
-    // Calculate position using the angle directly
-    final textX = center.dx + textRadius * math.cos(angle);
-    final textY = center.dy + textRadius * math.sin(angle);
+    // Calculate starting position (just inside border)
+    final textStartRadius = radius - 5;
+    final textStartX = center.dx + textStartRadius * math.cos(angle);
+    final textStartY = center.dy + textStartRadius * math.sin(angle);
 
     canvas.save();
-    canvas.translate(textX, textY);
+    canvas.translate(textStartX, textStartY);
+    canvas.rotate(angle + math.pi);
 
-    // Calculate rotation angle for vertical text
-    // Use the angle pointing outward from center and add π/2 for vertical orientation
-    double textRotation = angle + math.pi;
-
-    canvas.rotate(textRotation);
-
-    // Draw text centered at the calculated position
-    textPainter.paint(
-      canvas,
-      Offset(-textPainter.width / 2, -textPainter.height / 2),
-    );
+    textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
 
     canvas.restore();
   }
 
+  // Binary search for the longest substring that fits maxTextWidth
+  String _truncateToFit(
+    String fullText,
+    TextPainter textPainter,
+    TextStyle textStyle,
+    double maxTextWidth,
+  ) {
+    int low = 0;
+    int high = fullText.length;
+    String result = '';
+
+    while (low <= high) {
+      final mid = (low + high) ~/ 2;
+      final candidate = fullText.substring(0, mid);
+
+      textPainter.text = TextSpan(text: candidate, style: textStyle);
+      textPainter.layout();
+
+      if (textPainter.width <= maxTextWidth) {
+        result = candidate;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return result;
+  }
+
   @override
-  bool shouldRepaint(covariant RoulettePainter oldDelegate) {
+  bool shouldRepaint(covariant SpinnerPainter oldDelegate) {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.paintMode != paintMode ||
-        oldDelegate.gradientColors != gradientColors ||
-        oldDelegate.solidColors != solidColors;
+        oldDelegate.colors != colors ||
+        oldDelegate.wheelSize != wheelSize;
   }
 }

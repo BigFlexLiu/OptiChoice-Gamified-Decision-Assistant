@@ -1,7 +1,7 @@
-import 'package:decision_spin/theme/color_schemes.dart';
-import 'package:decision_spin/theme/component_theme.dart';
-import 'package:decision_spin/theme/text_themes.dart';
-import 'package:decision_spin/theme/theme_extensions.dart';
+import 'package:decision_spinner/theme/color_schemes.dart';
+import 'package:decision_spinner/theme/component_theme.dart';
+import 'package:decision_spinner/theme/text_themes.dart';
+import 'package:decision_spinner/theme/theme_extensions.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -12,8 +12,6 @@ class AppTheme {
 
     // Color Scheme
     colorScheme: AppColorSchemes.light,
-    primarySwatch: Colors.deepPurple,
-    primaryColor: Colors.deepPurple,
 
     // Background Colors
     scaffoldBackgroundColor: BackgroundColors.scaffoldLight,
@@ -23,26 +21,26 @@ class AppTheme {
     textTheme: AppTextThemes.light,
 
     // Component Themes
-    appBarTheme: AppComponentThemes.appBarLight,
-    elevatedButtonTheme: AppComponentThemes.elevatedButtonLight,
-    textButtonTheme: AppComponentThemes.textButtonLight,
-    outlinedButtonTheme: AppComponentThemes.outlinedButtonLight,
-    cardTheme: AppComponentThemes.cardLight,
-    inputDecorationTheme: AppComponentThemes.inputDecorationLight,
-    floatingActionButtonTheme: AppComponentThemes.fabLight,
-    dialogTheme: AppComponentThemes.dialogLight,
-    expansionTileTheme: AppComponentThemes.expansionTileLight,
-    snackBarTheme: AppComponentThemes.snackBarLight,
-    iconTheme: AppComponentThemes.iconLight,
-    primaryIconTheme: AppComponentThemes.primaryIconLight,
-    sliderTheme: AppComponentThemes.sliderLight,
-    tooltipTheme: AppComponentThemes.tooltipLight,
-    dividerTheme: AppComponentThemes.dividerLight,
-    badgeTheme: AppComponentThemes.badgeLight,
+    // appBarTheme: AppComponentThemes.appBarLight,
+    // elevatedButtonTheme: AppComponentThemes.elevatedButtonLight,
+    // textButtonTheme: AppComponentThemes.textButtonLight,
+    // outlinedButtonTheme: AppComponentThemes.outlinedButtonLight,
+    // cardTheme: AppComponentThemes.cardLight,
+    // inputDecorationTheme: AppComponentThemes.inputDecorationLight,
+    // floatingActionButtonTheme: AppComponentThemes.fabLight,
+    // dialogTheme: AppComponentThemes.dialogLight,
+    // expansionTileTheme: AppComponentThemes.expansionTileLight,
+    // snackBarTheme: AppComponentThemes.snackBarLight,
+    // iconTheme: AppComponentThemes.iconLight,
+    // primaryIconTheme: AppComponentThemes.primaryIconLight,
+    // sliderTheme: AppComponentThemes.sliderLight,
+    // tooltipTheme: AppComponentThemes.tooltipLight,
+    // dividerTheme: AppComponentThemes.dividerLight,
+    // badgeTheme: AppComponentThemes.badgeLight,
 
     // Custom Extensions
     extensions: [
-      RouletteThemeExtension.light,
+      SpinnerThemeExtension.light,
       CustomButtonExtension.light,
       AppConstants.standard,
     ],
@@ -72,7 +70,7 @@ class AppTheme {
 
     // Custom Extensions
     extensions: [
-      RouletteThemeExtension.dark,
+      SpinnerThemeExtension.dark,
       CustomButtonExtension.dark,
       AppConstants.standard,
     ],

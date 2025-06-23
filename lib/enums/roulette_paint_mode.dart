@@ -1,1 +1,0 @@
-enum RoulettePaintMode { gradient, solid }
