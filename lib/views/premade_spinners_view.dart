@@ -134,11 +134,7 @@ class _PremadeSpinnerTabView extends StatelessWidget {
     try {
       final finalName = await _generateUniqueName(spinner.name);
 
-      final createdSpinner = await SpinnerStorageService.createSpinner(
-        finalName,
-        spinner.options,
-        colorThemeIndex: spinner.colorThemeIndex,
-      );
+      final createdSpinner = await SpinnerStorageService.saveSpinner(spinner);
 
       if (createdSpinner != null && context.mounted) {
         SpinnerStorageService.clearCache();

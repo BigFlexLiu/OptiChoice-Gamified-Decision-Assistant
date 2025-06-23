@@ -1,6 +1,7 @@
 import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
 import 'package:decision_spinner/views/custom_color_picker_view.dart';
+import 'package:decision_spinner/widgets/default_divider.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -264,6 +265,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   @override
   Widget build(BuildContext context) {
+    print("${spinner}");
     return PopScope(
       canPop: !_hasChanges,
       onPopInvokedWithResult: (didPop, result) async {
@@ -373,6 +375,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   Widget _buildOptionsListSection() {
     final theme = Theme.of(context);
+    final numOptions = spinner.options.length;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -384,17 +387,12 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
               Icon(Icons.list),
               const SizedBox(width: 8),
               Text(
-                'Options (${spinner.options.length})',
+                'Options (${numOptions})',
                 style: theme.textTheme.titleSmall,
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: _isLoading ? null : () => _showAddOptionDialog(),
-                icon: Icon(Icons.add, size: 20),
               ),
             ],
           ),
-          if (spinner.options.isNotEmpty) ...[Divider(height: 24)],
+          DefaultDivider(),
           const SizedBox(height: 12),
           if (spinner.options.isEmpty)
             _buildEmptyState()
@@ -402,7 +400,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: spinner.options.length,
+              itemCount: numOptions,
               onReorder: _reorderOptions,
               itemBuilder: (context, index) {
                 return OptionListItem(
@@ -414,6 +412,11 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                 );
               },
             ),
+          AddOptionItemWidget(
+            index: numOptions,
+            color: spinner.colors[numOptions % spinner.colors.length],
+            onTap: () => _showAddOptionDialog(),
+          ),
         ],
       ),
     );
@@ -499,6 +502,7 @@ class ColorThemeSelector extends StatelessWidget {
               Text('Color Theme', style: theme.textTheme.titleSmall),
             ],
           ),
+          DefaultDivider(),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
@@ -653,7 +657,6 @@ class ColorThemeSelector extends StatelessWidget {
   }
 }
 
-// ...existing code...
 class OptionListItem extends StatelessWidget {
   final int index;
   final SpinnerOption option;
@@ -741,6 +744,88 @@ class OptionListItem extends StatelessWidget {
                     ),
                   ),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AddOptionItemWidget extends StatelessWidget {
+  final int index;
+  final Color color;
+  final VoidCallback onTap;
+
+  const AddOptionItemWidget({
+    super.key,
+    required this.index,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          style: BorderStyle
+              .solid, // Use BorderStyle.none if using only box shadow
+          color: theme.colorScheme.outline.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.03),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Color indicator and index bubble (same as OptionListItem)
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Center(
+                  child: Text(
+                    '${index + 1}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // "Add new option" label and icon
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      "Add new option",
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.add, color: theme.colorScheme.primary),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -993,8 +1078,6 @@ class DeleteConfirmationDialog extends StatelessWidget {
     );
   }
 }
-// ...existing code...
-// ...existing code...
 
 class AudioSettingsSection extends StatefulWidget {
   final String? spinSound;
@@ -1047,8 +1130,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    print("HI");
-    print(widget.spinSound);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -1062,7 +1143,8 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
               Text('Audio Settings', style: theme.textTheme.titleSmall),
             ],
           ),
-          const SizedBox(height: 16),
+          DefaultDivider(),
+          const SizedBox(height: 12),
           _buildAudioSelector(
             context: context,
             label: 'Spin Sound',
@@ -1251,7 +1333,8 @@ class SpinDurationSection extends StatelessWidget {
               Text('Spin Duration', style: theme.textTheme.titleSmall),
             ],
           ),
-          const SizedBox(height: 16),
+          DefaultDivider(),
+          const SizedBox(height: 12),
           Row(
             children: [
               Icon(Icons.speed, size: 16),

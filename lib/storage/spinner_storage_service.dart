@@ -1,3 +1,5 @@
+import 'package:decision_spinner/consts/color_themes.dart';
+
 import 'base_storage_service.dart';
 import '../consts/storage_constants.dart';
 import 'spinner_model.dart';
@@ -104,6 +106,7 @@ class SpinnerStorageService extends BaseStorageService {
   /// Save a spinner model
   static Future<bool> saveSpinner(SpinnerModel spinner) async {
     // Use cached data if available
+    print(spinner);
     final allSpinners = await loadAllSpinners();
 
     spinner.updatedAt = DateTime.now();
@@ -126,21 +129,19 @@ class SpinnerStorageService extends BaseStorageService {
       return null; // Spinner with this name already exists
     }
 
+    // Sanity check
+    if (colorThemeIndex > DefaultColorThemes.count) {
+      return null;
+    }
+
     final newSpinner = SpinnerModel(
       name: name,
       options: options,
       colorThemeIndex: colorThemeIndex,
-      colors: [
-        Colors.red,
-        Colors.blue,
-        Colors.green,
-        Colors.purple,
-        Colors.orange,
-        Colors.teal,
-      ],
+      colors: DefaultColorThemes.getByIndex(colorThemeIndex)!.colors,
     );
 
-    allSpinners[newSpinner.id] = newSpinner;
+    saveSpinner(newSpinner);
     final success = await saveAllSpinners(allSpinners);
 
     if (success) {
@@ -247,7 +248,6 @@ class SpinnerStorageService extends BaseStorageService {
   /// Check if a spinner name exists
   static Future<bool> spinnerNameExists(String name, {String? id}) async {
     final allSpinners = await loadAllSpinners();
-    print(allSpinners);
     return allSpinners.values.any(
       (spinner) => spinner.name == name && spinner.id != id,
     );

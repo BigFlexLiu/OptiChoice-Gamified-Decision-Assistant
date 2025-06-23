@@ -111,6 +111,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Preload spin sound
       if (_activeSpinner!.spinSound != null &&
           _activeSpinner!.spinSound!.isNotEmpty) {
+        print("${_activeSpinner!.spinSound!}");
         final audioPath = AudioUtils.getSpinAudioPath(
           _activeSpinner!.spinSound!,
         );
@@ -120,6 +121,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Preload spin end sound
       if (_activeSpinner!.spinEndSound != null &&
           _activeSpinner!.spinEndSound!.isNotEmpty) {
+        print("${_activeSpinner!.spinEndSound!}");
         final audioPath = AudioUtils.getSpinEndAudioPath(
           _activeSpinner!.spinEndSound!,
         );

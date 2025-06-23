@@ -2,6 +2,25 @@ import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
 
 class PremadeSpinnerDefinitions {
+  static SpinnerModel createSpinner({
+    required String newId,
+    required String name,
+    required List<SpinnerOption> options,
+    required List<Color> colors,
+  }) {
+    return SpinnerModel(
+      newId: newId,
+      name: name,
+      options: options,
+      colorThemeIndex: -1,
+      colors: colors,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      spinSound: 'pen_tick',
+      spinEndSound: 'tada_end',
+    );
+  }
+
   static List<SpinnerModel> get soloDecisions => [
     yesNoSpinner,
     whatToEatSpinner,
@@ -11,6 +30,7 @@ class PremadeSpinnerDefinitions {
     dice20Spinner,
     workoutSpinner,
   ];
+
   static List<SpinnerModel> get pairDecisions => [
     whatToWatchSpinner,
     dateNightSpinner,
@@ -18,6 +38,7 @@ class PremadeSpinnerDefinitions {
     truthOrDareSpinner,
     icebreakerSillySpinner,
   ];
+
   static List<SpinnerModel> get groupDecisions => [
     whoPaysSpinner,
     icebreakerCasualSpinner,
@@ -25,20 +46,17 @@ class PremadeSpinnerDefinitions {
     whatToDoSpinner,
   ];
 
-  static SpinnerModel get yesNoSpinner => SpinnerModel(
+  static SpinnerModel get yesNoSpinner => createSpinner(
     newId: 'premade_yes_no',
     name: 'Yes or No',
     options: [
       SpinnerOption(text: 'Yes'),
       SpinnerOption(text: 'No'),
     ],
-    colorThemeIndex: -1,
     colors: [Colors.green.shade500, Colors.red.shade500],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get whatToEatSpinner => SpinnerModel(
+  static SpinnerModel get whatToEatSpinner => createSpinner(
     newId: 'premade_what_to_eat',
     name: 'What to Eat',
     options: [
@@ -51,13 +69,10 @@ class PremadeSpinnerDefinitions {
       'Sandwich',
       'Skip Meal',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.orange.shade300, Colors.deepOrange.shade400],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get whatToWatchSpinner => SpinnerModel(
+  static SpinnerModel get whatToWatchSpinner => createSpinner(
     newId: 'premade_what_to_watch',
     name: 'What to Watch',
     options: [
@@ -69,13 +84,10 @@ class PremadeSpinnerDefinitions {
       'Sports',
       'News',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.blue.shade400, Colors.indigo.shade500],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get whereToGoSpinner => SpinnerModel(
+  static SpinnerModel get whereToGoSpinner => createSpinner(
     newId: 'premade_where_to_go',
     name: 'Where to Go',
     options: [
@@ -86,13 +98,10 @@ class PremadeSpinnerDefinitions {
       'Restaurant',
       'Stay home',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.teal.shade400, Colors.teal.shade700],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get whatToDoSpinner => SpinnerModel(
+  static SpinnerModel get whatToDoSpinner => createSpinner(
     newId: 'premade_what_to_do',
     name: 'What to Do',
     options: [
@@ -104,13 +113,10 @@ class PremadeSpinnerDefinitions {
       'Take a nap',
       'Call someone',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.purple.shade400, Colors.deepPurple.shade600],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get workoutSpinner => SpinnerModel(
+  static SpinnerModel get workoutSpinner => createSpinner(
     newId: 'premade_workout_type',
     name: 'Workout Type',
     options: [
@@ -122,13 +128,10 @@ class PremadeSpinnerDefinitions {
       'Stretching',
       'Rest day',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.red.shade300, Colors.pink.shade400],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get whoPaysSpinner => SpinnerModel(
+  static SpinnerModel get whoPaysSpinner => createSpinner(
     newId: 'premade_who_pays',
     name: 'Who Pays',
     options: [
@@ -138,13 +141,10 @@ class PremadeSpinnerDefinitions {
       'User 4',
       'Split',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.brown.shade300, Colors.amber.shade600],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get choreSpinner => SpinnerModel(
+  static SpinnerModel get choreSpinner => createSpinner(
     newId: 'premade_chore',
     name: 'Chore Spinner',
     options: [
@@ -156,13 +156,10 @@ class PremadeSpinnerDefinitions {
       'Dust',
       'Mop floors',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.grey.shade400, Colors.blueGrey.shade600],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get breakActivitySpinner => SpinnerModel(
+  static SpinnerModel get breakActivitySpinner => createSpinner(
     newId: 'premade_break_activity',
     name: 'Break Activity',
     options: [
@@ -173,13 +170,10 @@ class PremadeSpinnerDefinitions {
       'Meditate',
       'Quick tidy',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.lightBlue.shade300, Colors.cyan.shade600],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get truthOrDareSpinner => SpinnerModel(
+  static SpinnerModel get truthOrDareSpinner => createSpinner(
     newId: 'premade_truth_or_dare',
     name: 'Truth or Dare',
     options: [
@@ -190,33 +184,24 @@ class PremadeSpinnerDefinitions {
       'Group dare',
       'Tell a secret',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.pink.shade300, Colors.deepPurple.shade400],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get dice6Spinner => SpinnerModel(
+  static SpinnerModel get dice6Spinner => createSpinner(
     newId: 'premade_dice_6',
     name: 'Roll a Die (d6)',
     options: List.generate(6, (i) => SpinnerOption(text: '${i + 1}')),
-    colorThemeIndex: -1,
     colors: [Colors.grey.shade300, Colors.grey.shade700],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get dice20Spinner => SpinnerModel(
+  static SpinnerModel get dice20Spinner => createSpinner(
     newId: 'premade_dice_20',
     name: 'Roll a Die (d20)',
     options: List.generate(20, (i) => SpinnerOption(text: '${i + 1}')),
-    colorThemeIndex: -1,
     colors: [Colors.indigo.shade200, Colors.indigo.shade800],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get dateNightSpinner => SpinnerModel(
+  static SpinnerModel get dateNightSpinner => createSpinner(
     newId: 'premade_date_night',
     name: 'Date Night',
     options: [
@@ -227,13 +212,10 @@ class PremadeSpinnerDefinitions {
       'Try a new restaurant',
       'Stay in and relax',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.red.shade200, Colors.deepOrange.shade300],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get icebreakerCasualSpinner => SpinnerModel(
+  static SpinnerModel get icebreakerCasualSpinner => createSpinner(
     newId: 'premade_icebreaker_casual',
     name: 'Icebreaker: Casual',
     options: [
@@ -248,13 +230,10 @@ class PremadeSpinnerDefinitions {
       'What was your first job?',
       'What\'s a hobby you enjoy?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.lightGreen.shade300, Colors.lightBlue.shade300],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get icebreakerPersonalSpinner => SpinnerModel(
+  static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
     newId: 'premade_icebreaker_personal',
     name: 'Icebreaker: Personal',
     options: [
@@ -269,13 +248,10 @@ class PremadeSpinnerDefinitions {
       'What would you do with a million dollars?',
       'What do you value most in a friendship?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.teal.shade300, Colors.cyan.shade400],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 
-  static SpinnerModel get icebreakerSillySpinner => SpinnerModel(
+  static SpinnerModel get icebreakerSillySpinner => createSpinner(
     newId: 'premade_icebreaker_silly',
     name: 'Icebreaker: Fun & Silly',
     options: [
@@ -290,9 +266,6 @@ class PremadeSpinnerDefinitions {
       'Which superpower would you want?',
       'If you had to eat one meal forever?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colorThemeIndex: -1,
     colors: [Colors.amber.shade300, Colors.purple.shade200],
-    createdAt: DateTime.now(),
-    updatedAt: DateTime.now(),
   );
 }

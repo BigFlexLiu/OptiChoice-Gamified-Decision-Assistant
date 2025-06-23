@@ -19,16 +19,18 @@ class SpinnerModel {
     required this.colorThemeIndex,
     required this.colors,
     List<Color>? customColors,
-    this.spinSound,
-    this.spinEndSound,
+    String? spinSound,
+    String? spinEndSound,
     Duration? spinDuration,
     String? newId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now(),
-       spinDuration = spinDuration ?? const Duration(seconds: 3),
+       spinDuration = spinDuration ?? const Duration(seconds: 2),
        customColors = customColors ?? [Colors.red, Colors.green, Colors.blue],
+       spinSound = spinSound ?? "pen_tick",
+       spinEndSound = spinEndSound ?? 'tada_end',
        id = newId ?? _uuid.v4();
 
   static const _uuid = Uuid();
