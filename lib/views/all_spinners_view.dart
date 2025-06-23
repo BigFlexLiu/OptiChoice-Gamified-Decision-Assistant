@@ -521,7 +521,6 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                   onExpansionChanged: (bool value) =>
                       _expansionStateByItemId[spinnerId] = value,
                   canReorder: _searchQuery.isEmpty,
-                  subtitle: 'Created ${_formatDate(spinner.createdAt)}',
                   actions: _buildSpinnerActions(spinnerId, isActive, theme),
                 );
               },

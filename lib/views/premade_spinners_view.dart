@@ -118,7 +118,6 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
               _expansionStateByItemId[spinner.id] = value,
           isActive: false,
           canReorder: false,
-          subtitle: '${spinner.options.length} options • Premade',
           actions: _buildActions(context, spinner),
         );
       },
