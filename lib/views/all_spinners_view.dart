@@ -132,15 +132,27 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   }
 
   Map<String, SpinnerModel> get _filteredSpinners {
+    Map<String, SpinnerModel> filtered;
+
     if (_searchQuery.isEmpty) {
-      return _spinners;
+      filtered = _spinners;
+    } else {
+      filtered = Map.fromEntries(
+        _spinners.entries.where(
+          (entry) => entry.value.name.toLowerCase().contains(_searchQuery),
+        ),
+      );
     }
 
-    return Map.fromEntries(
-      _spinners.entries.where(
-        (entry) => entry.value.name.toLowerCase().contains(_searchQuery),
-      ),
-    );
+    // Sort to put active spinner first
+    final sortedEntries = filtered.entries.toList()
+      ..sort((a, b) {
+        if (a.key == _activeSpinnerId) return -1;
+        if (b.key == _activeSpinnerId) return 1;
+        return 0;
+      });
+
+    return Map.fromEntries(sortedEntries);
   }
 
   Future<void> _deleteSpinner(String id) async {
@@ -366,7 +378,6 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
     int newIndex, [
     Map<String, SpinnerModel>? sourceMap,
   ]) async {
-    // If we're in search mode, don't allow reordering
     if (_searchQuery.isNotEmpty) {
       _showSnackBar('Cannot reorder while searching. Clear search first.');
       return;
@@ -396,7 +407,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredSpinners = _filteredSpinners;
+    Map<String, SpinnerModel> filteredSpinners = _filteredSpinners;
 
     return Scaffold(
       appBar: AppBar(
@@ -495,6 +506,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
               onReorder: (oldIndex, newIndex) =>
                   _reorderSpinners(oldIndex, newIndex, filteredSpinners),
               itemBuilder: (context, index) {
+                // Show active spinner first if exists
                 final spinnerId = filteredSpinners.keys.elementAt(index);
                 final spinner = filteredSpinners[spinnerId]!;
                 final isActive = spinnerId == _activeSpinnerId;
