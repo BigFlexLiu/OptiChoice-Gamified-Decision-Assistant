@@ -27,8 +27,6 @@ class PremadeSpinnersView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return DefaultTabController(
       length: _tabs.length,
       child: Scaffold(
@@ -133,10 +131,11 @@ class _PremadeSpinnerTabView extends StatelessWidget {
   Future<void> _addSpinner(BuildContext context, SpinnerModel spinner) async {
     try {
       final finalName = await _generateUniqueName(spinner.name);
+      spinner.name = finalName;
 
       final createdSpinner = await SpinnerStorageService.saveSpinner(spinner);
 
-      if (createdSpinner != null && context.mounted) {
+      if (createdSpinner && context.mounted) {
         SpinnerStorageService.clearCache();
         Navigator.of(context).pop(true);
       } else if (context.mounted) {

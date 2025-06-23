@@ -249,19 +249,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
     );
   }
 
-  // In your SpinnerPainter paint method, calculate font size like this:
-  double _calculateFontSize() {
-    if (wheelSize == null) return 14.0; // Default size
-
-    // Scale font size based on wheel size
-    // Assuming default wheel size of 300 corresponds to 14pt font
-    final scaleFactor = wheelSize! / 300.0;
-    final scaledSize = 14.0 * scaleFactor;
-
-    // Clamp between 12 and 16
-    return scaledSize.clamp(12.0, 16.0);
-  }
-
   Widget _buildAnimatedWheel(double size) {
     return AnimatedBuilder(
       animation: _animation,

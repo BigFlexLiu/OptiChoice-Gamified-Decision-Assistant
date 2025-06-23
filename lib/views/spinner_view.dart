@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
+import 'package:decision_spinner/utils/logger.dart';
 import 'package:decision_spinner/views/all_spinners_view.dart';
 import 'package:decision_spinner/views/spinner_options_view.dart';
 import 'package:decision_spinner/widgets/spinner_wheel.dart';
@@ -111,7 +112,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Preload spin sound
       if (_activeSpinner!.spinSound != null &&
           _activeSpinner!.spinSound!.isNotEmpty) {
-        print("${_activeSpinner!.spinSound!}");
         final audioPath = AudioUtils.getSpinAudioPath(
           _activeSpinner!.spinSound!,
         );
@@ -121,15 +121,18 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Preload spin end sound
       if (_activeSpinner!.spinEndSound != null &&
           _activeSpinner!.spinEndSound!.isNotEmpty) {
-        print("${_activeSpinner!.spinEndSound!}");
         final audioPath = AudioUtils.getSpinEndAudioPath(
           _activeSpinner!.spinEndSound!,
         );
 
         _spinEndAudioAsset = AssetSource(audioPath);
       }
-    } catch (e) {
-      print('Error preloading audio sources: $e');
+    } catch (e, stackTrace) {
+      logger.e(
+        "Error preloading audio sources",
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -159,19 +162,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   AudioPlayer? _getNextAvailableSpinPlayer() {
-    // Start from the current index and look for an available player
-    for (int i = 0; i < _spinAudioPlayerCount; i++) {
-      int checkIndex = (_currentSpinPlayerIndex + i) % _spinAudioPlayerCount;
-      AudioPlayer player = _spinAudioPlayers[checkIndex];
-
-      // Check if this player is available (not playing)
-      // if (player.state == PlayerState.playing) continue;
-      _currentSpinPlayerIndex = (checkIndex + 1) % _spinAudioPlayerCount;
-      return player;
-    }
-
-    // No available player found
-    return null;
+    int checkIndex = _currentSpinPlayerIndex % _spinAudioPlayerCount;
+    AudioPlayer player = _spinAudioPlayers[checkIndex];
+    _currentSpinPlayerIndex = (checkIndex + 1) % _spinAudioPlayerCount;
+    return player;
   }
 
   Future<void> _playSpinSoundIfAvailable() async {
@@ -187,8 +181,8 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         await availablePlayer.play(_spinAudioAsset!);
       }
       // If no player is available, we simply don't play the sound
-    } catch (e) {
-      print('Error playing spin sound: $e');
+    } catch (e, stackTrace) {
+      logger.e("Error playing spin sound", error: e, stackTrace: stackTrace);
     }
   }
 
@@ -199,8 +193,12 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Stop any currently playing end sound and play the new one
       await _spinEndAudioPlayer.stop();
       await _spinEndAudioPlayer.play(_spinEndAudioAsset!);
-    } catch (e) {
-      print('Error playing end spin sound: $e');
+    } catch (e, stackTrace) {
+      logger.e(
+        "Error playing end spin sound",
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

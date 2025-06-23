@@ -244,7 +244,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
     if (color == Colors.black) return 'Black';
 
     // For custom colors, show hex value
-    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 }
 

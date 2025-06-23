@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:decision_spinner/utils/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -39,8 +39,12 @@ class AudioUtils {
 
       audioFiles.sort();
       return audioFiles;
-    } catch (e) {
-      print('Error loading audio files from $assetPath: $e');
+    } catch (e, stackTrace) {
+      logger.e(
+        'Error loading audio files from $assetPath',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -76,8 +80,8 @@ class AudioUtils {
 
       // Play the audio using AssetSource (which automatically adds "assets/")
       await _previewPlayer.play(AssetSource(audioPath));
-    } catch (e) {
-      print('Error playing preview audio: $e');
+    } catch (e, stackTrace) {
+      logger.e('Error playing preview audio', error: e, stackTrace: stackTrace);
       throw Exception('Failed to play audio preview');
     }
   }
@@ -85,8 +89,12 @@ class AudioUtils {
   static Future<void> stopPreview() async {
     try {
       await _previewPlayer.stop();
-    } catch (e) {
-      print('Error stopping preview audio: $e');
+    } catch (e, stackTrace) {
+      logger.e(
+        "Error stopping preview audio",
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

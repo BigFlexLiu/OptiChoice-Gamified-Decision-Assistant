@@ -265,7 +265,6 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   @override
   Widget build(BuildContext context) {
-    print("${spinner}");
     return PopScope(
       canPop: !_hasChanges,
       onPopInvokedWithResult: (didPop, result) async {
@@ -386,10 +385,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
             children: [
               Icon(Icons.list),
               const SizedBox(width: 8),
-              Text(
-                'Options (${numOptions})',
-                style: theme.textTheme.titleSmall,
-              ),
+              Text('Options ($numOptions)', style: theme.textTheme.titleSmall),
             ],
           ),
           DefaultDivider(),
@@ -771,16 +767,16 @@ class AddOptionItemWidget extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           style: BorderStyle
               .solid, // Use BorderStyle.none if using only box shadow
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.03),
+            color: theme.shadowColor.withValues(alpha: 0.03),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -818,7 +814,9 @@ class AddOptionItemWidget extends StatelessWidget {
                       "Add new option",
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontStyle: FontStyle.italic,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const Spacer(),

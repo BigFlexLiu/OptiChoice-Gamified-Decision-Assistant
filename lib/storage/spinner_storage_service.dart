@@ -3,7 +3,6 @@ import 'package:decision_spinner/consts/color_themes.dart';
 import 'base_storage_service.dart';
 import '../consts/storage_constants.dart';
 import 'spinner_model.dart';
-import '../views/spinner_options_view.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerStorageService extends BaseStorageService {
@@ -105,8 +104,6 @@ class SpinnerStorageService extends BaseStorageService {
 
   /// Save a spinner model
   static Future<bool> saveSpinner(SpinnerModel spinner) async {
-    // Use cached data if available
-    print(spinner);
     final allSpinners = await loadAllSpinners();
 
     spinner.updatedAt = DateTime.now();
