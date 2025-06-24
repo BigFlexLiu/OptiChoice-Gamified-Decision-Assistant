@@ -1,5 +1,6 @@
 import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/views/custom_color_picker_view.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
 import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
@@ -79,12 +80,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
       if (nameExists) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('A spinner with this name already exists'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          showErrorSnackBar(context, 'A spinner with this name already exists');
           setState(() {
             _isLoading = false;
           });
@@ -103,20 +99,13 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       if (mounted && success) {
         widget.onSpinnerChanged?.call(originalSpinner);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Spinner saved successfully!')));
+        showSnackBar(context, 'Spinner saved successfully!');
 
         Navigator.of(context).pop(originalSpinner);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save spinner. Please try again.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        showErrorSnackBar(context, 'Failed to save spinner. Please try again.');
       }
     } finally {
       if (mounted) {
@@ -1235,9 +1224,7 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
       await AudioUtils.previewAudio(soundName, isEndSound);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error playing audio: $e')));
+        showSnackBar(context, 'Error playing audio: $e');
       }
     } finally {
       if (mounted) {

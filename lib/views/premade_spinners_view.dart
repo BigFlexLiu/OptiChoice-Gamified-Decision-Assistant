@@ -1,6 +1,7 @@
 import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
 
@@ -157,14 +158,14 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
         SpinnerStorageService.clearCache();
         Navigator.of(context).pop(true);
       } else if (context.mounted) {
-        _showErrorSnackBar(
+        showErrorSnackBar(
           context,
           'Failed to create spinner. Please try again.',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        _showErrorSnackBar(context, 'Error: ${e.toString()}');
+        showErrorSnackBar(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -188,16 +189,6 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
     showDialog(
       context: context,
       builder: (context) => _PreviewDialog(spinner: spinner),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        duration: const Duration(seconds: 3),
-      ),
     );
   }
 }

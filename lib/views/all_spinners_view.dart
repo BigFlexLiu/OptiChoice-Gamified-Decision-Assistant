@@ -1,3 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/views/premade_spinners_view.dart';
 import 'package:decision_spinner/widgets/spinner.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +68,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('Failed to load spinners');
+      showSnackBar(context, 'Failed to load spinners');
     }
   }
 
@@ -105,9 +108,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
         if (newSpinner != null) {
           _loadData();
-          _showSnackBar('Spinner "$name" created and set as active');
+          showSnackBar(context, 'Spinner "$name" created and set as active');
         } else {
-          _showSnackBar('Failed to create spinner. Please try again.');
+          showSnackBar(context, 'Failed to create spinner. Please try again.');
         }
         return;
       }
@@ -194,9 +197,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       final success = await SpinnerStorageService.deleteSpinner(id);
       if (success) {
         _loadData();
-        _showSnackBar('Spinner "${spinner.name}" deleted');
+        showSnackBar(context, 'Spinner "${spinner.name}" deleted');
       } else {
-        _showSnackBar('Cannot delete the last spinner');
+        showSnackBar(context, 'Cannot delete the last spinner');
       }
     }
   }
@@ -219,9 +222,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
       if (duplicatedSpinner != null) {
         _loadData();
-        _showSnackBar('Spinner duplicated as "$newName"');
+        showSnackBar(context, 'Spinner duplicated as "$newName"');
       } else {
-        _showSnackBar('Failed to duplicate. Name might already exist.');
+        showSnackBar(context, 'Failed to duplicate. Name might already exist.');
       }
     }
   }
@@ -339,9 +342,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       });
 
       final spinnerName = _spinners[id]?.name ?? 'Unknown';
-      _showSnackBar('Active spinner set to "$spinnerName"');
+      showSnackBar(context, 'Active spinner set to "$spinnerName"');
     } else {
-      _showSnackBar('Failed to set active spinner');
+      showSnackBar(context, 'Failed to set active spinner');
     }
   }
 
@@ -367,19 +370,16 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
     }
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _reorderSpinners(
     int oldIndex,
     int newIndex, [
     Map<String, SpinnerModel>? sourceMap,
   ]) async {
     if (_searchQuery.isNotEmpty) {
-      _showSnackBar('Cannot reorder while searching. Clear search first.');
+      showSnackBar(
+        context,
+        'Cannot reorder while searching. Clear search first.',
+      );
       return;
     }
 
@@ -445,7 +445,8 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                 // Get the name of the newly active spinner for the success message
                 final activeSpinner = _spinners[_activeSpinnerId];
                 if (activeSpinner != null) {
-                  _showSnackBar(
+                  showSnackBar(
+                    context,
                     'Spinner "${activeSpinner.name}" has been added and set as active!',
                   );
                 }
@@ -595,20 +596,5 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
     }
 
     return actions;
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-    } else {
-      return 'Just now';
-    }
   }
 }
