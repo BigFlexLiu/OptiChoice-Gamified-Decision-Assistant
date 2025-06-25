@@ -300,7 +300,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       onThemeChanged: _updateColorTheme,
                       onCustomColorsChanged: _updateCustomColors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     AudioSettingsSection(
                       spinSound: spinner.spinSound,
                       spinEndSound: spinner.spinEndSound,
@@ -309,12 +309,12 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       onSpinSoundChanged: _updateSpinSound,
                       onSpinEndSoundChanged: _updateSpinEndSound,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     SpinDurationSection(
                       spinDuration: spinner.spinDuration,
                       onDurationChanged: _updateSpinDuration,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     _buildOptionsListSection(),
                   ],
                 ),
@@ -373,9 +373,18 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
         children: [
           Row(
             children: [
-              Icon(Icons.list),
+              Icon(
+                Icons.list,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
-              Text('Options ($numOptions)', style: theme.textTheme.titleSmall),
+              Text('$numOptions', style: theme.textTheme.titleSmall),
+              Text(
+                ' Options',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).hintColor.withAlpha(128),
+                ),
+              ),
             ],
           ),
           DefaultDivider(),
@@ -475,6 +484,12 @@ class ColorThemeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final defaultColors = [
+      Colors.red,
+      Colors.blue,
+      Colors.green,
+      Colors.purple,
+    ];
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -483,7 +498,10 @@ class ColorThemeSelector extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.palette_outlined),
+              Icon(
+                Icons.palette_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text('Color Theme', style: theme.textTheme.titleSmall),
             ],
@@ -527,9 +545,12 @@ class ColorThemeSelector extends StatelessWidget {
                               width: 16,
                               height: 16,
                               margin: const EdgeInsets.only(right: 2),
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
+                              decoration: colorSampleDecoration(
+                                context,
+                                color,
+                                width: 1,
+                                alpha: 64,
+                                strokeAlign: BorderSide.strokeAlignInside,
                               ),
                             );
                           }).toList(),
@@ -569,65 +590,25 @@ class ColorThemeSelector extends StatelessWidget {
                                   width: 16,
                                   height: 16,
                                   margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
+                                  decoration: colorSampleDecoration(
+                                    context,
+                                    color,
+                                    strokeAlign: BorderSide.strokeAlignInside,
                                   ),
                                 );
                               }).toList()
-                            : [
-                                Container(
+                            : defaultColors.take(4).map((color) {
+                                return Container(
                                   width: 16,
                                   height: 16,
                                   margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.red, Colors.blue],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
+                                  decoration: colorSampleDecoration(
+                                    context,
+                                    color,
+                                    strokeAlign: BorderSide.strokeAlignInside,
                                   ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.green, Colors.yellow],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.purple, Colors.orange],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.pink, Colors.cyan],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
+                                );
+                              }).toList(),
                       ),
                       const SizedBox(height: 4),
                       Text('Custom', style: theme.textTheme.bodySmall),
@@ -688,7 +669,7 @@ class OptionListItem extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: colorSampleDecoration(context, color, alpha: 64),
                 child: Center(
                   child: Text(
                     '${index + 1}',
@@ -783,7 +764,7 @@ class AddOptionItemWidget extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: colorSampleDecoration(context, color),
                 child: Center(
                   child: Text(
                     '${index + 1}',
@@ -796,7 +777,6 @@ class AddOptionItemWidget extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // "Add new option" label and icon
               Expanded(
                 child: Row(
                   children: [
@@ -888,20 +868,6 @@ class _EditOptionDialogState extends State<EditOptionDialog> {
               ),
               maxLength: 100,
             ),
-            // const SizedBox(height: 24),
-            // Weight slider
-            // Text('Weight: ${_tempWeight.toStringAsFixed(1)}'),
-            // Slider(
-            //   value: _tempWeight,
-            //   min: 0.1,
-            //   max: 5.0,
-            //   divisions: 49,
-            //   onChanged: (value) {
-            //     setState(() {
-            //       _tempWeight = value;
-            //     });
-            //   },
-            // ),
           ],
         ),
       ),
@@ -1071,7 +1037,10 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
         children: [
           Row(
             children: [
-              Icon(Icons.volume_up_outlined),
+              Icon(
+                Icons.volume_up_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text('Audio Settings', style: theme.textTheme.titleSmall),
             ],
@@ -1121,12 +1090,16 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 8),
+            Icon(
+              icon,
+              size: 16,
+              color: Theme.of(context).hintColor.withAlpha(100),
+            ),
+            const SizedBox(width: 4),
             Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -1166,11 +1139,18 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
                         ),
                       ),
                       ...availableSounds.map((sound) {
+                        final isSelected =
+                            sound ==
+                            currentSound; // compare with your selected value
                         return DropdownMenuItem<String?>(
                           value: sound,
                           child: Text(
                             AudioUtils.formatSoundName(sound),
-                            style: theme.textTheme.bodyMedium,
+                            style: isSelected
+                                ? theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  )
+                                : theme.textTheme.bodyMedium,
                           ),
                         );
                       }),
@@ -1259,26 +1239,28 @@ class SpinDurationSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.timer_outlined),
-              const SizedBox(width: 8),
-              Text('Spin Duration', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.speed, size: 16),
+              Icon(
+                Icons.timer_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text(
-                '${seconds.toStringAsFixed(1)} seconds',
-                style: theme.textTheme.bodyMedium?.copyWith(
+                '${seconds.toStringAsFixed(1)} ',
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                'seconds spin',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: theme.textTheme.titleSmall?.color?.withAlpha(128),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          DefaultDivider(),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(

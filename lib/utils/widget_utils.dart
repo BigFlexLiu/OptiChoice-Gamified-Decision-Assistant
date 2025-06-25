@@ -16,3 +16,19 @@ void showErrorSnackBar(BuildContext context, String message) {
     ),
   );
 }
+
+BoxDecoration colorSampleDecoration(
+  BuildContext context,
+  Color fillColor, {
+  double width = 2,
+  int alpha = 128,
+  double strokeAlign = BorderSide.strokeAlignOutside,
+}) => BoxDecoration(
+  color: fillColor,
+  shape: BoxShape.circle,
+  border: Border.all(
+    width: 2,
+    color: Theme.of(context).colorScheme.outline.withAlpha(alpha),
+    strokeAlign: strokeAlign,
+  ),
+);

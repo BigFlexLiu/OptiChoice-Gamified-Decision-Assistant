@@ -218,8 +218,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     await _loadActiveWheel();
   }
 
-  // ...existing code...
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {

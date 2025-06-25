@@ -1,3 +1,4 @@
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomColorPickerView extends StatefulWidget {
@@ -192,14 +193,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: _colors[index],
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
+              decoration: colorSampleDecoration(context, _colors[index]),
             ),
           ],
         ),
