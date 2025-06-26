@@ -193,7 +193,8 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   void _updateCustomColors(List<Color> customColors) {
     setState(() {
-      spinner.colorThemeIndex = -1; // Use -1 to indicate custom theme
+      spinner.colorThemeIndex = -1;
+      spinner.customColors = customColors;
       spinner.colors = customColors;
       _hasChanges = true;
     });
@@ -296,7 +297,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   children: [
                     ColorThemeSelector(
                       selectedThemeIndex: spinner.colorThemeIndex,
-                      currentColors: spinner.colors,
+                      customColors: spinner.customColors,
                       onThemeChanged: _updateColorTheme,
                       onCustomColorsChanged: _updateCustomColors,
                     ),
@@ -451,28 +452,23 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
 class ColorThemeSelector extends StatelessWidget {
   final int selectedThemeIndex;
-  final List<Color> currentColors;
+  final List<Color> customColors;
   final Function(int) onThemeChanged;
   final Function(List<Color>) onCustomColorsChanged;
 
   const ColorThemeSelector({
     super.key,
     required this.selectedThemeIndex,
-    required this.currentColors,
+    required this.customColors,
     required this.onThemeChanged,
     required this.onCustomColorsChanged,
   });
 
   void _showCustomColorPicker(BuildContext context) {
-    // Use current colors if it's a custom theme, otherwise use default colors
-    List<Color> initialColors = selectedThemeIndex == -1
-        ? currentColors
-        : DefaultColorThemes.getByIndex(0)?.colors ?? [];
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CustomColorPickerView(
-          initialColors: initialColors,
+          initialColors: customColors,
           onColorsChanged: (colors) {
             onCustomColorsChanged(colors);
           },
@@ -484,12 +480,6 @@ class ColorThemeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final defaultColors = [
-      Colors.red,
-      Colors.blue,
-      Colors.green,
-      Colors.purple,
-    ];
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -583,32 +573,18 @@ class ColorThemeSelector extends StatelessWidget {
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children:
-                            selectedThemeIndex == -1 && currentColors.isNotEmpty
-                            ? currentColors.take(4).map((color) {
-                                return Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: colorSampleDecoration(
-                                    context,
-                                    color,
-                                    strokeAlign: BorderSide.strokeAlignInside,
-                                  ),
-                                );
-                              }).toList()
-                            : defaultColors.take(4).map((color) {
-                                return Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: colorSampleDecoration(
-                                    context,
-                                    color,
-                                    strokeAlign: BorderSide.strokeAlignInside,
-                                  ),
-                                );
-                              }).toList(),
+                        children: customColors.take(4).map((color) {
+                          return Container(
+                            width: 16,
+                            height: 16,
+                            margin: const EdgeInsets.only(right: 2),
+                            decoration: colorSampleDecoration(
+                              context,
+                              color,
+                              strokeAlign: BorderSide.strokeAlignInside,
+                            ),
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 4),
                       Text('Custom', style: theme.textTheme.bodySmall),
