@@ -2,7 +2,7 @@
 
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/views/premade_spinners_view.dart';
-import 'package:decision_spinner/widgets/spinner.dart';
+import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -514,8 +514,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                 final isExpanded = _expansionStateByItemId[spinnerId]!;
 
                 return SpinnerCard(
-                  key: ValueKey(spinnerId), // Explicitly set the key here
-                  spinnerId: spinnerId,
+                  key: ValueKey(spinnerId),
                   spinner: spinner,
                   isActive: isActive,
                   isExpanded: isExpanded,

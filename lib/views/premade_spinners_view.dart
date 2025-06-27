@@ -2,7 +2,7 @@ import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/widgets/spinner.dart';
+import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 
 class PremadeSpinnersView extends StatelessWidget {
@@ -112,7 +112,6 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
         final isExpanded = _expansionStateByItemId[spinner.id]!;
 
         return SpinnerCard(
-          spinnerId: 'premade_${index}_${spinner.name}',
           spinner: spinner,
           isExpanded: isExpanded,
           onExpansionChanged: (bool value) =>

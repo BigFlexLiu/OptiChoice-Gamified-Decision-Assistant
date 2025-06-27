@@ -3,7 +3,6 @@ import '../storage/spinner_model.dart';
 import 'spinner_preview.dart';
 
 class SpinnerCard extends StatelessWidget {
-  final String spinnerId;
   final SpinnerModel spinner;
   final bool isActive;
   final bool canReorder;
@@ -14,7 +13,6 @@ class SpinnerCard extends StatelessWidget {
 
   const SpinnerCard({
     super.key,
-    required this.spinnerId,
     required this.spinner,
     required this.actions,
     required this.onExpansionChanged,
@@ -29,7 +27,6 @@ class SpinnerCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      // Remove this line: key: ValueKey(spinnerId),
       elevation: isActive ? 8 : 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: Container(
