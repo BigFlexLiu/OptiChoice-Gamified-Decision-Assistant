@@ -23,14 +23,6 @@ class SpinnerPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    // Draw outer border
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-
-    canvas.drawCircle(center, radius, borderPaint);
-
     final anglePerOption = 2 * math.pi / options.length;
     for (int i = 0; i < options.length; i++) {
       // Start from the top (-π/2) and add rotation
@@ -42,7 +34,7 @@ class SpinnerPainter extends CustomPainter {
 
       // Draw slice
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius - 2),
+        Rect.fromCircle(center: center, radius: radius),
         startAngle,
         sweepAngle,
         true,
@@ -53,7 +45,7 @@ class SpinnerPainter extends CustomPainter {
       final sliceBorderPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.7)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 4;
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius - 2),
@@ -72,6 +64,7 @@ class SpinnerPainter extends CustomPainter {
         startAngle + sweepAngle / 2,
       );
     }
+
     // Draw center circle
     final centerPaint = Paint()
       ..color = Colors.white

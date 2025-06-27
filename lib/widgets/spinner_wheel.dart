@@ -275,7 +275,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
         alignment: Alignment.center,
         children: [
           _buildPointerShadow(pointerSize),
-          _buildMainPointer(pointerSize),
           _buildPointerHighlight(pointerSize),
         ],
       ),
@@ -284,13 +283,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   Widget _buildPointerShadow(double baseSize) {
     final width = baseSize * 0.9; // Proportional to pointer base size
-    final height = baseSize * 1.75; // Proportional to pointer base size
+    final height = baseSize * 1.8; // Proportional to pointer base size
 
     return Transform.translate(
-      offset: Offset(
-        baseSize * 0.1,
-        baseSize * 0.1,
-      ), // Proportional shadow offset
+      offset: Offset(0, -height * 0.1), // Proportional shadow offset
       child: Container(
         width: 0,
         height: 0,
@@ -299,27 +295,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
             left: BorderSide(color: Colors.transparent, width: width),
             right: BorderSide(color: Colors.transparent, width: width),
             top: BorderSide(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 1),
               width: height,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainPointer(double baseSize) {
-    final width = baseSize * 0.9; // Proportional to pointer base size
-    final height = baseSize * 1.75; // Proportional to pointer base size
-
-    return Container(
-      width: 0,
-      height: 0,
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: Colors.transparent, width: width),
-          right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.black, width: height),
         ),
       ),
     );
@@ -336,7 +315,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         border: Border(
           left: BorderSide(color: Colors.transparent, width: width),
           right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.grey[200]!, width: height),
+          top: BorderSide(color: Colors.white, width: height),
         ),
       ),
     );
