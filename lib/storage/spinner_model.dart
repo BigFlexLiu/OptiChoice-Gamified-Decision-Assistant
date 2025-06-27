@@ -33,6 +33,13 @@ class SpinnerModel {
        spinEndSound = spinEndSound ?? 'tada_end',
        id = newId ?? _uuid.v4();
 
+  Color getColorOfOption(SpinnerOption option) {
+    print(options.indexOf(option));
+    print(colors.length);
+    print(colors);
+    return colors[options.indexOf(option) % colors.length];
+  }
+
   static const _uuid = Uuid();
   Map<String, dynamic> toJson() {
     return {

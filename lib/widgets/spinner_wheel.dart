@@ -34,6 +34,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   double _currentRotation = 0;
   int? _currentPointingIndex; // Track the current pointing indexfinal
   double? wheelSize;
+  late Color currentOptionColor;
 
   List<String> get spinnerTextOptions =>
       widget.spinnerModel.options.map((e) => e.text).toList();
@@ -48,6 +49,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       _currentPointingIndex = 0; // Set initial pointing index
       widget.onPointingOptionChanged!(firstOption.text);
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getColorOfOption(firstOption);
+      });
     }
   }
 
@@ -78,7 +82,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _determineWinner();
+        _reportWinner();
       }
     });
   }
@@ -148,41 +152,17 @@ class SpinnerWheelState extends State<SpinnerWheel>
     _controller.forward();
   }
 
-  void _determineWinner() {
-    if (spinnerTextOptions.isEmpty) return;
-
-    // Use weighted selection if options have different weights
-    final random = math.Random();
-    final totalWeight = widget.spinnerModel.options.fold<double>(
-      0,
-      (sum, option) => sum + option.weight,
-    );
-
-    if (totalWeight > 0) {
-      // Weighted random selection
-      final randomValue = random.nextDouble() * totalWeight;
-      double currentWeight = 0;
-
-      for (final option in widget.spinnerModel.options) {
-        currentWeight += option.weight;
-        if (randomValue <= currentWeight) {
-          widget.onSpinComplete(option.text);
-          return;
-        }
-      }
+  void _reportWinner() {
+    final winnerOption = _getCurrentPointingOption();
+    if (winnerOption != null) {
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getColorOfOption(winnerOption);
+      });
     }
-
-    // Fallback to position-based selection (should rarely be reached)
-    final normalizedRotation = _currentRotation % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
-    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
-    final winnerIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
-
-    widget.onSpinComplete(spinnerTextOptions[winnerIndex]);
+    widget.onSpinComplete(winnerOption?.text ?? "");
   }
 
-  String? _getCurrentPointingOption() {
+  SpinnerOption? _getCurrentPointingOption() {
     if (spinnerTextOptions.isEmpty) return null;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
@@ -191,7 +171,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final pointingIndex =
         (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    return spinnerTextOptions[pointingIndex];
+    return widget.spinnerModel.options[pointingIndex];
   }
 
   @override
@@ -273,7 +253,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
                 options: spinnerTextOptions,
                 rotation: 0, // Rotation is handled by Transform.rotate
                 colors: widget.spinnerModel.colors,
-                selectedOption: _getCurrentPointingOption(),
+                selectedOption: _getCurrentPointingOption()?.text,
                 wheelSize: size, // Pass the wheel size for text scaling
               ),
               size: Size(size, size),
@@ -339,7 +319,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         border: Border(
           left: BorderSide(color: Colors.transparent, width: width),
           right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.white, width: height),
+          top: BorderSide(color: Colors.black, width: height),
         ),
       ),
     );
@@ -356,7 +336,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         border: Border(
           left: BorderSide(color: Colors.transparent, width: width),
           right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.deepPurple, width: height),
+          top: BorderSide(color: Colors.grey[200]!, width: height),
         ),
       ),
     );
@@ -373,7 +353,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       decoration: BoxDecoration(
         gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.deepPurple, width: borderWidth),
+        border: Border.all(color: Colors.grey, width: borderWidth),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -387,7 +367,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
           width: innerCircleSize,
           height: innerCircleSize,
           decoration: BoxDecoration(
-            color: Colors.deepPurple,
+            color: currentOptionColor,
             shape: BoxShape.circle,
           ),
         ),
