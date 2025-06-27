@@ -34,7 +34,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   double _currentRotation = 0;
   int? _currentPointingIndex; // Track the current pointing indexfinal
   double? wheelSize;
-  late Color currentOptionColor;
+  Color currentOptionColor = Colors.black;
 
   List<String> get spinnerTextOptions =>
       widget.spinnerModel.options.map((e) => e.text).toList();
@@ -324,6 +324,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   Widget _buildCenterCircle(double wheelSize) {
     final circleSize = wheelSize * 0.167; // 50/300 ratio
     final innerCircleSize = circleSize * 0.4; // 20/50 ratio
+    final innerCircleBorderSize = innerCircleSize * 1.1;
     final borderWidth = circleSize * 0.08; // 4/50 ratio
 
     return Container(
@@ -348,6 +349,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
           decoration: BoxDecoration(
             color: currentOptionColor,
             shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey),
           ),
         ),
       ),
