@@ -324,32 +324,34 @@ class SpinnerWheelState extends State<SpinnerWheel>
   Widget _buildCenterCircle(double wheelSize) {
     final circleSize = wheelSize * 0.167; // 50/300 ratio
     final innerCircleSize = circleSize * 0.4; // 20/50 ratio
-    final innerCircleBorderSize = innerCircleSize * 1.1;
     final borderWidth = circleSize * 0.08; // 4/50 ratio
 
-    return Container(
-      width: circleSize,
-      height: circleSize,
-      decoration: BoxDecoration(
-        gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: circleSize * 0.2, // 10/50 ratio
-            offset: Offset(0, circleSize * 0.06), // 3/50 ratio
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: innerCircleSize,
-          height: innerCircleSize,
-          decoration: BoxDecoration(
-            color: currentOptionColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey),
+    return InkWell(
+      onTap: _spin,
+      child: Container(
+        width: circleSize,
+        height: circleSize,
+        decoration: BoxDecoration(
+          gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey, width: borderWidth),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: circleSize * 0.2, // 10/50 ratio
+              offset: Offset(0, circleSize * 0.06), // 3/50 ratio
+            ),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            width: innerCircleSize,
+            height: innerCircleSize,
+            decoration: BoxDecoration(
+              color: currentOptionColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey),
+            ),
           ),
         ),
       ),
