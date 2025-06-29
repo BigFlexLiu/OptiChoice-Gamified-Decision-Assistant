@@ -518,8 +518,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                   spinner: spinner,
                   isActive: isActive,
                   isExpanded: isExpanded,
-                  onExpansionChanged: (bool value) =>
-                      _expansionStateByItemId[spinnerId] = value,
+                  onExpansionChanged: (bool value) => setState(() {
+                    _expansionStateByItemId[spinnerId] = value;
+                  }),
                   canReorder: _searchQuery.isEmpty,
                   actions: _buildSpinnerActions(spinnerId, isActive, theme),
                 );

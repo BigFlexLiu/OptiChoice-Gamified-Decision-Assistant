@@ -25,120 +25,120 @@ class SpinnerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final double borderRadius = 24;
 
     return Card(
-      elevation: isActive ? 8 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.all(Radius.circular(borderRadius)),
+      ),
+      elevation: isActive || isExpanded ? 8 : 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: isActive
             ? BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(borderRadius),
                 border: Border.all(color: theme.colorScheme.primary, width: 2),
               )
             : null,
-        child: ExpansionTile(
-          onExpansionChanged: onExpansionChanged,
-          initiallyExpanded: isExpanded,
-          leading: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (canReorder) ...[
-                Icon(
-                  Icons.drag_handle,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-              ],
-              CircleAvatar(
-                backgroundColor: isActive
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.surface,
-                child: Icon(
-                  isActive ? Icons.star : Icons.casino,
-                  color: isActive
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  spinner.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive
-                        ? theme.colorScheme.primary
-                        : theme.textTheme.titleMedium?.color,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: ExpansionTile(
+            onExpansionChanged: onExpansionChanged,
+            initiallyExpanded: isExpanded,
+            backgroundColor: isExpanded ? Theme.of(context).canvasColor : null,
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (canReorder) ...[
+                  Icon(
+                    Icons.drag_handle,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-              ),
-              if (isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'ACTIVE',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${spinner.options.length} options',
-                style: theme.textTheme.bodyMedium,
-              ),
-              if (subtitle != null)
-                Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith()),
-            ],
-          ),
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Spinner Preview
-                  SpinnerPreview(size: 196, spinner: spinner),
-                  const SizedBox(width: 16),
-                  // Action Buttons
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: actions
-                          .map(
-                            (action) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildActionButton(
-                                context: context,
-                                icon: action.icon,
-                                label: action.label,
-                                onPressed: action.onPressed,
-                                color: action.color,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
+                  const SizedBox(width: 8),
                 ],
-              ),
+              ],
             ),
-          ],
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    spinner.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isActive
+                          ? theme.colorScheme.primary
+                          : theme.textTheme.titleMedium?.color,
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'ACTIVE',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${spinner.options.length} options',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                if (subtitle != null)
+                  Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith()),
+              ],
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Spinner Preview
+                    SpinnerPreview(size: 196, spinner: spinner),
+                    const SizedBox(width: 16),
+                    // Action Buttons
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: actions
+                            .map(
+                              (action) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: action.icon,
+                                  label: action.label,
+                                  onPressed: action.onPressed,
+                                  color: action.color,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

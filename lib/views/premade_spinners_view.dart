@@ -114,8 +114,9 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
         return SpinnerCard(
           spinner: spinner,
           isExpanded: isExpanded,
-          onExpansionChanged: (bool value) =>
-              _expansionStateByItemId[spinner.id] = value,
+          onExpansionChanged: (bool value) => setState(() {
+            _expansionStateByItemId[spinner.id] = value;
+          }),
           isActive: false,
           canReorder: false,
           actions: _buildActions(context, spinner),
