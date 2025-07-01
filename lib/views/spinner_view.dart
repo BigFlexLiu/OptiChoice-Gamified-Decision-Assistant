@@ -17,7 +17,7 @@ class SpinnerView extends StatefulWidget {
 
 class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   SpinnerModel? _activeSpinner;
-  String _currentOptionText = '';
+  late SpinnerOption? _currentSpinnerOption;
   bool _isSpinning = false;
   bool _isLoading = true;
   bool _shouldAnimateText = false;
@@ -77,14 +77,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     final defaultColor = Colors.black;
     if (_activeSpinner == null) return defaultColor;
 
-    final colors = _activeSpinner!.colors;
-    final currOptionIdx = _activeSpinner!.options.indexWhere(
-      (e) => e.text == _currentOptionText,
-    );
-
-    if (currOptionIdx == -1) return defaultColor;
-
-    return colors[currOptionIdx % colors.length];
+    return _activeSpinner!.getCircularColorOfOption(_currentSpinnerOption!);
   }
 
   Future<void> _loadActiveWheel() async {
@@ -98,9 +91,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
       setState(() {
         _activeSpinner = spinnerModel;
-        _currentOptionText = spinnerModel.options.isNotEmpty
-            ? spinnerModel.options[0].text
-            : '';
+        _currentSpinnerOption = spinnerModel.options.first;
         _isLoading = false;
       });
 
@@ -109,7 +100,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       // Handle error by setting loading to false and showing empty state
       setState(() {
         _activeSpinner = null;
-        _currentOptionText = '';
+        _currentSpinnerOption = null;
         _isLoading = false;
       });
     }
@@ -157,11 +148,11 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     });
   }
 
-  void _onPointingOptionChanged(String option) {
-    if (_isSpinning && option != _currentOptionText) {
+  void _onPointingOptionChanged(SpinnerOption option) {
+    if (_isSpinning && option != _currentSpinnerOption) {
       _playSpinSoundIfAvailable();
       setState(() {
-        _currentOptionText = option;
+        _currentSpinnerOption = option;
       });
     }
   }
@@ -321,7 +312,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
     return Center(
       child: AnimatedTextJumpChangeColor(
-        _currentOptionText,
+        _currentSpinnerOption?.text ?? "",
         _shouldAnimateText,
         setShouldAnimateFalse,
         _textColor,

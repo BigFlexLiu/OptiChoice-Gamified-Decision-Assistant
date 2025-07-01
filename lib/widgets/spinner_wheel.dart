@@ -8,7 +8,7 @@ class SpinnerWheel extends StatefulWidget {
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
-  final Function(String)? onPointingOptionChanged;
+  final Function(SpinnerOption)? onPointingOptionChanged;
   final double? size;
   final bool showSpinButton;
 
@@ -48,9 +48,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       _currentPointingIndex = 0; // Set initial pointing index
-      widget.onPointingOptionChanged!(firstOption.text);
+      widget.onPointingOptionChanged!(firstOption);
       setState(() {
-        currentOptionColor = widget.spinnerModel.getColorOfOption(firstOption);
+        currentOptionColor = widget.spinnerModel.getCircularColor(0);
       });
     }
   }
@@ -99,7 +99,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(spinnerTextOptions[pointingIndex]);
+      widget.onPointingOptionChanged!(
+        widget.spinnerModel.options[pointingIndex],
+      );
     }
   }
 
@@ -156,7 +158,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final winnerOption = _getCurrentPointingOption();
     if (winnerOption != null) {
       setState(() {
-        currentOptionColor = widget.spinnerModel.getColorOfOption(winnerOption);
+        currentOptionColor = widget.spinnerModel.getCircularColorOfOption(
+          winnerOption,
+        );
       });
     }
     widget.onSpinComplete(winnerOption?.text ?? "");
@@ -250,10 +254,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
             ),
             child: CustomPaint(
               painter: SpinnerPainter(
-                options: spinnerTextOptions,
+                spinnerModel: widget.spinnerModel,
                 rotation: 0, // Rotation is handled by Transform.rotate
-                colors: widget.spinnerModel.colors,
-                selectedOption: _getCurrentPointingOption()?.text,
+                selectedOption: _getCurrentPointingOption(),
                 wheelSize: size, // Pass the wheel size for text scaling
               ),
               size: Size(size, size),

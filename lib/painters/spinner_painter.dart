@@ -1,20 +1,21 @@
 import 'dart:math' as math;
+import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerPainter extends CustomPainter {
-  final List<String> options;
+  final SpinnerModel spinnerModel;
   final double rotation;
-  final String? selectedOption;
-  final List<Color> colors;
+  final SpinnerOption? selectedOption;
   final double? wheelSize;
 
   SpinnerPainter({
-    required this.options,
+    required this.spinnerModel,
     required this.rotation,
-    required this.colors,
     this.selectedOption,
     this.wheelSize,
   });
+
+  List<String> get options => spinnerModel.options.map((e) => e.text).toList();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -81,14 +82,10 @@ class SpinnerPainter extends CustomPainter {
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
-    final color = _getSolidColorForIndex(index);
+    final color = spinnerModel.getCircularColor(index);
     return Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-  }
-
-  Color _getSolidColorForIndex(int index) {
-    return colors[index % colors.length];
   }
 
   double _calculateFontSize() {
@@ -182,7 +179,6 @@ class SpinnerPainter extends CustomPainter {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.colors != colors ||
         oldDelegate.wheelSize != wheelSize;
   }
 }

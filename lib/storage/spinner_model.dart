@@ -33,11 +33,42 @@ class SpinnerModel {
        spinEndSound = spinEndSound ?? 'tada_end',
        id = newId ?? _uuid.v4();
 
-  Color getColorOfOption(SpinnerOption option) {
-    print(options.indexOf(option));
-    print(colors.length);
-    print(colors);
-    return colors[options.indexOf(option) % colors.length];
+  // Blend the color of the last idx item
+  Color getCircularColor(int idx) {
+    if (shouldUseBlendedColorAtIdx(idx)) {
+      return blendedColor;
+    }
+    return colors[idx % colors.length];
+  }
+
+  Color getCircularColorOfOption(SpinnerOption option) {
+    final optionIdx = options.indexOf(option);
+    if (optionIdx == -1) {
+      return colors.first;
+    }
+    return getCircularColor(optionIdx);
+  }
+
+  bool shouldUseBlendedColorAtIdx(int idx) {
+    int lastIdx = options.length - 1;
+    if (idx != lastIdx) {
+      return false;
+    }
+    int lastColorIndex = lastIdx % colors.length;
+
+    return 0 == lastColorIndex;
+  }
+
+  Color get blendedColor =>
+      blend(colors[0], colors[(options.length - 2) % colors.length]);
+
+  Color blend(Color a, Color b, {double t = 0.5}) {
+    return Color.fromARGB(
+      (a.alpha * (1 - t) + b.alpha * t).round(),
+      (a.red * (1 - t) + b.red * t).round(),
+      (a.green * (1 - t) + b.green * t).round(),
+      (a.blue * (1 - t) + b.blue * t).round(),
+    );
   }
 
   static const _uuid = Uuid();
