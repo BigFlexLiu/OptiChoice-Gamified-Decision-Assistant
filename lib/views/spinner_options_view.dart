@@ -126,9 +126,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
             context: context,
             builder: (context) => AlertDialog(
               title: Text('Unsaved Changes'),
-              content: Text(
-                'You have unsaved changes. Do you want to save them?',
-              ),
+              content: Text('Do you want to save them?'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -882,7 +880,6 @@ class _AddOptionDialogState extends State<AddOptionDialog> {
         decoration: InputDecoration(
           labelText: 'Option text',
           hintText: 'Enter new option...',
-          prefixIcon: const Icon(Icons.lightbulb_outline),
         ),
         autofocus: true,
         onSubmitted: (_) => _addOption(),

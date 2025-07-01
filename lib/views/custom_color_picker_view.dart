@@ -21,6 +21,10 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
   bool _isReordering = false;
   final Map<Color, int> _colorOrder = {};
 
+  // Store initial state for change detection
+  late List<Color> _initialColors;
+  late Map<Color, int> _initialColorOrder;
+
   // Predefined color palette for selection
   final List<Color> _colors = [
     Colors.red,
@@ -71,6 +75,32 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
     for (int i = 0; i < widget.initialColors.length; i++) {
       _colorOrder[widget.initialColors[i]] = i + 1;
     }
+
+    // Store initial state for change detection
+    _initialColors = List.from(widget.initialColors);
+    _initialColorOrder = Map.from(_colorOrder);
+  }
+
+  bool _hasChanges() {
+    // Check if number of selected colors changed
+    if (_selectedColors.length != _initialColors.length) {
+      return true;
+    }
+
+    // Check if selected colors changed
+    if (!_selectedColors.containsAll(_initialColors) ||
+        !_initialColors.every((color) => _selectedColors.contains(color))) {
+      return true;
+    }
+
+    // Check if order changed
+    for (final color in _selectedColors) {
+      if (_colorOrder[color] != _initialColorOrder[color]) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void _toggleColor(Color color) {
@@ -162,7 +192,6 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
   }
 
   void _saveColors() {
-    print("save");
     if (_isReordering) {
       final reorderedColors = _applyNewOrder();
       widget.onColorsChanged(reorderedColors);
@@ -186,165 +215,215 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _showDiscardChangesDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Unsaved Changes'),
+          content: const Text('Do you want to save them?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Discard'),
+            ),
+            TextButton(
+              onPressed: () {
+                _saveColors();
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Custom Colors'),
-        backgroundColor: theme.colorScheme.inversePrimary,
-        actions: [
-          TextButton(
-            onPressed: _saveColors,
-            child: Text(
-              'Save',
-              style: theme.appBarTheme.titleTextStyle?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+    return PopScope(
+      canPop: !_hasChanges(),
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (!didPop && _hasChanges()) {
+          await _showDiscardChangesDialog();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Custom Colors'),
+          backgroundColor: theme.colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              if (_hasChanges()) {
+                await _showDiscardChangesDialog();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-
-            // Selected colors count indicator and reorder button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${_selectedColors.length} of $_maxColors colors selected',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+          actions: [
+            if (_hasChanges())
+              TextButton(
+                onPressed: _saveColors,
+                child: Text(
+                  'Save',
+                  style: theme.appBarTheme.titleTextStyle?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (_selectedColors.length > 1)
-                  ElevatedButton.icon(
-                    onPressed: _toggleAndSaveReordering,
-                    icon: Icon(_isReordering ? Icons.check : Icons.reorder),
-                    label: Text(_isReordering ? 'Done' : 'Reorder'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isReordering
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.secondary,
-                      foregroundColor: _isReordering
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSecondary,
+              ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+
+              // Selected colors count indicator and reorder button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_selectedColors.length} of $_maxColors colors selected',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  if (_selectedColors.length > 1)
+                    ElevatedButton.icon(
+                      onPressed: _toggleAndSaveReordering,
+                      icon: Icon(_isReordering ? Icons.check : Icons.reorder),
+                      label: Text(_isReordering ? 'Done' : 'Reorder'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isReordering
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.secondary,
+                        foregroundColor: _isReordering
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSecondary,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-            // Color selection grid
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _colors.length,
-                itemBuilder: (context, index) {
-                  final color = _colors[index];
-                  final isSelected = _selectedColors.contains(color);
-                  final canDeselect = _selectedColors.length > _minColors;
-                  final canSelect = _selectedColors.length < _maxColors;
-                  final isEnabled = _isReordering
-                      ? isSelected
-                      : (isSelected ? canDeselect : canSelect);
-                  final colorOrder = _colorOrder[color];
+              // Color selection grid
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: _colors.length,
+                  itemBuilder: (context, index) {
+                    final color = _colors[index];
+                    final isSelected = _selectedColors.contains(color);
+                    final canDeselect = _selectedColors.length > _minColors;
+                    final canSelect = _selectedColors.length < _maxColors;
+                    final isEnabled = _isReordering
+                        ? isSelected
+                        : (isSelected ? canDeselect : canSelect);
+                    final colorOrder = _colorOrder[color];
 
-                  return GestureDetector(
-                    onTap: isEnabled
-                        ? () => _isReordering
-                              ? _toggleColorOrder(color)
-                              : _toggleColor(color)
-                        : null,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.3,
-                                ),
-                          width: isSelected ? 3 : 2,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: theme.colorScheme.primary.withValues(
+                    return GestureDetector(
+                      onTap: isEnabled
+                          ? () => _isReordering
+                                ? _toggleColorOrder(color)
+                                : _toggleColor(color)
+                          : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline.withValues(
                                     alpha: 0.3,
                                   ),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
+                            width: isSelected ? 3 : 2,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (isSelected && !_isReordering)
+                              Icon(
+                                Icons.check,
+                                color: _getContrastColor(color),
+                                size: 24,
+                              ),
+                            if (_isReordering &&
+                                isSelected &&
+                                colorOrder != null)
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 2,
+                                  ),
                                 ),
-                              ]
-                            : null,
+                                child: Text(
+                                  colorOrder.toString(),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                            if (!isEnabled || (_isReordering && !isSelected))
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (isSelected && !_isReordering)
-                            Icon(
-                              Icons.check,
-                              color: _getContrastColor(color),
-                              size: 24,
-                            ),
-                          if (_isReordering && isSelected && colorOrder != null)
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: theme.colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Text(
-                                colorOrder.toString(),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          if (!isEnabled || (_isReordering && !isSelected))
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
