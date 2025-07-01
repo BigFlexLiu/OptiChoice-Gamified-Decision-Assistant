@@ -1025,8 +1025,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
           const SizedBox(height: 12),
           _buildAudioSelector(
             context: context,
-            label: 'Spin Sound',
-            icon: Icons.play_circle_outline,
             currentSound: _validSpinSound,
             availableSounds: widget.availableSpinSounds,
             onSoundChanged: widget.onSpinSoundChanged,
@@ -1036,8 +1034,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
           const SizedBox(height: 16),
           _buildAudioSelector(
             context: context,
-            label: 'Spin End Sound',
-            icon: Icons.stop_circle_outlined,
             currentSound: _validSpinEndSound,
             availableSounds: widget.availableSpinEndSounds,
             onSoundChanged: widget.onSpinEndSoundChanged,
@@ -1051,8 +1047,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
 
   Widget _buildAudioSelector({
     required BuildContext context,
-    required String label,
-    required IconData icon,
     required String? currentSound,
     required List<String> availableSounds,
     required Function(String?) onSoundChanged,
@@ -1064,23 +1058,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: Theme.of(context).hintColor.withAlpha(100),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
