@@ -16,7 +16,7 @@ class DefaultColorThemes {
     _neonPopTheme,
     _earthSkyTheme,
     _technoNightTheme,
-    _retroArcadeTheme,
+    _aracadeTheme,
   ];
   static const ColorTheme _vibrantTheme = ColorTheme(
     name: 'Vibrant',
@@ -57,8 +57,8 @@ class DefaultColorThemes {
       Color(0xFFFF8C00), // Dark Orange
     ],
   );
-  static const ColorTheme _retroArcadeTheme = ColorTheme(
-    name: 'Retro Arcade',
+  static const ColorTheme _aracadeTheme = ColorTheme(
+    name: 'Arcade',
     colors: [
       Color(0xFFFC427B), // Bright Pink
       Color(0xFFF8EFBA), // Pale Yellow

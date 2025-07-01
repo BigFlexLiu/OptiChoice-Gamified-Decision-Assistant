@@ -116,144 +116,6 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     }
   }
 
-  void _updateSpinSound(String? soundName) {
-    setState(() {
-      spinner.spinSound = soundName;
-      _hasChanges = true;
-    });
-  }
-
-  void _updateSpinEndSound(String? soundName) {
-    setState(() {
-      spinner.spinEndSound = soundName;
-      _hasChanges = true;
-    });
-  }
-
-  void _updateSpinDuration(Duration duration) {
-    setState(() {
-      spinner.spinDuration = duration;
-      _hasChanges = true;
-    });
-  }
-
-  void _removeOption(int index) {
-    if (spinner.options.length > 2) {
-      setState(() {
-        spinner.options.removeAt(index);
-        _hasChanges = true;
-      });
-    }
-  }
-
-  void _editOption(int index, String newValue) {
-    if (newValue.trim().isNotEmpty &&
-        newValue.trim() != spinner.options[index].text) {
-      setState(() {
-        spinner.options[index].text = newValue;
-        _hasChanges = true;
-      });
-    }
-  }
-
-  void _updateOptionWeight(int index, double weight) {
-    setState(() {
-      spinner.options[index].weight = weight;
-      _hasChanges = true;
-    });
-  }
-
-  void _reorderOptions(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final item = spinner.options.removeAt(oldIndex);
-      spinner.options.insert(newIndex, item);
-      _hasChanges = true;
-    });
-  }
-
-  void _editSpinnerName(String newName) {
-    if (newName.trim().isNotEmpty && newName.trim() != spinner.name) {
-      setState(() {
-        spinner.name = newName.trim();
-        _hasChanges = true;
-      });
-    }
-  }
-
-  void _updateColorTheme(int themeIndex) {
-    setState(() {
-      spinner.colorThemeIndex = themeIndex;
-      spinner.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
-      _hasChanges = true;
-    });
-  }
-
-  void _updateCustomColors(List<Color> customColors) {
-    setState(() {
-      spinner.colorThemeIndex = -1;
-      spinner.customColors = customColors;
-      spinner.colors = customColors;
-      _hasChanges = true;
-    });
-  }
-
-  void _addOption(String text) {
-    setState(() {
-      spinner.options.add(SpinnerOption(text: text.trim()));
-      _hasChanges = true;
-    });
-  }
-
-  void _showEditNameDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => EditNameDialog(
-        initialName: spinner.name,
-        onNameChanged: _editSpinnerName,
-      ),
-    );
-  }
-
-  void _showOptionDialog(int index, SpinnerOption option) {
-    showDialog(
-      context: context,
-      builder: (context) => EditOptionDialog(
-        option: option,
-        canDelete: spinner.options.length > 2,
-        onOptionChanged: (newText, newWeight) {
-          _editOption(index, newText);
-          _updateOptionWeight(index, newWeight);
-        },
-        onDeleteRequested: () {
-          Navigator.of(context).pop();
-          _showDeleteConfirmation(index);
-        },
-      ),
-    );
-  }
-
-  void _showAddOptionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AddOptionDialog(onOptionAdded: _addOption),
-    );
-  }
-
-  void _showDeleteConfirmation(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => DeleteConfirmationDialog(
-        title: 'Delete Option',
-        message:
-            'Are you sure you want to delete "${spinner.options[index].text}"?',
-        onConfirmed: () => _removeOption(index),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -448,6 +310,144 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       ),
     );
   }
+
+  void _updateSpinSound(String? soundName) {
+    setState(() {
+      spinner.spinSound = soundName;
+      _hasChanges = true;
+    });
+  }
+
+  void _updateSpinEndSound(String? soundName) {
+    setState(() {
+      spinner.spinEndSound = soundName;
+      _hasChanges = true;
+    });
+  }
+
+  void _updateSpinDuration(Duration duration) {
+    setState(() {
+      spinner.spinDuration = duration;
+      _hasChanges = true;
+    });
+  }
+
+  void _removeOption(int index) {
+    if (spinner.options.length > 2) {
+      setState(() {
+        spinner.options.removeAt(index);
+        _hasChanges = true;
+      });
+    }
+  }
+
+  void _editOption(int index, String newValue) {
+    if (newValue.trim().isNotEmpty &&
+        newValue.trim() != spinner.options[index].text) {
+      setState(() {
+        spinner.options[index].text = newValue;
+        _hasChanges = true;
+      });
+    }
+  }
+
+  void _updateOptionWeight(int index, double weight) {
+    setState(() {
+      spinner.options[index].weight = weight;
+      _hasChanges = true;
+    });
+  }
+
+  void _reorderOptions(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final item = spinner.options.removeAt(oldIndex);
+      spinner.options.insert(newIndex, item);
+      _hasChanges = true;
+    });
+  }
+
+  void _editSpinnerName(String newName) {
+    if (newName.trim().isNotEmpty && newName.trim() != spinner.name) {
+      setState(() {
+        spinner.name = newName.trim();
+        _hasChanges = true;
+      });
+    }
+  }
+
+  void _updateColorTheme(int themeIndex) {
+    setState(() {
+      spinner.colorThemeIndex = themeIndex;
+      spinner.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
+      _hasChanges = true;
+    });
+  }
+
+  void _updateCustomColors(List<Color> customColors) {
+    setState(() {
+      spinner.colorThemeIndex = -1;
+      spinner.customColors = customColors;
+      spinner.colors = customColors;
+      _hasChanges = true;
+    });
+  }
+
+  void _addOption(String text) {
+    setState(() {
+      spinner.options.add(SpinnerOption(text: text.trim()));
+      _hasChanges = true;
+    });
+  }
+
+  void _showEditNameDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => EditNameDialog(
+        initialName: spinner.name,
+        onNameChanged: _editSpinnerName,
+      ),
+    );
+  }
+
+  void _showOptionDialog(int index, SpinnerOption option) {
+    showDialog(
+      context: context,
+      builder: (context) => EditOptionDialog(
+        option: option,
+        canDelete: spinner.options.length > 2,
+        onOptionChanged: (newText, newWeight) {
+          _editOption(index, newText);
+          _updateOptionWeight(index, newWeight);
+        },
+        onDeleteRequested: () {
+          Navigator.of(context).pop();
+          _showDeleteConfirmation(index);
+        },
+      ),
+    );
+  }
+
+  void _showAddOptionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AddOptionDialog(onOptionAdded: _addOption),
+    );
+  }
+
+  void _showDeleteConfirmation(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => DeleteConfirmationDialog(
+        title: 'Delete Option',
+        message:
+            'Are you sure you want to delete "${spinner.options[index].text}"?',
+        onConfirmed: () => _removeOption(index),
+      ),
+    );
+  }
 }
 
 class ColorThemeSelector extends StatelessWidget {
@@ -472,6 +472,55 @@ class ColorThemeSelector extends StatelessWidget {
           onColorsChanged: (colors) {
             onCustomColorsChanged(colors);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeSelector({
+    required BuildContext context,
+    required List<Color> colors,
+    required String name,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          border: isSelected
+              ? Border.all(color: theme.colorScheme.primary, width: 2)
+              : Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: colors.take(4).map((color) {
+                return Container(
+                  width: 16,
+                  height: 16,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: colorSampleDecoration(
+                    context,
+                    color,
+                    width: name == 'Custom' ? 1 : 1,
+                    alpha: name == 'Custom' ? 255 : 64,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 4),
+            Text(name, style: theme.textTheme.bodySmall),
+          ],
         ),
       ),
     );
@@ -508,89 +557,22 @@ class ColorThemeSelector extends StatelessWidget {
                 final colorTheme = entry.value;
                 final isSelected = selectedThemeIndex == index;
 
-                return GestureDetector(
+                return _buildThemeSelector(
+                  context: context,
+                  colors: colorTheme.colors,
+                  name: colorTheme.name,
+                  isSelected: isSelected,
                   onTap: () => onThemeChanged(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: isSelected
-                          ? Border.all(
-                              color: theme.colorScheme.primary,
-                              width: 2,
-                            )
-                          : Border.all(
-                              color: theme.colorScheme.outline.withValues(
-                                alpha: 0.3,
-                              ),
-                              width: 1,
-                            ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: colorTheme.colors.take(4).map((color) {
-                            return Container(
-                              width: 16,
-                              height: 16,
-                              margin: const EdgeInsets.only(right: 2),
-                              decoration: colorSampleDecoration(
-                                context,
-                                color,
-                                width: 1,
-                                alpha: 64,
-                                strokeAlign: BorderSide.strokeAlignInside,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(colorTheme.name, style: theme.textTheme.bodySmall),
-                      ],
-                    ),
-                  ),
                 );
               }),
 
               // Custom theme option
-              GestureDetector(
+              _buildThemeSelector(
+                context: context,
+                colors: customColors,
+                name: 'Custom',
+                isSelected: selectedThemeIndex == -1,
                 onTap: () => _showCustomColorPicker(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: selectedThemeIndex == -1
-                        ? Border.all(color: theme.colorScheme.primary, width: 2)
-                        : Border.all(
-                            color: theme.colorScheme.outline.withValues(
-                              alpha: 0.3,
-                            ),
-                            width: 1,
-                          ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: customColors.take(4).map((color) {
-                          return Container(
-                            width: 16,
-                            height: 16,
-                            margin: const EdgeInsets.only(right: 2),
-                            decoration: colorSampleDecoration(
-                              context,
-                              color,
-                              strokeAlign: BorderSide.strokeAlignInside,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('Custom', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
