@@ -208,7 +208,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -288,7 +288,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
                               : theme.colorScheme.outline.withValues(
                                   alpha: 0.3,
                                 ),
-                          width: isSelected ? 3 : 1,
+                          width: isSelected ? 3 : 2,
                         ),
                         boxShadow: isSelected
                             ? [
