@@ -113,7 +113,7 @@ class SpinnerPainter extends CustomPainter {
     final textStyle = TextStyle(
       color: textColor,
       fontSize: _calculateFontSize(),
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w900,
     );
 
     final textPainter = TextPainter(
