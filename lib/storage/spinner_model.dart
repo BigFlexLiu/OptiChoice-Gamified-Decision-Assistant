@@ -35,7 +35,10 @@ class SpinnerModel {
        customBackgroundColors =
            customColors ?? [Colors.red, Colors.green, Colors.blue],
        foregroundColors =
-           foregroundColors ?? [Colors.white, Colors.black, Colors.white],
+           foregroundColors ??
+           backgroundColors
+               .map((color) => ColorUtils.bestFgColorForBg(color))
+               .toList(),
        spinSound = spinSound ?? "pen_tick",
        spinEndSound = spinEndSound ?? 'tada_end',
        id = newId ?? _uuid.v4();

@@ -14,6 +14,7 @@ class PremadeSpinnerDefinitions {
       options: options,
       colorThemeIndex: -1,
       backgroundColors: colors,
+      customColors: colors,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       spinSound: 'pen_tick',
