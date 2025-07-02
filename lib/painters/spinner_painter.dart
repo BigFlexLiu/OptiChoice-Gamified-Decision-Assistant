@@ -68,6 +68,15 @@ class SpinnerPainter extends CustomPainter {
       );
     }
 
+    // Draw outer border around the entire spinner
+    final innerBorderWidth = 8.0;
+    final outerBorderPaint = Paint()
+      ..color = Colors.grey.shade700.withAlpha(64)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = innerBorderWidth;
+
+    canvas.drawCircle(center, radius + innerBorderWidth / 2, outerBorderPaint);
+
     // Draw center circle
     final centerPaint = Paint()
       ..color = Colors.white
