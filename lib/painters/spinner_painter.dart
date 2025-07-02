@@ -31,10 +31,8 @@ class SpinnerPainter extends CustomPainter {
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
       final sweepAngle = anglePerOption;
 
-      // Create slice paint based on mode
       final slicePaint = _createSlicePaint(i, center, radius);
-
-      final sliceColor = spinnerModel.getCircularBackgroundColor(i);
+      final foregroundColor = spinnerModel.getCircularForegroundColor(i);
 
       // Draw slice
       canvas.drawArc(
@@ -47,25 +45,23 @@ class SpinnerPainter extends CustomPainter {
 
       // Draw slice borders
       final sliceBorderPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.7)
+        ..color = Colors.grey.shade300
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4;
+        ..strokeWidth = 2;
 
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius - 2),
+        Rect.fromCircle(center: center, radius: radius),
         startAngle,
         sweepAngle,
         true,
         sliceBorderPaint,
       );
 
-      final textColor = spinnerModel.getCircularForegroundColor(i);
-
       // Draw text - use the middle of the slice
       _drawText(
         canvas,
         options[i],
-        textColor,
+        foregroundColor,
         center,
         radius,
         startAngle + sweepAngle / 2,
