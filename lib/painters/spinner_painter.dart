@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:decision_spinner/storage/spinner_model.dart';
+import 'package:decision_spinner/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerPainter extends CustomPainter {
@@ -33,6 +34,8 @@ class SpinnerPainter extends CustomPainter {
       // Create slice paint based on mode
       final slicePaint = _createSlicePaint(i, center, radius);
 
+      final sliceColor = spinnerModel.getCircularBackgroundColor(i);
+
       // Draw slice
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
@@ -56,10 +59,13 @@ class SpinnerPainter extends CustomPainter {
         sliceBorderPaint,
       );
 
+      final textColor = spinnerModel.getCircularForegroundColor(i);
+
       // Draw text - use the middle of the slice
       _drawText(
         canvas,
         options[i],
+        textColor,
         center,
         radius,
         startAngle + sweepAngle / 2,
@@ -82,7 +88,7 @@ class SpinnerPainter extends CustomPainter {
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
-    final color = spinnerModel.getCircularColor(index);
+    final color = spinnerModel.getCircularBackgroundColor(index);
     return Paint()
       ..color = color
       ..style = PaintingStyle.fill;
@@ -103,21 +109,15 @@ class SpinnerPainter extends CustomPainter {
   void _drawText(
     Canvas canvas,
     String text,
+    Color textColor,
     Offset center,
     double radius,
     double angle,
   ) {
     final textStyle = TextStyle(
-      color: Colors.white,
+      color: textColor,
       fontSize: _calculateFontSize(),
       fontWeight: FontWeight.w600,
-      shadows: [
-        Shadow(
-          offset: const Offset(1, 1),
-          blurRadius: 2,
-          color: Colors.black.withValues(alpha: 0.7),
-        ),
-      ],
     );
 
     final textPainter = TextPainter(

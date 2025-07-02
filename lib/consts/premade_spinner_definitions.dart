@@ -13,7 +13,7 @@ class PremadeSpinnerDefinitions {
       name: name,
       options: options,
       colorThemeIndex: -1,
-      colors: colors,
+      backgroundColors: colors,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       spinSound: 'pen_tick',

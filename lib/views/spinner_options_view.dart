@@ -101,7 +101,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
         showSnackBar(context, 'Spinner saved successfully!');
 
-        Navigator.of(context).pop(originalSpinner);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -157,7 +157,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   children: [
                     ColorThemeSelector(
                       selectedThemeIndex: spinner.colorThemeIndex,
-                      customColors: spinner.customColors,
+                      customColors: spinner.customBackgroundColors,
                       onThemeChanged: _updateColorTheme,
                       onCustomColorsChanged: _updateCustomColors,
                     ),
@@ -263,14 +263,17 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   key: ValueKey(spinner.options[index].text + index.toString()),
                   index: index,
                   option: spinner.options[index],
-                  color: spinner.colors[index % spinner.colors.length],
+                  color:
+                      spinner.backgroundColors[index %
+                          spinner.backgroundColors.length],
                   onTap: () => _showOptionDialog(index, spinner.options[index]),
                 );
               },
             ),
           AddOptionItemWidget(
             index: numOptions,
-            color: spinner.colors[numOptions % spinner.colors.length],
+            color: spinner
+                .backgroundColors[numOptions % spinner.backgroundColors.length],
             onTap: () => _showAddOptionDialog(),
           ),
         ],
@@ -379,7 +382,9 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   void _updateColorTheme(int themeIndex) {
     setState(() {
       spinner.colorThemeIndex = themeIndex;
-      spinner.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
+      spinner.backgroundColors = DefaultColorThemes.getByIndex(
+        themeIndex,
+      )!.colors;
       _hasChanges = true;
     });
   }
@@ -387,8 +392,8 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   void _updateCustomColors(List<Color> customColors) {
     setState(() {
       spinner.colorThemeIndex = -1;
-      spinner.customColors = customColors;
-      spinner.colors = customColors;
+      spinner.customBackgroundColors = customColors;
+      spinner.backgroundColors = customColors;
       _hasChanges = true;
     });
   }

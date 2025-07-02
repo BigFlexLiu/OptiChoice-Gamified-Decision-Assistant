@@ -50,7 +50,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       _currentPointingIndex = 0; // Set initial pointing index
       widget.onPointingOptionChanged!(firstOption);
       setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularColor(0);
+        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
       });
     }
   }
