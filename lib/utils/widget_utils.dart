@@ -32,3 +32,24 @@ BoxDecoration colorSampleDecoration(
     strokeAlign: strokeAlign,
   ),
 );
+
+class AnimatedRotation extends StatelessWidget {
+  final Animation<double> animation;
+  final Widget child;
+
+  const AnimatedRotation({
+    super.key,
+    required this.animation,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        return Transform.rotate(angle: animation.value, child: child);
+      },
+    );
+  }
+}

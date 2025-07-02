@@ -76,20 +76,6 @@ class SpinnerPainter extends CustomPainter {
       ..strokeWidth = innerBorderWidth;
 
     canvas.drawCircle(center, radius + innerBorderWidth / 2, outerBorderPaint);
-
-    // Draw center circle
-    final centerPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(center, 20, centerPaint);
-
-    final centerBorderPaint = Paint()
-      ..color = Colors.grey[400]!
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    canvas.drawCircle(center, 20, centerBorderPaint);
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {

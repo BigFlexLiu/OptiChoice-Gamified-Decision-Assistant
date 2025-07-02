@@ -184,15 +184,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       child: Column(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildSpinnerWheel(),
-          if (widget.showSpinButton) ...[
-            SizedBox(
-              height: (widget.size ?? 350) * 0.2,
-            ), // Proportional spacing
-            _buildSpinButton(),
-          ],
-        ],
+        children: [_buildSpinnerWheel()],
       ),
     );
   }
@@ -326,7 +318,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   Widget _buildCenterCircle(double wheelSize) {
     final circleSize = wheelSize * 0.167; // 50/300 ratio
-    final innerCircleSize = circleSize * 0.4; // 20/50 ratio
+    final innerCircleSize = circleSize * 0.75; // 20/50 ratio
     final borderWidth = circleSize * 0.08; // 4/50 ratio
 
     return InkWell(
@@ -346,32 +338,20 @@ class SpinnerWheelState extends State<SpinnerWheel>
             ),
           ],
         ),
-        child: Center(
-          child: Container(
-            width: innerCircleSize,
-            height: innerCircleSize,
-            decoration: BoxDecoration(
-              color: currentOptionColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey),
-            ),
-          ),
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _animation.value,
+              child: Icon(
+                Icons.cached_sharp,
+                color: currentOptionColor,
+                size: innerCircleSize,
+              ),
+            );
+          },
         ),
       ),
-    );
-  }
-
-  Widget _buildSpinButton() {
-    return ElevatedButton(
-      onPressed: widget.isSpinning ? null : _spin,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        textStyle: Theme.of(context).textTheme.headlineSmall,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-      ),
-      child: Text(widget.isSpinning ? 'Spinning...' : 'SPIN!'),
     );
   }
 }

@@ -256,13 +256,18 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
+      body: Stack(
         children: [
-          const SizedBox(height: 32),
-          Expanded(child: _buildCurrentPointingOption()),
-          Expanded(flex: 5, child: _buildSpinnerWheelSection()),
-          const SizedBox(height: 64),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [Expanded(child: _buildSpinnerWheelSection())],
+          ),
+          Column(
+            children: [
+              const SizedBox(height: 64),
+              _buildCurrentPointingOption(),
+            ],
+          ),
         ],
       ),
     );
