@@ -67,7 +67,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     // Reset animation state when widget parameters change
     if (oldWidget.spinnerModel != widget.spinnerModel) {
-      print("reset");
       _controller.reset();
       _currentRotation = 0;
       _currentPointingIndex = null;
@@ -149,7 +148,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final baseSpins =
         1 + (durationSeconds - 0.5) * (2.5 / 4.5); // Linear scale from 1.5 to 4
     final randomSpins =
-        baseSpins + random.nextDouble() * 0.5; // Smaller random variance
+        baseSpins + random.nextDouble() - 0.5; // Smaller random variance
 
     // Add random offset to ensure any option can be selected regardless of duration
     // This ensures equal probability for all options
