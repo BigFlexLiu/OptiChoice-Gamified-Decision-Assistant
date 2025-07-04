@@ -153,6 +153,7 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
       spinner.name = finalName;
 
       final createdSpinner = await SpinnerStorageService.saveSpinner(spinner);
+      await SpinnerStorageService.setActiveSpinnerId(spinner.id);
 
       if (createdSpinner && context.mounted) {
         SpinnerStorageService.clearCache();
