@@ -61,6 +61,31 @@ class SpinnerWheelState extends State<SpinnerWheel>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(SpinnerWheel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Reset animation state when widget parameters change
+    if (oldWidget.spinnerModel != widget.spinnerModel) {
+      print("reset");
+      _controller.reset();
+      _currentRotation = 0;
+      _currentPointingIndex = null;
+
+      // Re-initialize with the first option pointing
+      final firstOption = widget.spinnerModel.options.firstOrNull;
+      if (firstOption != null && widget.onPointingOptionChanged != null) {
+        _currentPointingIndex = 0;
+        widget.onPointingOptionChanged!(firstOption);
+        setState(() {
+          currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
+            0,
+          );
+        });
+      }
+    }
+  }
+
   void _initializeAnimation() {
     // Use the spinner's configured duration
     _controller = AnimationController(
@@ -317,9 +342,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   Widget _buildCenterCircle(double wheelSize) {
-    final circleSize = wheelSize * 0.167; // 50/300 ratio
-    final innerCircleSize = circleSize * 0.75; // 20/50 ratio
-    final borderWidth = circleSize * 0.08; // 4/50 ratio
+    final circleSize = wheelSize * 0.167;
+    final innerCircleSize = circleSize * 0.75;
+    final borderWidth = circleSize * 0.08;
 
     return InkWell(
       onTap: _spin,
@@ -333,8 +358,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: circleSize * 0.2, // 10/50 ratio
-              offset: Offset(0, circleSize * 0.06), // 3/50 ratio
+              blurRadius: circleSize * 0.2,
+              offset: Offset(0, circleSize * 0.06),
             ),
           ],
         ),
