@@ -150,13 +150,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_colorpicker:
-    dependency: "direct main"
-    description:
-      path: "C:\\Users\\Shenjoe\\Documents\\dev\\flutter\\packages\\flutter_colorpicker"
-      relative: false
-    source: path
-    version: "1.1.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -165,14 +158,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
-  flutter_reorderable_grid_view:
-    dependency: "direct main"
-    description:
-      name: flutter_reorderable_grid_view
-      sha256: f5db90ae62f8307daef9a884e09ed2d883838592e92185017a4431fe8e78899e
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.5.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter

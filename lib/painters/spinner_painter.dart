@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:decision_spinner/storage/spinner_model.dart';
-import 'package:decision_spinner/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerPainter extends CustomPainter {

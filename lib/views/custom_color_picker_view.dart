@@ -51,7 +51,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
   }
 
   Future<void> _showDiscardChangesDialog() async {
-    final result = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -73,10 +73,6 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
         );
       },
     );
-
-    if (result == true) {
-      Navigator.of(context).pop();
-    }
   }
 
   @override
@@ -135,7 +131,7 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(

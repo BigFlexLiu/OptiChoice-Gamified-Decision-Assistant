@@ -37,12 +37,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   audioplayers: ^6.5.0
   logger: ^2.6.0
-  flutter_colorpicker:
-    path: C:\Users\Shenjoe\Documents\dev\flutter\packages\flutter_colorpicker
-  flutter_reorderable_grid_view: ^5.5.0
-    # git:
-    #   url: https://github.com/BigFlexLiu/flutter_colorpicker.git
-    #   ref: master  # or a specific branch, tag, or commit hash
 
 dev_dependencies:
   flutter_test:
