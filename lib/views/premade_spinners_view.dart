@@ -1,7 +1,8 @@
 import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
-import 'package:decision_spinner/widgets/spinner.dart';
+import 'package:decision_spinner/utils/widget_utils.dart';
+import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 
 class PremadeSpinnersView extends StatelessWidget {
@@ -44,15 +45,15 @@ class PremadeSpinnersView extends StatelessWidget {
           children: [
             _PremadeSpinnerTabView(
               config: _tabs[0],
-              spinnerWheels: PremadeSpinnerDefinitions.soloDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.soloDecisions,
             ),
             _PremadeSpinnerTabView(
               config: _tabs[1],
-              spinnerWheels: PremadeSpinnerDefinitions.pairDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.pairDecisions,
             ),
             _PremadeSpinnerTabView(
               config: _tabs[2],
-              spinnerWheels: PremadeSpinnerDefinitions.groupDecisions,
+              spinnerModels: PremadeSpinnerDefinitions.groupDecisions,
             ),
           ],
         ),
@@ -73,33 +74,51 @@ class _TabConfig {
   final String description;
 }
 
-class _PremadeSpinnerTabView extends StatelessWidget {
+class _PremadeSpinnerTabView extends StatefulWidget {
   const _PremadeSpinnerTabView({
     required this.config,
-    required this.spinnerWheels,
+    required this.spinnerModels,
   });
 
   final _TabConfig config;
-  final List<SpinnerModel> spinnerWheels;
+  final List<SpinnerModel> spinnerModels;
+
+  @override
+  State<_PremadeSpinnerTabView> createState() => _PremadeSpinnerTabViewState();
+}
+
+class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
+  final Map<String, bool> _expansionStateByItemId = {};
+
+  @override
+  void initState() {
+    super.initState();
+    for (SpinnerModel spinnerModel in widget.spinnerModels) {
+      _expansionStateByItemId[spinnerModel.id] = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (spinnerWheels.isEmpty) {
-      return _EmptyStateWidget(config: config);
+    if (widget.spinnerModels.isEmpty) {
+      return _EmptyStateWidget(config: widget.config);
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: spinnerWheels.length,
+      itemCount: widget.spinnerModels.length,
       itemBuilder: (context, index) {
-        final spinner = spinnerWheels[index];
+        final spinner = widget.spinnerModels[index];
+        final isExpanded = _expansionStateByItemId[spinner.id]!;
 
         return SpinnerCard(
-          spinnerId: 'premade_${index}_${spinner.name}',
           spinner: spinner,
+          isExpanded: isExpanded,
+          onExpansionChanged: (bool value) => setState(() {
+            _expansionStateByItemId[spinner.id] = value;
+          }),
           isActive: false,
           canReorder: false,
-          subtitle: '${spinner.options.length} options • Premade',
           actions: _buildActions(context, spinner),
         );
       },
@@ -134,19 +153,20 @@ class _PremadeSpinnerTabView extends StatelessWidget {
       spinner.name = finalName;
 
       final createdSpinner = await SpinnerStorageService.saveSpinner(spinner);
+      await SpinnerStorageService.setActiveSpinnerId(spinner.id);
 
       if (createdSpinner && context.mounted) {
         SpinnerStorageService.clearCache();
         Navigator.of(context).pop(true);
       } else if (context.mounted) {
-        _showErrorSnackBar(
+        showErrorSnackBar(
           context,
           'Failed to create spinner. Please try again.',
         );
       }
     } catch (e) {
       if (context.mounted) {
-        _showErrorSnackBar(context, 'Error: ${e.toString()}');
+        showErrorSnackBar(context, 'Error: ${e.toString()}');
       }
     }
   }
@@ -170,16 +190,6 @@ class _PremadeSpinnerTabView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => _PreviewDialog(spinner: spinner),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        duration: const Duration(seconds: 3),
-      ),
     );
   }
 }

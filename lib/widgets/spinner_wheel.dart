@@ -8,7 +8,7 @@ class SpinnerWheel extends StatefulWidget {
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
-  final Function(String)? onPointingOptionChanged;
+  final Function(SpinnerOption)? onPointingOptionChanged;
   final double? size;
   final bool showSpinButton;
 
@@ -34,6 +34,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   double _currentRotation = 0;
   int? _currentPointingIndex; // Track the current pointing indexfinal
   double? wheelSize;
+  Color currentOptionColor = Colors.black;
 
   List<String> get spinnerTextOptions =>
       widget.spinnerModel.options.map((e) => e.text).toList();
@@ -47,7 +48,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       _currentPointingIndex = 0; // Set initial pointing index
-      widget.onPointingOptionChanged!(firstOption.text);
+      widget.onPointingOptionChanged!(firstOption);
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
+      });
     }
   }
 
@@ -55,6 +59,30 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(SpinnerWheel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Reset animation state when widget parameters change
+    if (oldWidget.spinnerModel != widget.spinnerModel) {
+      _controller.reset();
+      _currentRotation = 0;
+      _currentPointingIndex = null;
+
+      // Re-initialize with the first option pointing
+      final firstOption = widget.spinnerModel.options.firstOrNull;
+      if (firstOption != null && widget.onPointingOptionChanged != null) {
+        _currentPointingIndex = 0;
+        widget.onPointingOptionChanged!(firstOption);
+        setState(() {
+          currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
+            0,
+          );
+        });
+      }
+    }
   }
 
   void _initializeAnimation() {
@@ -78,7 +106,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _determineWinner();
+        _reportWinner();
       }
     });
   }
@@ -95,7 +123,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(spinnerTextOptions[pointingIndex]);
+      widget.onPointingOptionChanged!(
+        widget.spinnerModel.options[pointingIndex],
+      );
     }
   }
 
@@ -118,7 +148,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final baseSpins =
         1 + (durationSeconds - 0.5) * (2.5 / 4.5); // Linear scale from 1.5 to 4
     final randomSpins =
-        baseSpins + random.nextDouble() * 0.5; // Smaller random variance
+        baseSpins + random.nextDouble() - 0.5; // Smaller random variance
 
     // Add random offset to ensure any option can be selected regardless of duration
     // This ensures equal probability for all options
@@ -148,41 +178,19 @@ class SpinnerWheelState extends State<SpinnerWheel>
     _controller.forward();
   }
 
-  void _determineWinner() {
-    if (spinnerTextOptions.isEmpty) return;
-
-    // Use weighted selection if options have different weights
-    final random = math.Random();
-    final totalWeight = widget.spinnerModel.options.fold<double>(
-      0,
-      (sum, option) => sum + option.weight,
-    );
-
-    if (totalWeight > 0) {
-      // Weighted random selection
-      final randomValue = random.nextDouble() * totalWeight;
-      double currentWeight = 0;
-
-      for (final option in widget.spinnerModel.options) {
-        currentWeight += option.weight;
-        if (randomValue <= currentWeight) {
-          widget.onSpinComplete(option.text);
-          return;
-        }
-      }
+  void _reportWinner() {
+    final winnerOption = _getCurrentPointingOption();
+    if (winnerOption != null) {
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getCircularColorOfOption(
+          winnerOption,
+        );
+      });
     }
-
-    // Fallback to position-based selection (should rarely be reached)
-    final normalizedRotation = _currentRotation % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
-    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
-    final winnerIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
-
-    widget.onSpinComplete(spinnerTextOptions[winnerIndex]);
+    widget.onSpinComplete(winnerOption?.text ?? "");
   }
 
-  String? _getCurrentPointingOption() {
+  SpinnerOption? _getCurrentPointingOption() {
     if (spinnerTextOptions.isEmpty) return null;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
@@ -191,7 +199,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final pointingIndex =
         (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
 
-    return spinnerTextOptions[pointingIndex];
+    return widget.spinnerModel.options[pointingIndex];
   }
 
   @override
@@ -200,15 +208,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       child: Column(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildSpinnerWheel(),
-          if (widget.showSpinButton) ...[
-            SizedBox(
-              height: (widget.size ?? 350) * 0.2,
-            ), // Proportional spacing
-            _buildSpinButton(),
-          ],
-        ],
+        children: [_buildSpinnerWheel()],
       ),
     );
   }
@@ -270,9 +270,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
             ),
             child: CustomPaint(
               painter: SpinnerPainter(
-                options: spinnerTextOptions,
+                spinnerModel: widget.spinnerModel,
                 rotation: 0, // Rotation is handled by Transform.rotate
-                colors: widget.spinnerModel.colors,
                 selectedOption: _getCurrentPointingOption(),
                 wheelSize: size, // Pass the wheel size for text scaling
               ),
@@ -295,7 +294,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
         alignment: Alignment.center,
         children: [
           _buildPointerShadow(pointerSize),
-          _buildMainPointer(pointerSize),
           _buildPointerHighlight(pointerSize),
         ],
       ),
@@ -304,13 +302,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   Widget _buildPointerShadow(double baseSize) {
     final width = baseSize * 0.9; // Proportional to pointer base size
-    final height = baseSize * 1.75; // Proportional to pointer base size
+    final height = baseSize * 1.8; // Proportional to pointer base size
 
     return Transform.translate(
-      offset: Offset(
-        baseSize * 0.1,
-        baseSize * 0.1,
-      ), // Proportional shadow offset
+      offset: Offset(0, -height * 0.1), // Proportional shadow offset
       child: Container(
         width: 0,
         height: 0,
@@ -319,27 +314,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
             left: BorderSide(color: Colors.transparent, width: width),
             right: BorderSide(color: Colors.transparent, width: width),
             top: BorderSide(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 1),
               width: height,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainPointer(double baseSize) {
-    final width = baseSize * 0.9; // Proportional to pointer base size
-    final height = baseSize * 1.75; // Proportional to pointer base size
-
-    return Container(
-      width: 0,
-      height: 0,
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: Colors.transparent, width: width),
-          right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.white, width: height),
         ),
       ),
     );
@@ -356,56 +334,48 @@ class SpinnerWheelState extends State<SpinnerWheel>
         border: Border(
           left: BorderSide(color: Colors.transparent, width: width),
           right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.deepPurple, width: height),
+          top: BorderSide(color: Colors.white, width: height),
         ),
       ),
     );
   }
 
   Widget _buildCenterCircle(double wheelSize) {
-    final circleSize = wheelSize * 0.167; // 50/300 ratio
-    final innerCircleSize = circleSize * 0.4; // 20/50 ratio
-    final borderWidth = circleSize * 0.08; // 4/50 ratio
+    final circleSize = wheelSize * 0.167;
+    final innerCircleSize = circleSize * 0.75;
+    final borderWidth = circleSize * 0.08;
 
-    return Container(
-      width: circleSize,
-      height: circleSize,
-      decoration: BoxDecoration(
-        gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.deepPurple, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: circleSize * 0.2, // 10/50 ratio
-            offset: Offset(0, circleSize * 0.06), // 3/50 ratio
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: innerCircleSize,
-          height: innerCircleSize,
-          decoration: BoxDecoration(
-            color: Colors.deepPurple,
-            shape: BoxShape.circle,
-          ),
+    return InkWell(
+      onTap: _spin,
+      child: Container(
+        width: circleSize,
+        height: circleSize,
+        decoration: BoxDecoration(
+          gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey, width: borderWidth),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: circleSize * 0.2,
+              offset: Offset(0, circleSize * 0.06),
+            ),
+          ],
+        ),
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Transform.rotate(
+              angle: _animation.value,
+              child: Icon(
+                Icons.cached_sharp,
+                color: currentOptionColor,
+                size: innerCircleSize,
+              ),
+            );
+          },
         ),
       ),
-    );
-  }
-
-  Widget _buildSpinButton() {
-    return ElevatedButton(
-      onPressed: widget.isSpinning ? null : _spin,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        textStyle: Theme.of(context).textTheme.headlineSmall,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-      ),
-      child: Text(widget.isSpinning ? 'Spinning...' : 'SPIN!'),
     );
   }
 }

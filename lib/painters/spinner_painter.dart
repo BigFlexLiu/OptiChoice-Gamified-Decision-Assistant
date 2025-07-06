@@ -1,20 +1,21 @@
 import 'dart:math' as math;
+import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerPainter extends CustomPainter {
-  final List<String> options;
+  final SpinnerModel spinnerModel;
   final double rotation;
-  final String? selectedOption;
-  final List<Color> colors;
+  final SpinnerOption? selectedOption;
   final double? wheelSize;
 
   SpinnerPainter({
-    required this.options,
+    required this.spinnerModel,
     required this.rotation,
-    required this.colors,
     this.selectedOption,
     this.wheelSize,
   });
+
+  List<String> get options => spinnerModel.options.map((e) => e.text).toList();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -23,26 +24,18 @@ class SpinnerPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    // Draw outer border
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-
-    canvas.drawCircle(center, radius, borderPaint);
-
     final anglePerOption = 2 * math.pi / options.length;
     for (int i = 0; i < options.length; i++) {
       // Start from the top (-π/2) and add rotation
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
       final sweepAngle = anglePerOption;
 
-      // Create slice paint based on mode
       final slicePaint = _createSlicePaint(i, center, radius);
+      final foregroundColor = spinnerModel.getCircularForegroundColor(i);
 
       // Draw slice
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius - 2),
+        Rect.fromCircle(center: center, radius: radius),
         startAngle,
         sweepAngle,
         true,
@@ -51,12 +44,12 @@ class SpinnerPainter extends CustomPainter {
 
       // Draw slice borders
       final sliceBorderPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.7)
+        ..color = Colors.grey.shade300
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
 
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius - 2),
+        Rect.fromCircle(center: center, radius: radius),
         startAngle,
         sweepAngle,
         true,
@@ -67,35 +60,28 @@ class SpinnerPainter extends CustomPainter {
       _drawText(
         canvas,
         options[i],
+        foregroundColor,
         center,
         radius,
         startAngle + sweepAngle / 2,
       );
     }
-    // Draw center circle
-    final centerPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(center, 20, centerPaint);
-
-    final centerBorderPaint = Paint()
-      ..color = Colors.grey[400]!
+    // Draw outer border around the entire spinner
+    final innerBorderWidth = 8.0;
+    final outerBorderPaint = Paint()
+      ..color = Colors.grey.shade700.withAlpha(64)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = innerBorderWidth;
 
-    canvas.drawCircle(center, 20, centerBorderPaint);
+    canvas.drawCircle(center, radius + innerBorderWidth / 2, outerBorderPaint);
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
-    final color = _getSolidColorForIndex(index);
+    final color = spinnerModel.getCircularBackgroundColor(index);
     return Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-  }
-
-  Color _getSolidColorForIndex(int index) {
-    return colors[index % colors.length];
   }
 
   double _calculateFontSize() {
@@ -113,21 +99,15 @@ class SpinnerPainter extends CustomPainter {
   void _drawText(
     Canvas canvas,
     String text,
+    Color textColor,
     Offset center,
     double radius,
     double angle,
   ) {
     final textStyle = TextStyle(
-      color: Colors.white,
+      color: textColor,
       fontSize: _calculateFontSize(),
-      fontWeight: FontWeight.w600,
-      shadows: [
-        Shadow(
-          offset: const Offset(1, 1),
-          blurRadius: 2,
-          color: Colors.black.withValues(alpha: 0.7),
-        ),
-      ],
+      fontWeight: FontWeight.w900,
     );
 
     final textPainter = TextPainter(
@@ -189,7 +169,6 @@ class SpinnerPainter extends CustomPainter {
     return oldDelegate.options != options ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.colors != colors ||
         oldDelegate.wheelSize != wheelSize;
   }
 }

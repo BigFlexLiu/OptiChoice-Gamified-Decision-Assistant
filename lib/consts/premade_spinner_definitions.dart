@@ -13,7 +13,8 @@ class PremadeSpinnerDefinitions {
       name: name,
       options: options,
       colorThemeIndex: -1,
-      colors: colors,
+      backgroundColors: colors,
+      customColors: colors,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       spinSound: 'pen_tick',
@@ -53,7 +54,7 @@ class PremadeSpinnerDefinitions {
       SpinnerOption(text: 'Yes'),
       SpinnerOption(text: 'No'),
     ],
-    colors: [Colors.green.shade500, Colors.red.shade500],
+    colors: [Colors.green, Colors.red],
   );
 
   static SpinnerModel get whatToEatSpinner => createSpinner(
@@ -69,7 +70,7 @@ class PremadeSpinnerDefinitions {
       'Sandwich',
       'Skip Meal',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.orange.shade300, Colors.deepOrange.shade400],
+    colors: [Colors.orange, Colors.deepOrange],
   );
 
   static SpinnerModel get whatToWatchSpinner => createSpinner(
@@ -84,7 +85,7 @@ class PremadeSpinnerDefinitions {
       'Sports',
       'News',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.blue.shade400, Colors.indigo.shade500],
+    colors: [Colors.blue, Colors.indigo],
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
@@ -98,7 +99,7 @@ class PremadeSpinnerDefinitions {
       'Restaurant',
       'Stay home',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.teal.shade400, Colors.teal.shade700],
+    colors: [Colors.teal, Colors.tealAccent],
   );
 
   static SpinnerModel get whatToDoSpinner => createSpinner(
@@ -113,7 +114,7 @@ class PremadeSpinnerDefinitions {
       'Take a nap',
       'Call someone',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.purple.shade400, Colors.deepPurple.shade600],
+    colors: [Colors.purple, Colors.deepPurple],
   );
 
   static SpinnerModel get workoutSpinner => createSpinner(
@@ -128,7 +129,7 @@ class PremadeSpinnerDefinitions {
       'Stretching',
       'Rest day',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.red.shade300, Colors.pink.shade400],
+    colors: [Colors.red, Colors.pink],
   );
 
   static SpinnerModel get whoPaysSpinner => createSpinner(
@@ -156,7 +157,7 @@ class PremadeSpinnerDefinitions {
       'Dust',
       'Mop floors',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.grey.shade400, Colors.blueGrey.shade600],
+    colors: [Colors.grey, Colors.cyan],
   );
 
   static SpinnerModel get breakActivitySpinner => createSpinner(
@@ -170,7 +171,7 @@ class PremadeSpinnerDefinitions {
       'Meditate',
       'Quick tidy',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.lightBlue.shade300, Colors.cyan.shade600],
+    colors: [Colors.lightBlue, Colors.cyan],
   );
 
   static SpinnerModel get truthOrDareSpinner => createSpinner(
@@ -184,21 +185,21 @@ class PremadeSpinnerDefinitions {
       'Group dare',
       'Tell a secret',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.pink.shade300, Colors.deepPurple.shade400],
+    colors: [Colors.pink, Colors.deepPurple],
   );
 
   static SpinnerModel get dice6Spinner => createSpinner(
     newId: 'premade_dice_6',
     name: 'Roll a Die (d6)',
     options: List.generate(6, (i) => SpinnerOption(text: '${i + 1}')),
-    colors: [Colors.grey.shade300, Colors.grey.shade700],
+    colors: [Colors.grey, Colors.blueGrey],
   );
 
   static SpinnerModel get dice20Spinner => createSpinner(
     newId: 'premade_dice_20',
     name: 'Roll a Die (d20)',
     options: List.generate(20, (i) => SpinnerOption(text: '${i + 1}')),
-    colors: [Colors.indigo.shade200, Colors.indigo.shade800],
+    colors: [Colors.grey, Colors.indigo],
   );
 
   static SpinnerModel get dateNightSpinner => createSpinner(
@@ -212,7 +213,7 @@ class PremadeSpinnerDefinitions {
       'Try a new restaurant',
       'Stay in and relax',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.red.shade200, Colors.deepOrange.shade300],
+    colors: [Colors.red, Colors.deepOrange],
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
@@ -230,7 +231,7 @@ class PremadeSpinnerDefinitions {
       'What was your first job?',
       'What\'s a hobby you enjoy?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.lightGreen.shade300, Colors.lightBlue.shade300],
+    colors: [Colors.lightGreen, Colors.lightBlue],
   );
 
   static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
@@ -248,7 +249,7 @@ class PremadeSpinnerDefinitions {
       'What would you do with a million dollars?',
       'What do you value most in a friendship?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.teal.shade300, Colors.cyan.shade400],
+    colors: [Colors.teal, Colors.cyan],
   );
 
   static SpinnerModel get icebreakerSillySpinner => createSpinner(
@@ -266,6 +267,6 @@ class PremadeSpinnerDefinitions {
       'Which superpower would you want?',
       'If you had to eat one meal forever?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.amber.shade300, Colors.purple.shade200],
+    colors: [Colors.amber, Colors.purple],
   );
 }

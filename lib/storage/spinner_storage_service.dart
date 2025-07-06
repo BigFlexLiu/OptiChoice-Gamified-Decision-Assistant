@@ -52,7 +52,7 @@ class SpinnerStorageService extends BaseStorageService {
           .map((text) => SpinnerOption(text: text, weight: 1.0))
           .toList(),
       colorThemeIndex: -1,
-      colors: [
+      backgroundColors: [
         Colors.red,
         Colors.blue,
         Colors.green,
@@ -135,7 +135,7 @@ class SpinnerStorageService extends BaseStorageService {
       name: name,
       options: options,
       colorThemeIndex: colorThemeIndex,
-      colors: DefaultColorThemes.getByIndex(colorThemeIndex)!.colors,
+      backgroundColors: DefaultColorThemes.getByIndex(colorThemeIndex)!.colors,
     );
 
     saveSpinner(newSpinner);

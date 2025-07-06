@@ -1,15 +1,10 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 
 class ColorTheme {
   final String name;
-  final List<List<Color>> gradientColors;
   final List<Color> colors;
 
-  const ColorTheme({
-    required this.name,
-    required this.gradientColors,
-    required this.colors,
-  });
+  const ColorTheme({required this.name, required this.colors});
 }
 
 class DefaultColorThemes {
@@ -18,25 +13,13 @@ class DefaultColorThemes {
   // Static list of all available color themes
   static final List<ColorTheme> _colorThemes = [
     _vibrantTheme,
-    _oceanTheme,
-    _sunsetTheme,
-    _forestTheme,
-    _purpleTheme,
+    _neonPopTheme,
+    _earthSkyTheme,
+    _technoNightTheme,
+    _aracadeTheme,
   ];
-
-  // Individual theme definitions as static constants
   static const ColorTheme _vibrantTheme = ColorTheme(
     name: 'Vibrant',
-    gradientColors: [
-      [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-      [Color(0xFF4ECDC4), Color(0xFF44A08D)],
-      [Color(0xFF667eea), Color(0xFF764ba2)],
-      [Color(0xFFf093fb), Color(0xFFf5576c)],
-      [Color(0xFF4facfe), Color(0xFF00f2fe)],
-      [Color(0xFF43e97b), Color(0xFF38f9d7)],
-      [Color(0xFFfa709a), Color(0xFFfee140)],
-      [Color(0xFF30cfd0), Color(0xFF91a7ff)],
-    ],
     colors: [
       Color(0xFFFF6B6B),
       Color(0xFF4ECDC4),
@@ -48,104 +31,103 @@ class DefaultColorThemes {
       Color(0xFF30cfd0),
     ],
   );
-
-  static const ColorTheme _oceanTheme = ColorTheme(
-    name: 'Ocean',
-    gradientColors: [
-      [Color(0xFF2E86AB), Color(0xFF72DBD9)],
-      [Color(0xFF00B4DB), Color(0xFF0083B0)],
-      [Color(0xFF1CB5E0), Color(0xFF000851)],
-      [Color(0xFF4481EB), Color(0xFF04BEFE)],
-      [Color(0xFF5B73C4), Color(0xFF9198E5)],
-      [Color(0xFF2196F3), Color(0xFF21CBF3)],
-      [Color(0xFF4FC3F7), Color(0xFF29B6F6)],
-      [Color(0xFF00ACC1), Color(0xFF26C6DA)],
-    ],
+  static const ColorTheme _neonPopTheme = ColorTheme(
+    name: 'Neon Pop',
     colors: [
-      Color(0xFF2E86AB),
-      Color(0xFF00B4DB),
-      Color(0xFF1CB5E0),
-      Color(0xFF4481EB),
-      Color(0xFF5B73C4),
-      Color(0xFF2196F3),
-      Color(0xFF4FC3F7),
-      Color(0xFF00ACC1),
+      Color(0xFFFF00FF), // Magenta
+      Color(0xFF00FFFF), // Cyan
+      Color(0xFFFFFF00), // Yellow
+      Color(0xFFFF0000), // Red
+      Color(0xFF00FF00), // Lime
+      Color(0xFF0000FF), // Blue
+      Color(0xFFFFA500), // Orange
+      Color(0xFF00CED1), // Dark Turquoise
+    ],
+  );
+  static const ColorTheme _earthSkyTheme = ColorTheme(
+    name: 'Earth & Sky',
+    colors: [
+      Color(0xFF2E8B57), // Sea Green
+      Color(0xFF4682B4), // Steel Blue
+      Color(0xFFDAA520), // Goldenrod
+      Color(0xFF8B0000), // Dark Red
+      Color(0xFF20B2AA), // Light Sea Green
+      Color(0xFFB22222), // Firebrick
+      Color(0xFF5F9EA0), // Cadet Blue
+      Color(0xFFFF8C00), // Dark Orange
+    ],
+  );
+  static const ColorTheme _aracadeTheme = ColorTheme(
+    name: 'Arcade',
+    colors: [
+      Color(0xFFFC427B), // Bright Pink
+      Color(0xFFF8EFBA), // Pale Yellow
+      Color(0xFF55E6C1), // Mint
+      Color(0xFF3B3B98), // Indigo
+      Color(0xFFFF6B81), // Light Red
+      Color(0xFF25CCF7), // Aqua
+      Color(0xFFFD7272), // Salmon
+      Color(0xFFF19066), // Coral
+    ],
+  );
+  static const ColorTheme _technoNightTheme = ColorTheme(
+    name: 'Techno Night',
+    colors: [
+      Color(0xFF0F3460), // Deep Navy
+      Color(0xFFE94560), // Vivid Red
+      Color(0xFF53354A), // Purple Brown
+      Color(0xFF903749), // Dark Rose
+      Color(0xFFFFD460), // Gold
+      Color(0xFF3EC1D3), // Teal
+      Color(0xFF6A2C70), // Dark Purple
+      Color(0xFF1FAB89), // Sea Green
     ],
   );
 
-  static const ColorTheme _sunsetTheme = ColorTheme(
-    name: 'Sunset',
-    gradientColors: [
-      [Color(0xFFFF9A8B), Color(0xFFA890FE)],
-      [Color(0xFFFFAD84), Color(0xFFFF6B6B)],
-      [Color(0xFFFFA726), Color(0xFFFF7043)],
-      [Color(0xFFFF8A65), Color(0xFFFF5722)],
-      [Color(0xFFFFB74D), Color(0xFFFF9800)],
-      [Color(0xFFFFCC02), Color(0xFFFF6F00)],
-      [Color(0xFFFF5722), Color(0xFFE91E63)],
-      [Color(0xFFF57F17), Color(0xFFFF6F00)],
-    ],
+  static const ColorTheme _customColorTheme = ColorTheme(
+    name: "Custom Colors",
     colors: [
-      Color(0xFFFF9A8B),
-      Color(0xFFFFAD84),
-      Color(0xFFFFA726),
-      Color(0xFFFF8A65),
-      Color(0xFFFFB74D),
-      Color(0xFFFFCC02),
-      Color(0xFFFF5722),
-      Color(0xFFF57F17),
+      Colors.red,
+      Colors.redAccent,
+      Colors.pink,
+      Colors.pinkAccent,
+      Colors.purple,
+      Colors.purpleAccent,
+      Colors.deepPurple,
+      Colors.deepPurpleAccent,
+      Colors.indigo,
+      Colors.indigoAccent,
+      Colors.blue,
+      Colors.blueAccent,
+      Colors.lightBlue,
+      Colors.lightBlueAccent,
+      Colors.cyan,
+      Colors.cyanAccent,
+      Colors.teal,
+      Colors.tealAccent,
+      Colors.green,
+      Colors.greenAccent,
+      Colors.lightGreen,
+      Colors.lightGreenAccent,
+      Colors.lime,
+      Colors.limeAccent,
+      Colors.yellow,
+      Colors.yellowAccent,
+      Colors.amber,
+      Colors.amberAccent,
+      Colors.orange,
+      Colors.orangeAccent,
+      Colors.deepOrange,
+      Colors.deepOrangeAccent,
+      Colors.brown,
+      Colors.grey,
+      Colors.blueGrey,
+      Colors.black,
+      Colors.white,
     ],
   );
 
-  static const ColorTheme _forestTheme = ColorTheme(
-    name: 'Forest',
-    gradientColors: [
-      [Color(0xFF56AB2F), Color(0xFFA8E6CF)],
-      [Color(0xFF11998E), Color(0xFF38EF7D)],
-      [Color(0xFF00B09B), Color(0xFF96C93D)],
-      [Color(0xFF2E8B57), Color(0xFF90EE90)],
-      [Color(0xFF228B22), Color(0xFF32CD32)],
-      [Color(0xFF006400), Color(0xFF7CFC00)],
-      [Color(0xFF4CAF50), Color(0xFF8BC34A)],
-      [Color(0xFF388E3C), Color(0xFF66BB6A)],
-    ],
-    colors: [
-      Color(0xFF56AB2F),
-      Color(0xFF11998E),
-      Color(0xFF00B09B),
-      Color(0xFF2E8B57),
-      Color(0xFF228B22),
-      Color(0xFF006400),
-      Color(0xFF4CAF50),
-      Color(0xFF388E3C),
-    ],
-  );
-
-  static const ColorTheme _purpleTheme = ColorTheme(
-    name: 'Purple',
-    gradientColors: [
-      [Color(0xFF667eea), Color(0xFF764ba2)],
-      [Color(0xFF9C27B0), Color(0xFFE1BEE7)],
-      [Color(0xFF673AB7), Color(0xFF9575CD)],
-      [Color(0xFF3F51B5), Color(0xFF7986CB)],
-      [Color(0xFF5E35B1), Color(0xFF9575CD)],
-      [Color(0xFF7B1FA2), Color(0xFFBA68C8)],
-      [Color(0xFF8E24AA), Color(0xFFCE93D8)],
-      [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
-    ],
-    colors: [
-      Color(0xFF667eea),
-      Color(0xFF9C27B0),
-      Color(0xFF673AB7),
-      Color(0xFF3F51B5),
-      Color(0xFF5E35B1),
-      Color(0xFF7B1FA2),
-      Color(0xFF8E24AA),
-      Color(0xFF6A1B9A),
-    ],
-  );
-
-  // Public static getters and methods for accessing themes
+  static List<Color> get customColors => _customColorTheme.colors;
 
   /// Returns all available color themes
   static List<ColorTheme> get all => List.unmodifiable(_colorThemes);
@@ -178,11 +160,4 @@ class DefaultColorThemes {
 
   /// Gets the default theme (first in the list)
   static ColorTheme get defaultTheme => _colorThemes.first;
-
-  // Individual theme getters for direct access
-  static ColorTheme get vibrant => _vibrantTheme;
-  static ColorTheme get ocean => _oceanTheme;
-  static ColorTheme get sunset => _sunsetTheme;
-  static ColorTheme get forest => _forestTheme;
-  static ColorTheme get purple => _purpleTheme;
 }

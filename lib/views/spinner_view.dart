@@ -17,9 +17,11 @@ class SpinnerView extends StatefulWidget {
 
 class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   SpinnerModel? _activeSpinner;
-  String _currentPointingOption = '';
+  late SpinnerOption? _currentSpinnerOption;
   bool _isSpinning = false;
   bool _isLoading = true;
+  bool _shouldAnimateText = false;
+  Color _textColor = Colors.black;
 
   // Audio players for spinner sounds - configurable count
   static const int _spinAudioPlayerCount = 10;
@@ -37,6 +39,9 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _initializeAudioPlayers();
     _loadActiveWheel();
+    setState(() {
+      _textColor = _getCurrentOptionColor;
+    });
   }
 
   void _initializeAudioPlayers() {
@@ -68,38 +73,34 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     }
   }
 
+  Color get _getCurrentOptionColor {
+    final defaultColor = Colors.black;
+    if (_activeSpinner == null) return defaultColor;
+
+    return _activeSpinner!.getCircularColorOfOption(_currentSpinnerOption!);
+  }
+
   Future<void> _loadActiveWheel() async {
     setState(() => _isLoading = true);
 
     try {
-      // Load the active wheel from the storage service
-      final wheel = await SpinnerStorageService.loadActiveSpinner();
-
-      if (wheel != null) {
-        setState(() {
-          _activeSpinner = wheel;
-          _currentPointingOption = wheel.options.isNotEmpty
-              ? wheel.options[0].text
-              : '';
-          _isLoading = false;
-        });
-
-        // Preload audio after setting the active spinner
-        await _preloadAudioSources();
-      } else {
-        // This shouldn't happen as SpinnerStorageService creates default if none exist
-        // But handle it gracefully just in case
-        setState(() {
-          _activeSpinner = null;
-          _currentPointingOption = '';
-          _isLoading = false;
-        });
+      final spinnerModel = await SpinnerStorageService.loadActiveSpinner();
+      if (spinnerModel == null) {
+        throw Exception('Spinner model is unexpectedly null.');
       }
+
+      setState(() {
+        _activeSpinner = spinnerModel;
+        _currentSpinnerOption = spinnerModel.options.first;
+        _isLoading = false;
+      });
+
+      await _preloadAudioSources();
     } catch (e) {
       // Handle error by setting loading to false and showing empty state
       setState(() {
         _activeSpinner = null;
-        _currentPointingOption = '';
+        _currentSpinnerOption = null;
         _isLoading = false;
       });
     }
@@ -110,21 +111,16 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
     try {
       // Preload spin sound
-      if (_activeSpinner!.spinSound != null &&
-          _activeSpinner!.spinSound!.isNotEmpty) {
-        final audioPath = AudioUtils.getSpinAudioPath(
-          _activeSpinner!.spinSound!,
-        );
+      final spinSound = _activeSpinner?.spinSound;
+      if (spinSound != null && spinSound.isNotEmpty) {
+        final audioPath = AudioUtils.getSpinAudioPath(spinSound);
         _spinAudioAsset = AssetSource(audioPath);
       }
 
       // Preload spin end sound
-      if (_activeSpinner!.spinEndSound != null &&
-          _activeSpinner!.spinEndSound!.isNotEmpty) {
-        final audioPath = AudioUtils.getSpinEndAudioPath(
-          _activeSpinner!.spinEndSound!,
-        );
-
+      final spinEndSound = _activeSpinner?.spinEndSound;
+      if (spinEndSound != null && spinEndSound.isNotEmpty) {
+        final audioPath = AudioUtils.getSpinEndAudioPath(spinEndSound);
         _spinEndAudioAsset = AssetSource(audioPath);
       }
     } catch (e, stackTrace) {
@@ -139,10 +135,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   void _onSpinComplete(String selectedOption) async {
     setState(() {
       _isSpinning = false;
-      // _currentPointingOption = selectedOption;
+      _shouldAnimateText = true;
+      _textColor = _getCurrentOptionColor;
     });
 
-    // Play end spin sound if configured
     await _playEndSpinSound();
   }
 
@@ -152,11 +148,11 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     });
   }
 
-  void _onPointingOptionChanged(String option) {
-    if (_isSpinning && option != _currentPointingOption) {
+  void _onPointingOptionChanged(SpinnerOption option) {
+    if (_isSpinning && option != _currentSpinnerOption) {
       _playSpinSoundIfAvailable();
       setState(() {
-        _currentPointingOption = option;
+        _currentSpinnerOption = option;
       });
     }
   }
@@ -172,15 +168,12 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     if (_spinAudioAsset == null) return;
 
     try {
-      // Get the next available player
       AudioPlayer? availablePlayer = _getNextAvailableSpinPlayer();
 
       if (availablePlayer != null) {
-        // Play the preloaded sound
         await availablePlayer.stop();
         await availablePlayer.play(_spinAudioAsset!);
       }
-      // If no player is available, we simply don't play the sound
     } catch (e, stackTrace) {
       logger.e("Error playing spin sound", error: e, stackTrace: stackTrace);
     }
@@ -190,7 +183,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     if (_spinEndAudioAsset == null) return;
 
     try {
-      // Stop any currently playing end sound and play the new one
       await _spinEndAudioPlayer.stop();
       await _spinEndAudioPlayer.play(_spinEndAudioAsset!);
     } catch (e, stackTrace) {
@@ -203,7 +195,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   void _navigateToWheelsManagement() async {
-    // Do nothing if no active spinner
     if (_activeSpinner == null) {
       return;
     }
@@ -217,8 +208,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     // Reload active wheel when returning from management screen
     await _loadActiveWheel();
   }
-
-  // ...existing code...
 
   @override
   Widget build(BuildContext context) {
@@ -267,13 +256,18 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
+      body: Stack(
         children: [
-          const SizedBox(height: 32),
-          Expanded(child: _buildCurrentPointingOption()),
-          Expanded(flex: 5, child: _buildSpinnerWheelSection()),
-          const SizedBox(height: 64),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [Expanded(child: _buildSpinnerWheelSection())],
+          ),
+          Column(
+            children: [
+              const SizedBox(height: 64),
+              _buildCurrentPointingOption(),
+            ],
+          ),
         ],
       ),
     );
@@ -322,13 +316,20 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     }
 
     return Center(
-      child: Text(
-        _currentPointingOption,
-        style: theme.textTheme.headlineLarge,
-        textAlign: TextAlign.center,
+      child: AnimatedTextJumpChangeColor(
+        _currentSpinnerOption?.text ?? "",
+        _shouldAnimateText,
+        setShouldAnimateFalse,
+        _textColor,
       ),
     );
   }
+
+  void setShouldAnimateFalse() => {
+    setState(() {
+      _shouldAnimateText = false;
+    }),
+  };
 
   Widget _buildSpinnerWheelSection() {
     if (_activeSpinner!.options.isEmpty) {
@@ -364,6 +365,120 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         onSpinComplete: _onSpinComplete,
         onPointingOptionChanged: _onPointingOptionChanged,
       ),
+    );
+  }
+}
+
+class AnimatedTextJumpChangeColor extends StatefulWidget {
+  final String text;
+  final bool shouldAnimate;
+  final void Function() setShouldAnimateFalse;
+  final Color? color;
+  const AnimatedTextJumpChangeColor(
+    this.text,
+    this.shouldAnimate,
+    this.setShouldAnimateFalse,
+    this.color, {
+    super.key,
+  });
+
+  @override
+  State<AnimatedTextJumpChangeColor> createState() =>
+      _AnimatedTextJumpChangeColorState();
+}
+
+class _AnimatedTextJumpChangeColorState
+    extends State<AnimatedTextJumpChangeColor> {
+  final _animationTime = 500;
+  bool _shouldAnimateJump = false;
+  bool _shouldAnimateFall = false;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _shouldAnimateJump = widget.shouldAnimate;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedTextJumpChangeColor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          widget.shouldAnimate &&
+          !_shouldAnimateJump &&
+          !_shouldAnimateFall) {
+        setState(() {
+          _shouldAnimateJump = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final defaultTextStyle = (theme.textTheme.headlineLarge ?? TextStyle())
+        .copyWith(inherit: false, fontWeight: FontWeight.w700);
+    final maxFontSize = theme.textTheme.displayLarge!.fontSize;
+
+    Text baseTextWidget = Text(
+      widget.text,
+      style: defaultTextStyle,
+      textAlign: TextAlign.center,
+    );
+    if (!_shouldAnimateFall && !_shouldAnimateJump) {
+      return AnimatedDefaultTextStyle(
+        style: baseTextWidget.style!,
+        duration: Duration(),
+        onEnd: null,
+        child: baseTextWidget,
+      );
+    }
+
+    final jumpEndTextStyle = defaultTextStyle.copyWith(
+      inherit: false,
+      // color: widget.color,
+      fontSize: maxFontSize,
+    );
+    if (_shouldAnimateJump) {
+      return animateJump(jumpEndTextStyle);
+    }
+
+    // Animate fall after the jump
+    final fallEndTextStyle = defaultTextStyle.copyWith(inherit: false);
+    return animateFall(fallEndTextStyle);
+  }
+
+  Widget animateJump(TextStyle endStyle) {
+    return AnimatedDefaultTextStyle(
+      style: endStyle,
+      duration: Duration(milliseconds: _animationTime ~/ 2),
+      onEnd: () => {
+        setState(() {
+          _shouldAnimateJump = false;
+          _shouldAnimateFall = true;
+        }),
+      },
+      curve: Curves.easeOut,
+      child: Text(widget.text, textAlign: TextAlign.center),
+    );
+  }
+
+  Widget animateFall(TextStyle endStyle) {
+    return AnimatedDefaultTextStyle(
+      style: endStyle,
+      duration: Duration(milliseconds: _animationTime ~/ 2),
+      onEnd: () => {
+        setState(() {
+          _shouldAnimateJump = false;
+          _shouldAnimateFall = false;
+          widget.setShouldAnimateFalse();
+        }),
+      },
+      curve: Curves.easeIn,
+      child: Text(widget.text, textAlign: TextAlign.center),
     );
   }
 }

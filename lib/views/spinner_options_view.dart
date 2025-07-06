@@ -1,7 +1,9 @@
 import 'package:decision_spinner/consts/color_themes.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/views/custom_color_picker_view.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
+import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -78,12 +80,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
       if (nameExists) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('A spinner with this name already exists'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          showErrorSnackBar(context, 'A spinner with this name already exists');
           setState(() {
             _isLoading = false;
           });
@@ -102,20 +99,13 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       if (mounted && success) {
         widget.onSpinnerChanged?.call(originalSpinner);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Spinner saved successfully!')));
+        showSnackBar(context, 'Spinner saved successfully!');
 
-        Navigator.of(context).pop(originalSpinner);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save spinner. Please try again.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        showErrorSnackBar(context, 'Failed to save spinner. Please try again.');
       }
     } finally {
       if (mounted) {
@@ -124,6 +114,202 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
         });
       }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop && _hasChanges) {
+          final dialogResult = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Unsaved Changes'),
+              content: Text('Do you want to save them?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Discard'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _saveChanges();
+                  },
+                  child: Text('Save'),
+                ),
+              ],
+            ),
+          );
+
+          if (dialogResult == false && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    ColorThemeSelector(
+                      selectedThemeIndex: spinner.colorThemeIndex,
+                      customColors: spinner.customBackgroundColors,
+                      onThemeChanged: _updateColorTheme,
+                      onCustomColorsChanged: _updateCustomColors,
+                    ),
+                    const SizedBox(height: 8),
+                    AudioSettingsSection(
+                      spinSound: spinner.spinSound,
+                      spinEndSound: spinner.spinEndSound,
+                      availableSpinSounds: _spinAudioFiles,
+                      availableSpinEndSounds: _spinEndAudioFiles,
+                      onSpinSoundChanged: _updateSpinSound,
+                      onSpinEndSoundChanged: _updateSpinEndSound,
+                    ),
+                    const SizedBox(height: 8),
+                    SpinDurationSection(
+                      spinDuration: spinner.spinDuration,
+                      onDurationChanged: _updateSpinDuration,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildOptionsListSection(),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      title: GestureDetector(
+        onTap: _isLoading ? null : () => _showEditNameDialog(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                spinner.name,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).appBarTheme.titleTextStyle,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.edit_outlined),
+          onPressed: _isLoading ? null : () => _showEditNameDialog(),
+          tooltip: 'Edit spinner name',
+        ),
+        if (_hasChanges)
+          TextButton(
+            onPressed: _isLoading ? null : _saveChanges,
+            child: Text(
+              'Save',
+              style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildOptionsListSection() {
+    final theme = Theme.of(context);
+    final numOptions = spinner.options.length;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.list,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
+              const SizedBox(width: 8),
+              Text('$numOptions', style: theme.textTheme.titleSmall),
+              Text(
+                ' Options',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).hintColor.withAlpha(128),
+                ),
+              ),
+            ],
+          ),
+          DefaultDivider(),
+          const SizedBox(height: 12),
+          if (spinner.options.isEmpty)
+            _buildEmptyState()
+          else
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: numOptions,
+              onReorder: _reorderOptions,
+              itemBuilder: (context, index) {
+                return OptionListItem(
+                  key: ValueKey(spinner.options[index].text + index.toString()),
+                  index: index,
+                  option: spinner.options[index],
+                  color:
+                      spinner.backgroundColors[index %
+                          spinner.backgroundColors.length],
+                  onTap: () => _showOptionDialog(index, spinner.options[index]),
+                );
+              },
+            ),
+          AddOptionItemWidget(
+            index: numOptions,
+            color: spinner
+                .backgroundColors[numOptions % spinner.backgroundColors.length],
+            onTap: () => _showAddOptionDialog(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 64,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No options yet',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add some options to get started',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _updateSpinSound(String? soundName) {
@@ -196,15 +382,18 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   void _updateColorTheme(int themeIndex) {
     setState(() {
       spinner.colorThemeIndex = themeIndex;
-      spinner.colors = DefaultColorThemes.getByIndex(themeIndex)!.colors;
+      spinner.backgroundColors = DefaultColorThemes.getByIndex(
+        themeIndex,
+      )!.colors;
       _hasChanges = true;
     });
   }
 
   void _updateCustomColors(List<Color> customColors) {
     setState(() {
-      spinner.colorThemeIndex = -1; // Use -1 to indicate custom theme
-      spinner.colors = customColors;
+      spinner.colorThemeIndex = -1;
+      spinner.customBackgroundColors = customColors;
+      spinner.backgroundColors = customColors;
       _hasChanges = true;
     });
   }
@@ -262,218 +451,27 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       ),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_hasChanges,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (!didPop && _hasChanges) {
-          final dialogResult = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text('Unsaved Changes'),
-              content: Text(
-                'You have unsaved changes. Do you want to save them?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('Discard'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveChanges();
-                  },
-                  child: Text('Save'),
-                ),
-              ],
-            ),
-          );
-
-          if (dialogResult == false && context.mounted) {
-            Navigator.of(context).pop();
-          }
-        }
-      },
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    ColorThemeSelector(
-                      selectedThemeIndex: spinner.colorThemeIndex,
-                      currentColors: spinner.colors,
-                      onThemeChanged: _updateColorTheme,
-                      onCustomColorsChanged: _updateCustomColors,
-                    ),
-                    const SizedBox(height: 16),
-                    AudioSettingsSection(
-                      spinSound: spinner.spinSound,
-                      spinEndSound: spinner.spinEndSound,
-                      availableSpinSounds: _spinAudioFiles,
-                      availableSpinEndSounds: _spinEndAudioFiles,
-                      onSpinSoundChanged: _updateSpinSound,
-                      onSpinEndSoundChanged: _updateSpinEndSound,
-                    ),
-                    const SizedBox(height: 16),
-                    SpinDurationSection(
-                      spinDuration: spinner.spinDuration,
-                      onDurationChanged: _updateSpinDuration,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildOptionsListSection(),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      title: GestureDetector(
-        onTap: _isLoading ? null : () => _showEditNameDialog(),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                spinner.name,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).appBarTheme.titleTextStyle,
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.edit_outlined),
-          onPressed: _isLoading ? null : () => _showEditNameDialog(),
-          tooltip: 'Edit spinner name',
-        ),
-        if (_hasChanges)
-          TextButton(
-            onPressed: _isLoading ? null : _saveChanges,
-            child: Text(
-              'Save',
-              style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildOptionsListSection() {
-    final theme = Theme.of(context);
-    final numOptions = spinner.options.length;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.list),
-              const SizedBox(width: 8),
-              Text('Options ($numOptions)', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          if (spinner.options.isEmpty)
-            _buildEmptyState()
-          else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: numOptions,
-              onReorder: _reorderOptions,
-              itemBuilder: (context, index) {
-                return OptionListItem(
-                  key: ValueKey(spinner.options[index].text + index.toString()),
-                  index: index,
-                  option: spinner.options[index],
-                  color: spinner.colors[index % spinner.colors.length],
-                  onTap: () => _showOptionDialog(index, spinner.options[index]),
-                );
-              },
-            ),
-          AddOptionItemWidget(
-            index: numOptions,
-            color: spinner.colors[numOptions % spinner.colors.length],
-            onTap: () => _showAddOptionDialog(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 64,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No options yet',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add some options to get started',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class ColorThemeSelector extends StatelessWidget {
   final int selectedThemeIndex;
-  final List<Color> currentColors;
+  final List<Color> customColors;
   final Function(int) onThemeChanged;
   final Function(List<Color>) onCustomColorsChanged;
 
   const ColorThemeSelector({
     super.key,
     required this.selectedThemeIndex,
-    required this.currentColors,
+    required this.customColors,
     required this.onThemeChanged,
     required this.onCustomColorsChanged,
   });
 
   void _showCustomColorPicker(BuildContext context) {
-    // Use current colors if it's a custom theme, otherwise use default colors
-    List<Color> initialColors = selectedThemeIndex == -1
-        ? currentColors
-        : DefaultColorThemes.getByIndex(0)?.colors ?? [];
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CustomColorPickerView(
-          initialColors: initialColors,
+          initialColors: customColors,
           onColorsChanged: (colors) {
             onCustomColorsChanged(colors);
           },
@@ -482,6 +480,55 @@ class ColorThemeSelector extends StatelessWidget {
     );
   }
 
+  Widget _buildThemeSelector({
+    required BuildContext context,
+    required List<Color> colors,
+    required String name,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          border: isSelected
+              ? Border.all(color: theme.colorScheme.primary, width: 2)
+              : Border.all(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: colors.take(4).map((color) {
+                return Container(
+                  width: 16,
+                  height: 16,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: colorSampleDecoration(
+                    context,
+                    color,
+                    width: name == 'Custom' ? 1 : 1,
+                    alpha: name == 'Custom' ? 255 : 64,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 4),
+            Text(name, style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -493,7 +540,10 @@ class ColorThemeSelector extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.palette_outlined),
+              Icon(
+                Icons.palette_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text('Color Theme', style: theme.textTheme.titleSmall),
             ],
@@ -510,140 +560,22 @@ class ColorThemeSelector extends StatelessWidget {
                 final colorTheme = entry.value;
                 final isSelected = selectedThemeIndex == index;
 
-                return GestureDetector(
+                return _buildThemeSelector(
+                  context: context,
+                  colors: colorTheme.colors,
+                  name: colorTheme.name,
+                  isSelected: isSelected,
                   onTap: () => onThemeChanged(index),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: isSelected
-                          ? Border.all(
-                              color: theme.colorScheme.primary,
-                              width: 2,
-                            )
-                          : Border.all(
-                              color: theme.colorScheme.outline.withValues(
-                                alpha: 0.3,
-                              ),
-                              width: 1,
-                            ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: colorTheme.colors.take(4).map((color) {
-                            return Container(
-                              width: 16,
-                              height: 16,
-                              margin: const EdgeInsets.only(right: 2),
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(colorTheme.name, style: theme.textTheme.bodySmall),
-                      ],
-                    ),
-                  ),
                 );
               }),
 
               // Custom theme option
-              GestureDetector(
+              _buildThemeSelector(
+                context: context,
+                colors: customColors,
+                name: 'Custom',
+                isSelected: selectedThemeIndex == -1,
                 onTap: () => _showCustomColorPicker(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: selectedThemeIndex == -1
-                        ? Border.all(color: theme.colorScheme.primary, width: 2)
-                        : Border.all(
-                            color: theme.colorScheme.outline.withValues(
-                              alpha: 0.3,
-                            ),
-                            width: 1,
-                          ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children:
-                            selectedThemeIndex == -1 && currentColors.isNotEmpty
-                            ? currentColors.take(4).map((color) {
-                                return Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                );
-                              }).toList()
-                            : [
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.red, Colors.blue],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.green, Colors.yellow],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.purple, Colors.orange],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.pink, Colors.cyan],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text('Custom', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -698,7 +630,7 @@ class OptionListItem extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: colorSampleDecoration(context, color, alpha: 64),
                 child: Center(
                   child: Text(
                     '${index + 1}',
@@ -793,7 +725,7 @@ class AddOptionItemWidget extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: colorSampleDecoration(context, color),
                 child: Center(
                   child: Text(
                     '${index + 1}',
@@ -806,7 +738,6 @@ class AddOptionItemWidget extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // "Add new option" label and icon
               Expanded(
                 child: Row(
                   children: [
@@ -828,61 +759,6 @@ class AddOptionItemWidget extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class EditNameDialog extends StatefulWidget {
-  final String initialName;
-  final Function(String) onNameChanged;
-
-  const EditNameDialog({
-    super.key,
-    required this.initialName,
-    required this.onNameChanged,
-  });
-
-  @override
-  State<EditNameDialog> createState() => _EditNameDialogState();
-}
-
-class _EditNameDialogState extends State<EditNameDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Edit Spinner Name'),
-      content: TextField(
-        controller: _controller,
-        decoration: InputDecoration(labelText: 'Spinner name'),
-        autofocus: true,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            widget.onNameChanged(_controller.text);
-            Navigator.of(context).pop();
-          },
-          child: Text('Save'),
-        ),
-      ],
     );
   }
 }
@@ -953,20 +829,6 @@ class _EditOptionDialogState extends State<EditOptionDialog> {
               ),
               maxLength: 100,
             ),
-            // const SizedBox(height: 24),
-            // Weight slider
-            // Text('Weight: ${_tempWeight.toStringAsFixed(1)}'),
-            // Slider(
-            //   value: _tempWeight,
-            //   min: 0.1,
-            //   max: 5.0,
-            //   divisions: 49,
-            //   onChanged: (value) {
-            //     setState(() {
-            //       _tempWeight = value;
-            //     });
-            //   },
-            // ),
           ],
         ),
       ),
@@ -1023,7 +885,6 @@ class _AddOptionDialogState extends State<AddOptionDialog> {
         decoration: InputDecoration(
           labelText: 'Option text',
           hintText: 'Enter new option...',
-          prefixIcon: const Icon(Icons.lightbulb_outline),
         ),
         autofocus: true,
         onSubmitted: (_) => _addOption(),
@@ -1136,7 +997,10 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
         children: [
           Row(
             children: [
-              Icon(Icons.volume_up_outlined),
+              Icon(
+                Icons.volume_up_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text('Audio Settings', style: theme.textTheme.titleSmall),
             ],
@@ -1145,8 +1009,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
           const SizedBox(height: 12),
           _buildAudioSelector(
             context: context,
-            label: 'Spin Sound',
-            icon: Icons.play_circle_outline,
             currentSound: _validSpinSound,
             availableSounds: widget.availableSpinSounds,
             onSoundChanged: widget.onSpinSoundChanged,
@@ -1156,8 +1018,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
           const SizedBox(height: 16),
           _buildAudioSelector(
             context: context,
-            label: 'Spin End Sound',
-            icon: Icons.stop_circle_outlined,
             currentSound: _validSpinEndSound,
             availableSounds: widget.availableSpinEndSounds,
             onSoundChanged: widget.onSpinEndSoundChanged,
@@ -1171,8 +1031,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
 
   Widget _buildAudioSelector({
     required BuildContext context,
-    required String label,
-    required IconData icon,
     required String? currentSound,
     required List<String> availableSounds,
     required Function(String?) onSoundChanged,
@@ -1184,19 +1042,6 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -1231,11 +1076,18 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
                         ),
                       ),
                       ...availableSounds.map((sound) {
+                        final isSelected =
+                            sound ==
+                            currentSound; // compare with your selected value
                         return DropdownMenuItem<String?>(
                           value: sound,
                           child: Text(
                             AudioUtils.formatSoundName(sound),
-                            style: theme.textTheme.bodyMedium,
+                            style: isSelected
+                                ? theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  )
+                                : theme.textTheme.bodyMedium,
                           ),
                         );
                       }),
@@ -1289,9 +1141,7 @@ class _AudioSettingsSectionState extends State<AudioSettingsSection> {
       await AudioUtils.previewAudio(soundName, isEndSound);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error playing audio: $e')));
+        showSnackBar(context, 'Error playing audio: $e');
       }
     } finally {
       if (mounted) {
@@ -1326,26 +1176,28 @@ class SpinDurationSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.timer_outlined),
-              const SizedBox(width: 8),
-              Text('Spin Duration', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.speed, size: 16),
+              Icon(
+                Icons.timer_outlined,
+                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
+              ),
               const SizedBox(width: 8),
               Text(
-                '${seconds.toStringAsFixed(1)} seconds',
-                style: theme.textTheme.bodyMedium?.copyWith(
+                '${seconds.toStringAsFixed(1)} ',
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                'seconds spin',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: theme.textTheme.titleSmall?.color?.withAlpha(128),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          DefaultDivider(),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(

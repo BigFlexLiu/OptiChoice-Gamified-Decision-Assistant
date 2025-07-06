@@ -1,5 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/views/premade_spinners_view.dart';
-import 'package:decision_spinner/widgets/spinner.dart';
+import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -20,6 +23,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final Map<String, bool> _expansionStateByItemId = {};
 
   @override
   void initState() {
@@ -56,10 +60,15 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
         _spinners = spinners;
         _activeSpinnerId = activeSpinnerId;
         _isLoading = false;
+        for (var spinnerId in spinners.keys) {
+          if (!_expansionStateByItemId.containsKey(spinnerId)) {
+            _expansionStateByItemId[spinnerId] = false;
+          }
+        }
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('Failed to load spinners');
+      showSnackBar(context, 'Failed to load spinners');
     }
   }
 
@@ -99,9 +108,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
         if (newSpinner != null) {
           _loadData();
-          _showSnackBar('Spinner "$name" created and set as active');
+          showSnackBar(context, 'Spinner "$name" created and set as active');
         } else {
-          _showSnackBar('Failed to create spinner. Please try again.');
+          showSnackBar(context, 'Failed to create spinner. Please try again.');
         }
         return;
       }
@@ -126,15 +135,27 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   }
 
   Map<String, SpinnerModel> get _filteredSpinners {
+    Map<String, SpinnerModel> filtered;
+
     if (_searchQuery.isEmpty) {
-      return _spinners;
+      filtered = _spinners;
+    } else {
+      filtered = Map.fromEntries(
+        _spinners.entries.where(
+          (entry) => entry.value.name.toLowerCase().contains(_searchQuery),
+        ),
+      );
     }
 
-    return Map.fromEntries(
-      _spinners.entries.where(
-        (entry) => entry.value.name.toLowerCase().contains(_searchQuery),
-      ),
-    );
+    // Sort to put active spinner first
+    final sortedEntries = filtered.entries.toList()
+      ..sort((a, b) {
+        if (a.key == _activeSpinnerId) return -1;
+        if (b.key == _activeSpinnerId) return 1;
+        return 0;
+      });
+
+    return Map.fromEntries(sortedEntries);
   }
 
   Future<void> _deleteSpinner(String id) async {
@@ -176,9 +197,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       final success = await SpinnerStorageService.deleteSpinner(id);
       if (success) {
         _loadData();
-        _showSnackBar('Spinner "${spinner.name}" deleted');
+        showSnackBar(context, 'Spinner "${spinner.name}" deleted');
       } else {
-        _showSnackBar('Cannot delete the last spinner');
+        showSnackBar(context, 'Cannot delete the last spinner');
       }
     }
   }
@@ -201,9 +222,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
       if (duplicatedSpinner != null) {
         _loadData();
-        _showSnackBar('Spinner duplicated as "$newName"');
+        showSnackBar(context, 'Spinner duplicated as "$newName"');
       } else {
-        _showSnackBar('Failed to duplicate. Name might already exist.');
+        showSnackBar(context, 'Failed to duplicate. Name might already exist.');
       }
     }
   }
@@ -321,9 +342,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       });
 
       final spinnerName = _spinners[id]?.name ?? 'Unknown';
-      _showSnackBar('Active spinner set to "$spinnerName"');
+      showSnackBar(context, 'Active spinner set to "$spinnerName"');
     } else {
-      _showSnackBar('Failed to set active spinner');
+      showSnackBar(context, 'Failed to set active spinner');
     }
   }
 
@@ -349,20 +370,16 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
     }
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _reorderSpinners(
     int oldIndex,
     int newIndex, [
     Map<String, SpinnerModel>? sourceMap,
   ]) async {
-    // If we're in search mode, don't allow reordering
     if (_searchQuery.isNotEmpty) {
-      _showSnackBar('Cannot reorder while searching. Clear search first.');
+      showSnackBar(
+        context,
+        'Cannot reorder while searching. Clear search first.',
+      );
       return;
     }
 
@@ -390,7 +407,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredSpinners = _filteredSpinners;
+    Map<String, SpinnerModel> filteredSpinners = _filteredSpinners;
 
     return Scaffold(
       appBar: AppBar(
@@ -428,7 +445,8 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                 // Get the name of the newly active spinner for the success message
                 final activeSpinner = _spinners[_activeSpinnerId];
                 if (activeSpinner != null) {
-                  _showSnackBar(
+                  showSnackBar(
+                    context,
                     'Spinner "${activeSpinner.name}" has been added and set as active!',
                   );
                 }
@@ -489,17 +507,21 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
               onReorder: (oldIndex, newIndex) =>
                   _reorderSpinners(oldIndex, newIndex, filteredSpinners),
               itemBuilder: (context, index) {
+                // Show active spinner first if exists
                 final spinnerId = filteredSpinners.keys.elementAt(index);
                 final spinner = filteredSpinners[spinnerId]!;
                 final isActive = spinnerId == _activeSpinnerId;
+                final isExpanded = _expansionStateByItemId[spinnerId]!;
 
                 return SpinnerCard(
-                  key: ValueKey(spinnerId), // Explicitly set the key here
-                  spinnerId: spinnerId,
+                  key: ValueKey(spinnerId),
                   spinner: spinner,
                   isActive: isActive,
+                  isExpanded: isExpanded,
+                  onExpansionChanged: (bool value) => setState(() {
+                    _expansionStateByItemId[spinnerId] = value;
+                  }),
                   canReorder: _searchQuery.isEmpty,
-                  subtitle: 'Created ${_formatDate(spinner.createdAt)}',
                   actions: _buildSpinnerActions(spinnerId, isActive, theme),
                 );
               },
@@ -574,20 +596,5 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
     }
 
     return actions;
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-    } else {
-      return 'Just now';
-    }
   }
 }

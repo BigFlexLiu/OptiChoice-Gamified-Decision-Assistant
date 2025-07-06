@@ -1,3 +1,5 @@
+import 'package:decision_spinner/consts/color_themes.dart';
+import 'package:decision_spinner/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomColorPickerView extends StatefulWidget {
@@ -15,379 +17,222 @@ class CustomColorPickerView extends StatefulWidget {
 }
 
 class _CustomColorPickerViewState extends State<CustomColorPickerView> {
-  late List<Color> _colors;
+  late List<Color> _selectedColors;
   final int _minColors = 2;
   final int _maxColors = 12;
 
-  // Predefined color palette for easy selection
-  static const List<Color> _colorPalette = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
-    Colors.black,
-  ];
+  late List<Color> _initialColors;
 
   @override
   void initState() {
     super.initState();
-    _colors = List.from(widget.initialColors);
-
-    // Ensure minimum colors
-    while (_colors.length < _minColors) {
-      _colors.add(_colorPalette[_colors.length % _colorPalette.length]);
-    }
+    _selectedColors = List.from(widget.initialColors);
+    _initialColors = List.from(widget.initialColors);
   }
 
-  void _addColor() {
-    if (_colors.length < _maxColors) {
-      setState(() {
-        // Add a color that's not already in the list
-        Color newColor = _colorPalette.firstWhere(
-          (color) => !_colors.contains(color),
-          orElse: () => _colorPalette[_colors.length % _colorPalette.length],
-        );
-        _colors.add(newColor);
-      });
-    }
+  bool _hasChanges() {
+    // Use value-based comparison for color lists
+    return !_selectedColors.hasSameColorsInOrder(_initialColors);
   }
 
-  void _removeColor(int index) {
-    if (_colors.length > _minColors) {
-      setState(() {
-        _colors.removeAt(index);
-      });
-    }
-  }
-
-  void _updateColor(int index, Color color) {
+  void _toggleColor(Color color) {
     setState(() {
-      _colors[index] = color;
+      if (_selectedColors.containsColorValue(color)) {
+        _selectedColors.removeColorValue(color);
+      } else {
+        _selectedColors.add(color);
+      }
     });
   }
 
-  void _showColorPicker(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => ColorPickerDialog(
-        initialColor: _colors[index],
-        onColorSelected: (color) => _updateColor(index, color),
-      ),
-    );
-  }
-
   void _saveColors() {
-    widget.onColorsChanged(_colors);
+    widget.onColorsChanged(_selectedColors);
     Navigator.of(context).pop();
   }
 
+  Future<void> _showDiscardChangesDialog() async {
+    await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Unsaved Changes'),
+          content: const Text('Do you want to save them?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Discard'),
+            ),
+            TextButton(
+              onPressed: () {
+                _saveColors();
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Custom Colors'),
-        backgroundColor: theme.colorScheme.inversePrimary,
-        actions: [
-          TextButton(
-            onPressed: _saveColors,
-            child: Text(
-              'Save',
-              style: theme.appBarTheme.titleTextStyle?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+    return PopScope(
+      canPop: !_hasChanges(),
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (!didPop && _hasChanges()) {
+          await _showDiscardChangesDialog();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Custom Colors'),
+          backgroundColor: theme.colorScheme.inversePrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              if (_hasChanges()) {
+                await _showDiscardChangesDialog();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Choose colors for your spinner',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You can have between $_minColors and $_maxColors colors.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Color list
-            Expanded(
-              child: ReorderableListView.builder(
-                itemCount: _colors.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
-                    final color = _colors.removeAt(oldIndex);
-                    _colors.insert(newIndex, color);
-                  });
-                },
-                itemBuilder: (context, index) {
-                  return _buildColorItem(index, theme);
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Add color button
-            if (_colors.length < _maxColors)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _addColor,
-                  icon: Icon(Icons.add),
-                  label: Text('Add Color'),
+          actions: [
+            if (_hasChanges())
+              TextButton(
+                onPressed: _saveColors,
+                child: Text(
+                  'Save',
+                  style: theme.appBarTheme.titleTextStyle?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
           ],
         ),
-      ),
-    );
-  }
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
 
-  Widget _buildColorItem(int index, ThemeData theme) {
-    return Container(
-      key: ValueKey('color_$index'),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: ListTile(
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.drag_handle, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _colors[index],
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  width: 1,
-                ),
+              // Selected colors count indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_selectedColors.length} of $_maxColors colors selected',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        title: Text('Color ${index + 1}'),
-        subtitle: Text(_getColorName(_colors[index])),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () => _showColorPicker(index),
-              icon: Icon(Icons.edit),
-              tooltip: 'Edit color',
-            ),
-            if (_colors.length > _minColors)
-              IconButton(
-                onPressed: () => _removeColor(index),
-                icon: Icon(Icons.delete_outline),
-                tooltip: 'Remove color',
-              ),
-          ],
-        ),
-        onTap: () => _showColorPicker(index),
-      ),
-    );
-  }
+              const SizedBox(height: 24),
 
-  String _getColorName(Color color) {
-    // Simple color name detection
-    if (color == Colors.red) return 'Red';
-    if (color == Colors.blue) return 'Blue';
-    if (color == Colors.green) return 'Green';
-    if (color == Colors.yellow) return 'Yellow';
-    if (color == Colors.orange) return 'Orange';
-    if (color == Colors.purple) return 'Purple';
-    if (color == Colors.pink) return 'Pink';
-    if (color == Colors.cyan) return 'Cyan';
-    if (color == Colors.teal) return 'Teal';
-    if (color == Colors.lime) return 'Lime';
-    if (color == Colors.amber) return 'Amber';
-    if (color == Colors.brown) return 'Brown';
-    if (color == Colors.grey) return 'Grey';
-    if (color == Colors.black) return 'Black';
+              // Color selection grid
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: DefaultColorThemes.customColors.length,
+                  itemBuilder: (context, index) {
+                    final color = DefaultColorThemes.customColors[index];
+                    final isSelected = _selectedColors.containsColorValue(
+                      color,
+                    );
+                    final canDeselect = _selectedColors.length > _minColors;
+                    final canSelect = _selectedColors.length < _maxColors;
+                    final isEnabled = isSelected ? canDeselect : canSelect;
+                    final colorOrder = isSelected
+                        ? _selectedColors.indexOfColorValue(color) + 1
+                        : null;
 
-    // For custom colors, show hex value
-    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-  }
-}
-
-class ColorPickerDialog extends StatefulWidget {
-  final Color initialColor;
-  final Function(Color) onColorSelected;
-
-  const ColorPickerDialog({
-    super.key,
-    required this.initialColor,
-    required this.onColorSelected,
-  });
-
-  @override
-  State<ColorPickerDialog> createState() => _ColorPickerDialogState();
-}
-
-class _ColorPickerDialogState extends State<ColorPickerDialog> {
-  late Color _selectedColor;
-
-  // Predefined colors for quick selection
-  static const List<List<Color>> _colorShades = [
-    [Colors.red, Colors.redAccent],
-    [Colors.pink, Colors.pinkAccent],
-    [Colors.purple, Colors.purpleAccent],
-    [Colors.deepPurple, Colors.deepPurpleAccent],
-    [Colors.indigo, Colors.indigoAccent],
-    [Colors.blue, Colors.blueAccent],
-    [Colors.lightBlue, Colors.lightBlueAccent],
-    [Colors.cyan, Colors.cyanAccent],
-    [Colors.teal, Colors.tealAccent],
-    [Colors.green, Colors.greenAccent],
-    [Colors.lightGreen, Colors.lightGreenAccent],
-    [Colors.lime, Colors.limeAccent],
-    [Colors.yellow, Colors.yellowAccent],
-    [Colors.amber, Colors.amberAccent],
-    [Colors.orange, Colors.orangeAccent],
-    [Colors.deepOrange, Colors.deepOrangeAccent],
-    [Colors.brown],
-    [Colors.grey],
-    [Colors.blueGrey],
-    [Colors.black, Colors.white],
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedColor = widget.initialColor;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AlertDialog(
-      title: Text('Choose Color'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Selected color preview
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: _selectedColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.outline, width: 2),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Color palette
-            SizedBox(
-              height: 300,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _colorShades.expand((shades) => shades).length,
-                itemBuilder: (context, index) {
-                  final allColors = _colorShades
-                      .expand((shades) => shades)
-                      .toList();
-                  final color = allColors[index];
-                  final isSelected = color == _selectedColor;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedColor = color;
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline.withValues(
-                                  alpha: 0.3,
+                    return GestureDetector(
+                      onTap: isEnabled ? () => _toggleColor(color) : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline.withValues(
+                                    alpha: 0.3,
+                                  ),
+                            width: isSelected ? 3 : 2,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (isSelected && colorOrder != null)
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 2,
+                                  ),
                                 ),
-                          width: isSelected ? 3 : 1,
+                                child: Text(
+                                  colorOrder.toString(),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                            if (!isEnabled)
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      child: isSelected
-                          ? Icon(
-                              Icons.check,
-                              color: _getContrastColor(color),
-                              size: 20,
-                            )
-                          : null,
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            widget.onColorSelected(_selectedColor);
-            Navigator.of(context).pop();
-          },
-          child: Text('Select'),
-        ),
-      ],
     );
-  }
-
-  Color _getContrastColor(Color color) {
-    // Calculate contrast color for the check icon
-    final luminance = color.computeLuminance();
-    return luminance > 0.5 ? Colors.black : Colors.white;
   }
 }
