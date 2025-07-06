@@ -1,3 +1,5 @@
+import 'package:decision_spinner/consts/color_themes.dart';
+import 'package:decision_spinner/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomColorPickerView extends StatefulWidget {
@@ -15,138 +17,37 @@ class CustomColorPickerView extends StatefulWidget {
 }
 
 class _CustomColorPickerViewState extends State<CustomColorPickerView> {
-  late Set<Color> _selectedColors;
+  late List<Color> _selectedColors;
   final int _minColors = 2;
   final int _maxColors = 12;
-  final Map<Color, int> _colorOrder = {};
 
   late List<Color> _initialColors;
-  late Map<Color, int> _initialColorOrder;
-
-  final List<Color> _colorChoices = [
-    Colors.red,
-    Colors.redAccent,
-    Colors.pink,
-    Colors.pinkAccent,
-    Colors.purple,
-    Colors.purpleAccent,
-    Colors.deepPurple,
-    Colors.deepPurpleAccent,
-    Colors.indigo,
-    Colors.indigoAccent,
-    Colors.blue,
-    Colors.blueAccent,
-    Colors.lightBlue,
-    Colors.lightBlueAccent,
-    Colors.cyan,
-    Colors.cyanAccent,
-    Colors.teal,
-    Colors.tealAccent,
-    Colors.green,
-    Colors.greenAccent,
-    Colors.lightGreen,
-    Colors.lightGreenAccent,
-    Colors.lime,
-    Colors.limeAccent,
-    Colors.yellow,
-    Colors.yellowAccent,
-    Colors.amber,
-    Colors.amberAccent,
-    Colors.orange,
-    Colors.orangeAccent,
-    Colors.deepOrange,
-    Colors.deepOrangeAccent,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
-    Colors.black,
-    Colors.white,
-  ].map((color) => Color(color.toARGB32())).toList();
 
   @override
   void initState() {
     super.initState();
-    _selectedColors = Set.from(widget.initialColors);
-
-    for (int i = 0; i < widget.initialColors.length; i++) {
-      _colorOrder[widget.initialColors[i]] = i + 1;
-    }
-
+    _selectedColors = List.from(widget.initialColors);
     _initialColors = List.from(widget.initialColors);
-    _initialColorOrder = Map.from(_colorOrder);
   }
 
   bool _hasChanges() {
-    // Check if number of selected colors changed
-    if (_selectedColors.length != _initialColors.length) {
-      return true;
-    }
-
-    // Check if selected colors changed
-    if (!_selectedColors.containsAll(_initialColors) ||
-        !_initialColors.every((color) => _selectedColors.contains(color))) {
-      return true;
-    }
-
-    // Check if order changed
-    for (final color in _selectedColors) {
-      if (_colorOrder[color] != _initialColorOrder[color]) {
-        return true;
-      }
-    }
-
-    return false;
+    // Use value-based comparison for color lists
+    return !_selectedColors.hasSameColorsInOrder(_initialColors);
   }
 
   void _toggleColor(Color color) {
     setState(() {
-      if (_selectedColors.contains(color)) {
-        _selectedColors.remove(color);
-        _colorOrder.remove(color);
+      if (_selectedColors.containsColorValue(color)) {
+        _selectedColors.removeColorValue(color);
       } else {
         _selectedColors.add(color);
-        // Assign the next available order immediately
-        _colorOrder[color] = _getNextAvailableOrder();
       }
     });
   }
 
-  void _reassignOrders() {
-    // Get all colors that still have orders and sort them by their current order
-    List<Color> orderedColors = _colorOrder.keys
-        .where((color) => _selectedColors.contains(color))
-        .toList();
-    orderedColors.sort((a, b) => _colorOrder[a]!.compareTo(_colorOrder[b]!));
-
-    // Reassign sequential orders starting from 1
-    for (int i = 0; i < orderedColors.length; i++) {
-      _colorOrder[orderedColors[i]] = i + 1;
-    }
-  }
-
   void _saveColors() {
-    _reassignOrders();
-    // Get all selected colors with their orders
-    final List<MapEntry<Color, int>> colorOrderPairs = _selectedColors
-        .map((color) => MapEntry(color, _colorOrder[color] ?? _maxColors + 1))
-        .toList();
-
-    // Sort by order to get the relative ordering
-    colorOrderPairs.sort((a, b) => a.value.compareTo(b.value));
-
-    // Extract colors in their relative order
-    final orderedColors = colorOrderPairs.map((entry) => entry.key).toList();
-
-    widget.onColorsChanged(orderedColors);
+    widget.onColorsChanged(_selectedColors);
     Navigator.of(context).pop();
-  }
-
-  int _getNextAvailableOrder() {
-    final used = Set.of(_colorOrder.values);
-    for (var i = 1; i <= _maxColors; i++) {
-      if (!used.contains(i)) return i;
-    }
-    return _maxColors + 1;
   }
 
   Future<void> _showDiscardChangesDialog() async {
@@ -256,14 +157,18 @@ class _CustomColorPickerViewState extends State<CustomColorPickerView> {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  itemCount: _colorChoices.length,
+                  itemCount: DefaultColorThemes.customColors.length,
                   itemBuilder: (context, index) {
-                    final color = _colorChoices[index];
-                    final isSelected = _selectedColors.contains(color);
+                    final color = DefaultColorThemes.customColors[index];
+                    final isSelected = _selectedColors.containsColorValue(
+                      color,
+                    );
                     final canDeselect = _selectedColors.length > _minColors;
                     final canSelect = _selectedColors.length < _maxColors;
                     final isEnabled = isSelected ? canDeselect : canSelect;
-                    final colorOrder = _colorOrder[color];
+                    final colorOrder = isSelected
+                        ? _selectedColors.indexOfColorValue(color) + 1
+                        : null;
 
                     return GestureDetector(
                       onTap: isEnabled ? () => _toggleColor(color) : null,

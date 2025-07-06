@@ -1,5 +1,46 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:flutter/material.dart';
+
+// Extension for List<Color> to provide value-based comparison methods
+extension ColorListUtils on List<Color> {
+  /// Checks if the list contains a color with the same ARGB value
+  bool containsColorValue(Color color) {
+    return any((c) => c.value == color.value);
+  }
+
+  /// Finds the index of a color with the same ARGB value
+  int indexOfColorValue(Color color) {
+    for (int i = 0; i < length; i++) {
+      if (this[i].value == color.value) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /// Removes a color with the same ARGB value
+  bool removeColorValue(Color color) {
+    final index = indexOfColorValue(color);
+    if (index != -1) {
+      removeAt(index);
+      return true;
+    }
+    return false;
+  }
+
+  /// Checks if two color lists have the same colors in the same order (by value)
+  bool hasSameColorsInOrder(List<Color> other) {
+    if (length != other.length) return false;
+
+    for (int i = 0; i < length; i++) {
+      if (this[i].value != other[i].value) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
 
 class ColorUtils {
   static List<int> colorToRgb(Color color) {
@@ -178,5 +219,57 @@ class FgColorResult {
   @override
   String toString() {
     return 'FgColorResult(color: $color, ΔE: ${deltaE.toStringAsFixed(2)}, contrast: ${contrast.toStringAsFixed(2)})';
+  }
+}
+
+// Extension for individual Color comparison and serialization
+extension ColorExtensions on Color {
+  /// Check if two colors have the same ARGB value
+  bool hasSameValueAs(Color other) {
+    return value == other.value;
+  }
+
+  /// Convert color to a serializable map
+  Map<String, dynamic> toMap() {
+    return {'value': value};
+  }
+
+  /// Create color from serializable map
+  static Color fromMap(Map<String, dynamic> map) {
+    return Color(map['value']);
+  }
+
+  /// Convert color to hex string
+  String toHex() {
+    return '#${value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+  }
+
+  /// Create color from hex string
+  static Color fromHex(String hex) {
+    final hexCode = hex.replaceAll('#', '');
+    return Color(int.parse(hexCode, radix: 16));
+  }
+}
+
+// Helper class for color list serialization
+class ColorListSerializer {
+  /// Convert color list to serializable list
+  static List<Map<String, dynamic>> toMapList(List<Color> colors) {
+    return colors.map((color) => color.toMap()).toList();
+  }
+
+  /// Create color list from serializable list
+  static List<Color> fromMapList(List<Map<String, dynamic>> mapList) {
+    return mapList.map((map) => ColorExtensions.fromMap(map)).toList();
+  }
+
+  /// Convert color list to hex strings
+  static List<String> toHexList(List<Color> colors) {
+    return colors.map((color) => color.toHex()).toList();
+  }
+
+  /// Create color list from hex strings
+  static List<Color> fromHexList(List<String> hexList) {
+    return hexList.map((hex) => ColorExtensions.fromHex(hex)).toList();
   }
 }

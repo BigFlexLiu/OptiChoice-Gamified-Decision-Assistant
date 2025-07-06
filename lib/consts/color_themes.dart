@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 
 class ColorTheme {
   final String name;
@@ -84,21 +84,50 @@ class DefaultColorThemes {
     ],
   );
 
-  static const ColorTheme _purpleTheme = ColorTheme(
-    name: 'Purple',
+  static const ColorTheme _customColorTheme = ColorTheme(
+    name: "Custom Colors",
     colors: [
-      Color(0xFF667eea),
-      Color(0xFF9C27B0),
-      Color(0xFF673AB7),
-      Color(0xFF3F51B5),
-      Color(0xFF5E35B1),
-      Color(0xFF7B1FA2),
-      Color(0xFF8E24AA),
-      Color(0xFF6A1B9A),
+      Colors.red,
+      Colors.redAccent,
+      Colors.pink,
+      Colors.pinkAccent,
+      Colors.purple,
+      Colors.purpleAccent,
+      Colors.deepPurple,
+      Colors.deepPurpleAccent,
+      Colors.indigo,
+      Colors.indigoAccent,
+      Colors.blue,
+      Colors.blueAccent,
+      Colors.lightBlue,
+      Colors.lightBlueAccent,
+      Colors.cyan,
+      Colors.cyanAccent,
+      Colors.teal,
+      Colors.tealAccent,
+      Colors.green,
+      Colors.greenAccent,
+      Colors.lightGreen,
+      Colors.lightGreenAccent,
+      Colors.lime,
+      Colors.limeAccent,
+      Colors.yellow,
+      Colors.yellowAccent,
+      Colors.amber,
+      Colors.amberAccent,
+      Colors.orange,
+      Colors.orangeAccent,
+      Colors.deepOrange,
+      Colors.deepOrangeAccent,
+      Colors.brown,
+      Colors.grey,
+      Colors.blueGrey,
+      Colors.black,
+      Colors.white,
     ],
   );
 
-  // Public static getters and methods for accessing themes
+  static List<Color> get customColors => _customColorTheme.colors;
 
   /// Returns all available color themes
   static List<ColorTheme> get all => List.unmodifiable(_colorThemes);
