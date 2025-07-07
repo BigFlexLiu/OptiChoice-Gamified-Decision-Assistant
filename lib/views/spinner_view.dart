@@ -39,8 +39,12 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _initializeAudioPlayers();
     _loadActiveWheel();
-    setState(() {
-      _textColor = _getCurrentOptionColor;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _textColor = _getCurrentOptionColor;
+        });
+      }
     });
   }
 
@@ -90,8 +94,19 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       }
 
       setState(() {
+        // Check if this is the same spinner and preserve current option if possible
+        SpinnerOption? preservedOption;
+        if (_activeSpinner != null &&
+            _activeSpinner!.id == spinnerModel.id &&
+            _currentSpinnerOption != null) {
+          // Try to find the same option in the new spinner model
+          preservedOption = spinnerModel.options
+              .where((option) => option.text == _currentSpinnerOption!.text)
+              .firstOrNull;
+        }
+
         _activeSpinner = spinnerModel;
-        _currentSpinnerOption = spinnerModel.options.first;
+        _currentSpinnerOption = preservedOption ?? spinnerModel.options.first;
         _isLoading = false;
       });
 
@@ -133,26 +148,52 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   void _onSpinComplete(String selectedOption) async {
-    setState(() {
-      _isSpinning = false;
-      _shouldAnimateText = true;
-      _textColor = _getCurrentOptionColor;
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = false;
+          _shouldAnimateText = true;
+          _textColor = _getCurrentOptionColor;
+        });
+      }
     });
 
     await _playEndSpinSound();
   }
 
   void _onSpinStart() {
-    setState(() {
-      _isSpinning = true;
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = true;
+        });
+      }
+    });
+  }
+
+  void _onSpinEndPrematurely() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = false;
+          _shouldAnimateText = false;
+        });
+      }
     });
   }
 
   void _onPointingOptionChanged(SpinnerOption option) {
     if (_isSpinning && option != _currentSpinnerOption) {
       _playSpinSoundIfAvailable();
-      setState(() {
-        _currentSpinnerOption = option;
+      // Use addPostFrameCallback to ensure setState is not called during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _currentSpinnerOption = option;
+          });
+        }
       });
     }
   }
@@ -195,6 +236,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   void _navigateToWheelsManagement() async {
+    _onSpinEndPrematurely();
     if (_activeSpinner == null) {
       return;
     }
@@ -283,6 +325,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
           child: IconButton(
             icon: Icon(Icons.list),
             onPressed: () async {
+              _onSpinEndPrematurely();
               await Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (context) => AllSpinnerView()));
@@ -325,11 +368,16 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     );
   }
 
-  void setShouldAnimateFalse() => {
-    setState(() {
-      _shouldAnimateText = false;
-    }),
-  };
+  void setShouldAnimateFalse() {
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _shouldAnimateText = false;
+        });
+      }
+    });
+  }
 
   Widget _buildSpinnerWheelSection() {
     if (_activeSpinner!.options.isEmpty) {

@@ -32,8 +32,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
-  int? _currentPointingIndex; // Track the current pointing indexfinal
-  double? wheelSize;
+  int _currentPointingIndex = 0; // Track the current pointing indexfinal
   Color currentOptionColor = Colors.black;
 
   List<String> get spinnerTextOptions =>
@@ -47,7 +46,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final firstOption = widget.spinnerModel.options.firstOrNull;
 
     if (firstOption != null && widget.onPointingOptionChanged != null) {
-      _currentPointingIndex = 0; // Set initial pointing index
       widget.onPointingOptionChanged!(firstOption);
       setState(() {
         currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
@@ -68,8 +66,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Reset animation state when widget parameters change
     if (oldWidget.spinnerModel != widget.spinnerModel) {
       _controller.reset();
-      _currentRotation = 0;
-      _currentPointingIndex = null;
+      _initializeAnimation();
+      _currentPointingIndex = 0;
 
       // Re-initialize with the first option pointing
       final firstOption = widget.spinnerModel.options.firstOrNull;
@@ -83,6 +81,11 @@ class SpinnerWheelState extends State<SpinnerWheel>
         });
       }
     }
+
+    // Spin got cancelled prematurely
+    if (oldWidget.isSpinning != widget.isSpinning && !widget.isSpinning) {
+      _controller.stop();
+    }
   }
 
   void _initializeAnimation() {
@@ -92,8 +95,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
       vsync: this,
     );
 
+    _initializeCurrentRotation();
     _animation = Tween<double>(
-      begin: 0,
+      begin: _currentRotation,
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
@@ -109,6 +113,16 @@ class SpinnerWheelState extends State<SpinnerWheel>
         _reportWinner();
       }
     });
+  }
+
+  void _initializeCurrentRotation() {
+    if (widget.spinnerModel.options.isNotEmpty) {
+      final sectionAngle = (2 * math.pi) / widget.spinnerModel.options.length;
+      setState(() {
+        _currentRotation =
+            -sectionAngle / 2; // Position at middle of first section
+      });
+    }
   }
 
   void _updatePointingOption() {

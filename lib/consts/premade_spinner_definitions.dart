@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 
 class PremadeSpinnerDefinitions {
   static SpinnerModel createSpinner({
-    required String newId,
     required String name,
     required List<SpinnerOption> options,
     required List<Color> colors,
   }) {
     return SpinnerModel(
-      newId: newId,
       name: name,
       options: options,
       colorThemeIndex: -1,
@@ -48,7 +46,6 @@ class PremadeSpinnerDefinitions {
   ];
 
   static SpinnerModel get yesNoSpinner => createSpinner(
-    newId: 'premade_yes_no',
     name: 'Yes or No',
     options: [
       SpinnerOption(text: 'Yes'),
@@ -58,7 +55,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get whatToEatSpinner => createSpinner(
-    newId: 'premade_what_to_eat',
     name: 'What to Eat',
     options: [
       'Pizza',
@@ -74,7 +70,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get whatToWatchSpinner => createSpinner(
-    newId: 'premade_what_to_watch',
     name: 'What to Watch',
     options: [
       'Movie',
@@ -89,7 +84,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
-    newId: 'premade_where_to_go',
     name: 'Where to Go',
     options: [
       'Coffee shop',
@@ -103,7 +97,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get whatToDoSpinner => createSpinner(
-    newId: 'premade_what_to_do',
     name: 'What to Do',
     options: [
       'Read a book',
@@ -118,7 +111,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get workoutSpinner => createSpinner(
-    newId: 'premade_workout_type',
     name: 'Workout Type',
     options: [
       'Cardio',
@@ -133,7 +125,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get whoPaysSpinner => createSpinner(
-    newId: 'premade_who_pays',
     name: 'Who Pays',
     options: [
       'User 1',
@@ -146,7 +137,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get choreSpinner => createSpinner(
-    newId: 'premade_chore',
     name: 'Chore Spinner',
     options: [
       'Dishes',
@@ -161,7 +151,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get breakActivitySpinner => createSpinner(
-    newId: 'premade_break_activity',
     name: 'Break Activity',
     options: [
       'Stretch',
@@ -175,7 +164,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get truthOrDareSpinner => createSpinner(
-    newId: 'premade_truth_or_dare',
     name: 'Truth or Dare',
     options: [
       'Truth',
@@ -189,21 +177,18 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get dice6Spinner => createSpinner(
-    newId: 'premade_dice_6',
     name: 'Roll a Die (d6)',
     options: List.generate(6, (i) => SpinnerOption(text: '${i + 1}')),
     colors: [Colors.grey, Colors.blueGrey],
   );
 
   static SpinnerModel get dice20Spinner => createSpinner(
-    newId: 'premade_dice_20',
     name: 'Roll a Die (d20)',
     options: List.generate(20, (i) => SpinnerOption(text: '${i + 1}')),
     colors: [Colors.grey, Colors.indigo],
   );
 
   static SpinnerModel get dateNightSpinner => createSpinner(
-    newId: 'premade_date_night',
     name: 'Date Night',
     options: [
       'Movie night',
@@ -217,7 +202,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
-    newId: 'premade_icebreaker_casual',
     name: 'Icebreaker: Casual',
     options: [
       'What\'s your favorite movie?',
@@ -235,7 +219,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
-    newId: 'premade_icebreaker_personal',
     name: 'Icebreaker: Personal',
     options: [
       'What\'s a goal you\'re working on?',
@@ -253,7 +236,6 @@ class PremadeSpinnerDefinitions {
   );
 
   static SpinnerModel get icebreakerSillySpinner => createSpinner(
-    newId: 'premade_icebreaker_silly',
     name: 'Icebreaker: Fun & Silly',
     options: [
       'Would you rather fight 1 horse-sized duck or 100 duck-sized horses?',
