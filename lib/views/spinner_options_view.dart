@@ -263,9 +263,8 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   key: ValueKey(spinner.options[index].text + index.toString()),
                   index: index,
                   option: spinner.options[index],
-                  color:
-                      spinner.backgroundColors[index %
-                          spinner.backgroundColors.length],
+                  backgroundColor: spinner.getCircularBackgroundColor(index),
+                  foregroundColor: spinner.getCircularForegroundColor(index),
                   onTap: () => _showOptionDialog(index, spinner.options[index]),
                 );
               },
@@ -588,14 +587,16 @@ class ColorThemeSelector extends StatelessWidget {
 class OptionListItem extends StatelessWidget {
   final int index;
   final SpinnerOption option;
-  final Color color;
+  final Color backgroundColor;
+  final Color foregroundColor;
   final VoidCallback onTap;
 
   const OptionListItem({
     super.key,
     required this.index,
     required this.option,
-    required this.color,
+    required this.backgroundColor,
+    required this.foregroundColor,
     required this.onTap,
   });
 
@@ -630,12 +631,16 @@ class OptionListItem extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: colorSampleDecoration(context, color, alpha: 64),
+                decoration: colorSampleDecoration(
+                  context,
+                  backgroundColor,
+                  alpha: 64,
+                ),
                 child: Center(
                   child: Text(
                     '${index + 1}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: foregroundColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
