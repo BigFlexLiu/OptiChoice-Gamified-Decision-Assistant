@@ -1,4 +1,4 @@
-package com.example.decision_spin
+package dev.vfile.decision_spin
 
 import io.flutter.embedding.android.FlutterActivity
 
