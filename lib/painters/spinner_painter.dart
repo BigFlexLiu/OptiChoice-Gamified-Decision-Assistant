@@ -44,9 +44,9 @@ class SpinnerPainter extends CustomPainter {
 
       // Draw slice borders
       final sliceBorderPaint = Paint()
-        ..color = Colors.grey.shade300
+        ..color = Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 3;
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
@@ -66,15 +66,6 @@ class SpinnerPainter extends CustomPainter {
         startAngle + sweepAngle / 2,
       );
     }
-
-    // Draw outer border around the entire spinner
-    final innerBorderWidth = 8.0;
-    final outerBorderPaint = Paint()
-      ..color = Colors.grey.shade700.withAlpha(64)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = innerBorderWidth;
-
-    canvas.drawCircle(center, radius + innerBorderWidth / 2, outerBorderPaint);
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
