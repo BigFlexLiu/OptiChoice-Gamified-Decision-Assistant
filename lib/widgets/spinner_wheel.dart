@@ -195,10 +195,11 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void _reportWinner() {
     final winnerOption = _getCurrentPointingOption();
     if (winnerOption != null) {
+      final optionIdx = widget.spinnerModel.options.indexOf(winnerOption);
       setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularColorOfOption(
-          winnerOption,
-        );
+        currentOptionColor = optionIdx != -1
+            ? widget.spinnerModel.getCircularBackgroundColor(optionIdx)
+            : widget.spinnerModel.backgroundColors.first;
       });
     }
     widget.onSpinComplete(winnerOption?.text ?? "");

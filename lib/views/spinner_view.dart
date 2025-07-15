@@ -79,9 +79,13 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
   Color get _getCurrentOptionColor {
     final defaultColor = Colors.black;
-    if (_activeSpinner == null) return defaultColor;
+    if (_activeSpinner == null || _currentSpinnerOption == null)
+      return defaultColor;
 
-    return _activeSpinner!.getCircularColorOfOption(_currentSpinnerOption!);
+    final optionIdx = _activeSpinner!.options.indexOf(_currentSpinnerOption!);
+    if (optionIdx == -1) return defaultColor;
+
+    return _activeSpinner!.getCircularBackgroundColor(optionIdx);
   }
 
   Future<void> _loadActiveWheel() async {

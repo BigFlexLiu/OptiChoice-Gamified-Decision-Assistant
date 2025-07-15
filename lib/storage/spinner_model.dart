@@ -67,22 +67,6 @@ class SpinnerModel {
     return foregroundColors[idx % foregroundColors.length];
   }
 
-  Color getCircularColorOfOption(SpinnerOption option) {
-    final optionIdx = options.indexOf(option);
-    if (optionIdx == -1) {
-      return backgroundColors.first;
-    }
-    return getCircularBackgroundColor(optionIdx);
-  }
-
-  Color getCircularForegroundColorOfOption(SpinnerOption option) {
-    final optionIdx = options.indexOf(option);
-    if (optionIdx == -1) {
-      return foregroundColors.first;
-    }
-    return getCircularForegroundColor(optionIdx);
-  }
-
   bool shouldUseBlendedColorAtIdx(int idx) {
     int lastIdx = options.length - 1;
     if (idx != lastIdx) {
@@ -107,13 +91,45 @@ class SpinnerModel {
     );
   }
 
+  // Get only enabled options
+  List<SpinnerOption> get activeOptions =>
+      options.where((option) => option.isActive).toList();
+
+  // Get only enabled options
+  List<SpinnerOption> get inactiveOptions =>
+      options.where((option) => !option.isActive).toList();
+
+  // Get the count of enabled options
+  int get activeOptionsCount =>
+      options.where((option) => option.isActive).length;
+
+  // Toggle the enabled state of an option
+  void toggleOptionIsActive(SpinnerOption option) {
+    option.isActive = !option.isActive;
+    updatedAt = DateTime.now();
+  }
+
+  // Enable or disable all options
+  void setAllOptionsActive(bool enabled) {
+    for (var option in options) {
+      option.isActive = enabled;
+    }
+    updatedAt = DateTime.now();
+  }
+
   static const _uuid = Uuid();
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'options': options
-          .map((option) => {'text': option.text, 'weight': option.weight})
+          .map(
+            (option) => {
+              'text': option.text,
+              'weight': option.weight,
+              'isActive': option.isActive,
+            },
+          )
           .toList(),
       'colorThemeIndex': colorThemeIndex,
       'colors': backgroundColors.map((color) => color.toARGB32()).toList(),
@@ -137,8 +153,11 @@ class SpinnerModel {
       name: json['name'],
       options: (json['options'] as List)
           .map(
-            (option) =>
-                SpinnerOption(text: option['text'], weight: option['weight']),
+            (option) => SpinnerOption(
+              text: option['text'],
+              weight: option['weight'],
+              isActive: option['isActive'] ?? true,
+            ),
           )
           .toList(),
       colorThemeIndex: json['colorThemeIndex'],
@@ -174,7 +193,11 @@ class SpinnerModel {
       name: newName ?? '${original.name} (Copy)',
       options: original.options
           .map(
-            (option) => SpinnerOption(text: option.text, weight: option.weight),
+            (option) => SpinnerOption(
+              text: option.text,
+              weight: option.weight,
+              isActive: option.isActive,
+            ),
           )
           .toList(),
       colorThemeIndex: original.colorThemeIndex,
@@ -222,6 +245,7 @@ class SpinnerModel {
 class SpinnerOption {
   String text;
   double weight;
+  bool isActive;
 
-  SpinnerOption({required this.text, this.weight = 1.0});
+  SpinnerOption({required this.text, this.weight = 1.0, this.isActive = true});
 }
