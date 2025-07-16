@@ -306,6 +306,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     final displayIndex = entry.key;
                     final originalIndex = entry.value.key;
                     final option = entry.value.value;
+                    final activeCount = spinner.activeOptionsCount;
 
                     return OptionListItem(
                       key: ValueKey('active_${option.text}_$originalIndex'),
@@ -319,7 +320,9 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                         displayIndex,
                       ),
                       onTap: () => _showOptionDialog(originalIndex, option),
-                      onActiveToggled: () => _toggleOptionActive(originalIndex),
+                      onActiveToggled: activeCount > 2
+                          ? () => _toggleOptionActive(originalIndex)
+                          : null,
                     );
                   }),
                 ],
@@ -664,20 +667,23 @@ class OptionListItem extends StatelessWidget {
               ),
 
               // Active/Inactive toggle button
-              Container(
-                margin: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  onPressed: onActiveToggled,
-                  icon: Icon(
-                    option.isActive ? Icons.visibility : Icons.visibility_off,
-                    color: option.isActive
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              if (onActiveToggled != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    onPressed: onActiveToggled,
+                    icon: Icon(
+                      option.isActive ? Icons.visibility : Icons.visibility_off,
+                      color: option.isActive
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    tooltip: option.isActive
+                        ? 'Disable option'
+                        : 'Enable option',
+                    visualDensity: VisualDensity.compact,
                   ),
-                  tooltip: option.isActive ? 'Disable option' : 'Enable option',
-                  visualDensity: VisualDensity.compact,
                 ),
-              ),
 
               // Weight badge (if different from 1.0)
               if (option.weight != 1.0)
