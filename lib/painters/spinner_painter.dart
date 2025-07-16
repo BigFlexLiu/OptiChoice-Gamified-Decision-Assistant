@@ -15,7 +15,8 @@ class SpinnerPainter extends CustomPainter {
     this.wheelSize,
   });
 
-  List<String> get options => spinnerModel.options.map((e) => e.text).toList();
+  List<String> get options =>
+      spinnerModel.activeOptions.map((e) => e.text).toList();
 
   @override
   void paint(Canvas canvas, Size size) {

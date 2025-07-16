@@ -35,22 +35,13 @@ class SpinnerWheelState extends State<SpinnerWheel>
   int _currentPointingIndex = 0; // Track the current pointing indexfinal
   Color currentOptionColor = Colors.black;
 
-  List<String> get spinnerTextOptions =>
-      widget.spinnerModel.options.map((e) => e.text).toList();
+  List<SpinnerOption> get spinnerOptions => widget.spinnerModel.activeOptions;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimation();
-    // Initialize with the first option pointing
-    final firstOption = widget.spinnerModel.options.firstOrNull;
-
-    if (firstOption != null && widget.onPointingOptionChanged != null) {
-      widget.onPointingOptionChanged!(firstOption);
-      setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
-      });
-    }
+    _initializeInitialOption();
   }
 
   @override
@@ -67,24 +58,24 @@ class SpinnerWheelState extends State<SpinnerWheel>
     if (oldWidget.spinnerModel != widget.spinnerModel) {
       _controller.reset();
       _initializeAnimation();
-      _currentPointingIndex = 0;
 
-      // Re-initialize with the first option pointing
-      final firstOption = widget.spinnerModel.options.firstOrNull;
-      if (firstOption != null && widget.onPointingOptionChanged != null) {
-        _currentPointingIndex = 0;
-        widget.onPointingOptionChanged!(firstOption);
-        setState(() {
-          currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
-            0,
-          );
-        });
-      }
+      _currentPointingIndex = 0;
+      _initializeInitialOption();
     }
 
     // Spin got cancelled prematurely
     if (oldWidget.isSpinning != widget.isSpinning && !widget.isSpinning) {
       _controller.stop();
+    }
+  }
+
+  void _initializeInitialOption() {
+    final firstOption = spinnerOptions.firstOrNull;
+    if (firstOption != null && widget.onPointingOptionChanged != null) {
+      widget.onPointingOptionChanged!(firstOption);
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
+      });
     }
   }
 
@@ -116,8 +107,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _initializeCurrentRotation() {
-    if (widget.spinnerModel.options.isNotEmpty) {
-      final sectionAngle = (2 * math.pi) / widget.spinnerModel.options.length;
+    if (spinnerOptions.isNotEmpty) {
+      final sectionAngle = (2 * math.pi) / spinnerOptions.length;
       setState(() {
         _currentRotation =
             -sectionAngle / 2; // Position at middle of first section
@@ -126,25 +117,23 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _updatePointingOption() {
-    if (spinnerTextOptions.isEmpty) return;
+    if (spinnerOptions.isEmpty) return;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(
-        widget.spinnerModel.options[pointingIndex],
-      );
+      widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
     }
   }
 
   void _spin() {
-    if (widget.isSpinning || spinnerTextOptions.length < 2) return;
+    if (widget.isSpinning || spinnerOptions.length < 2) return;
 
     widget.onSpinStart();
     _startSpinAnimation();
@@ -166,7 +155,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     // Add random offset to ensure any option can be selected regardless of duration
     // This ensures equal probability for all options
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final randomOffset = random.nextDouble() * sectionAngle;
 
     final finalRotation =
@@ -195,7 +184,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void _reportWinner() {
     final winnerOption = _getCurrentPointingOption();
     if (winnerOption != null) {
-      final optionIdx = widget.spinnerModel.options.indexOf(winnerOption);
+      final optionIdx = spinnerOptions.indexOf(winnerOption);
       setState(() {
         currentOptionColor = optionIdx != -1
             ? widget.spinnerModel.getCircularBackgroundColor(optionIdx)
@@ -206,15 +195,15 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   SpinnerOption? _getCurrentPointingOption() {
-    if (spinnerTextOptions.isEmpty) return null;
+    if (spinnerOptions.isEmpty) return null;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
 
-    return widget.spinnerModel.options[pointingIndex];
+    return spinnerOptions[pointingIndex];
   }
 
   @override
