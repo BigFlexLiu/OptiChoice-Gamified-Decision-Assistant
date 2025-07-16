@@ -371,6 +371,48 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       onActiveToggled: () => _toggleOptionActive(originalIndex),
                     );
                   }),
+
+                  // Button to activate all inactive options
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.3,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          spinner.setAllOptionsActive();
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Activate all inactive options",
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.visibility,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

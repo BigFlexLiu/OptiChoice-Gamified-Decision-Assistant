@@ -110,9 +110,9 @@ class SpinnerModel {
   }
 
   // Enable or disable all options
-  void setAllOptionsActive(bool enabled) {
+  void setAllOptionsActive() {
     for (var option in options) {
-      option.isActive = enabled;
+      option.isActive = true;
     }
     updatedAt = DateTime.now();
   }
