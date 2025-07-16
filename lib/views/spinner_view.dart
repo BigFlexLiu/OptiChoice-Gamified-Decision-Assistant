@@ -1,6 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
-import 'package:decision_spinner/utils/audio_utils.dart';
-import 'package:decision_spinner/utils/logger.dart';
+import 'package:decision_spinner/utils/spinner_audio_manager.dart';
 import 'package:decision_spinner/views/all_spinners_view.dart';
 import 'package:decision_spinner/views/spinner_options_view.dart';
 import 'package:decision_spinner/widgets/spinner_wheel.dart';
@@ -23,21 +21,14 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   bool _shouldAnimateText = false;
   Color _textColor = Colors.black;
 
-  // Audio players for spinner sounds - configurable count
-  static const int _spinAudioPlayerCount = 10;
-  final List<AudioPlayer> _spinAudioPlayers = [];
-
-  int _currentSpinPlayerIndex = 0;
-  final AudioPlayer _spinEndAudioPlayer = AudioPlayer();
-
-  AssetSource? _spinAudioAsset;
-  AssetSource? _spinEndAudioAsset;
+  // Audio manager for spinner sounds
+  late SpinnerAudioManager _audioManager;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeAudioPlayers();
+    _audioManager = SpinnerAudioManager();
     _loadActiveWheel();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -48,25 +39,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     });
   }
 
-  void _initializeAudioPlayers() {
-    // Initialize the spin audio players
-    for (int i = 0; i < _spinAudioPlayerCount; i++) {
-      _spinAudioPlayers.add(
-        AudioPlayer()
-          ..setPlayerMode(PlayerMode.lowLatency)
-          ..setReleaseMode(ReleaseMode.stop),
-      );
-    }
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // Dispose all audio players
-    for (final player in _spinAudioPlayers) {
-      player.dispose();
-    }
-    _spinEndAudioPlayer.dispose();
+    _audioManager.dispose();
     super.dispose();
   }
 
@@ -75,184 +51,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _loadActiveWheel();
     }
-  }
-
-  Color get _getCurrentOptionColor {
-    final defaultColor = Colors.black;
-    if (_activeSpinner == null || _currentSpinnerOption == null)
-      return defaultColor;
-
-    final optionIdx = _activeSpinner!.options.indexOf(_currentSpinnerOption!);
-    if (optionIdx == -1) return defaultColor;
-
-    return _activeSpinner!.getCircularBackgroundColor(optionIdx);
-  }
-
-  Future<void> _loadActiveWheel() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final spinnerModel = await SpinnerStorageService.loadActiveSpinner();
-      if (spinnerModel == null) {
-        throw Exception('Spinner model is unexpectedly null.');
-      }
-
-      setState(() {
-        // Check if this is the same spinner and preserve current option if possible
-        SpinnerOption? preservedOption;
-        if (_activeSpinner != null &&
-            _activeSpinner!.id == spinnerModel.id &&
-            _currentSpinnerOption != null) {
-          // Try to find the same option in the new spinner model
-          preservedOption = spinnerModel.options
-              .where((option) => option.text == _currentSpinnerOption!.text)
-              .firstOrNull;
-        }
-
-        _activeSpinner = spinnerModel;
-        _currentSpinnerOption = preservedOption ?? spinnerModel.options.first;
-        _isLoading = false;
-      });
-
-      await _preloadAudioSources();
-    } catch (e) {
-      // Handle error by setting loading to false and showing empty state
-      setState(() {
-        _activeSpinner = null;
-        _currentSpinnerOption = null;
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _preloadAudioSources() async {
-    if (_activeSpinner == null) return;
-
-    try {
-      // Preload spin sound
-      final spinSound = _activeSpinner?.spinSound;
-      if (spinSound != null && spinSound.isNotEmpty) {
-        final audioPath = AudioUtils.getSpinAudioPath(spinSound);
-        _spinAudioAsset = AssetSource(audioPath);
-      }
-
-      // Preload spin end sound
-      final spinEndSound = _activeSpinner?.spinEndSound;
-      if (spinEndSound != null && spinEndSound.isNotEmpty) {
-        final audioPath = AudioUtils.getSpinEndAudioPath(spinEndSound);
-        _spinEndAudioAsset = AssetSource(audioPath);
-      }
-    } catch (e, stackTrace) {
-      logger.e(
-        "Error preloading audio sources",
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  void _onSpinComplete(String selectedOption) async {
-    // Use addPostFrameCallback to ensure setState is not called during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _isSpinning = false;
-          _shouldAnimateText = true;
-          _textColor = _getCurrentOptionColor;
-        });
-      }
-    });
-
-    await _playEndSpinSound();
-  }
-
-  void _onSpinStart() {
-    // Use addPostFrameCallback to ensure setState is not called during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _isSpinning = true;
-        });
-      }
-    });
-  }
-
-  void _onSpinEndPrematurely() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _isSpinning = false;
-          _shouldAnimateText = false;
-        });
-      }
-    });
-  }
-
-  void _onPointingOptionChanged(SpinnerOption option) {
-    if (_isSpinning && option != _currentSpinnerOption) {
-      _playSpinSoundIfAvailable();
-      // Use addPostFrameCallback to ensure setState is not called during build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _currentSpinnerOption = option;
-          });
-        }
-      });
-    }
-  }
-
-  AudioPlayer? _getNextAvailableSpinPlayer() {
-    int checkIndex = _currentSpinPlayerIndex % _spinAudioPlayerCount;
-    AudioPlayer player = _spinAudioPlayers[checkIndex];
-    _currentSpinPlayerIndex = (checkIndex + 1) % _spinAudioPlayerCount;
-    return player;
-  }
-
-  Future<void> _playSpinSoundIfAvailable() async {
-    if (_spinAudioAsset == null) return;
-
-    try {
-      AudioPlayer? availablePlayer = _getNextAvailableSpinPlayer();
-
-      if (availablePlayer != null) {
-        await availablePlayer.stop();
-        await availablePlayer.play(_spinAudioAsset!);
-      }
-    } catch (e, stackTrace) {
-      logger.e("Error playing spin sound", error: e, stackTrace: stackTrace);
-    }
-  }
-
-  Future<void> _playEndSpinSound() async {
-    if (_spinEndAudioAsset == null) return;
-
-    try {
-      await _spinEndAudioPlayer.stop();
-      await _spinEndAudioPlayer.play(_spinEndAudioAsset!);
-    } catch (e, stackTrace) {
-      logger.e(
-        "Error playing end spin sound",
-        error: e,
-        stackTrace: stackTrace,
-      );
-    }
-  }
-
-  void _navigateToWheelsManagement() async {
-    _onSpinEndPrematurely();
-    if (_activeSpinner == null) {
-      return;
-    }
-    // Navigate to SpinnerManager and reload active wheel when returning
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SpinnerOptionsView(spinner: _activeSpinner!),
-      ),
-    );
-
-    // Reload active wheel when returning from management screen
-    await _loadActiveWheel();
   }
 
   @override
@@ -372,17 +170,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     );
   }
 
-  void setShouldAnimateFalse() {
-    // Use addPostFrameCallback to ensure setState is not called during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _shouldAnimateText = false;
-        });
-      }
-    });
-  }
-
   Widget _buildSpinnerWheelSection() {
     if (_activeSpinner!.options.isEmpty) {
       return Center(
@@ -418,6 +205,133 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         onPointingOptionChanged: _onPointingOptionChanged,
       ),
     );
+  }
+
+  void _navigateToWheelsManagement() async {
+    _onSpinEndPrematurely();
+    if (_activeSpinner == null) {
+      return;
+    }
+    // Navigate to SpinnerManager and reload active wheel when returning
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SpinnerOptionsView(spinner: _activeSpinner!),
+      ),
+    );
+
+    // Reload active wheel when returning from management screen
+    await _loadActiveWheel();
+  }
+
+  void _onSpinStart() {
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = true;
+        });
+      }
+    });
+  }
+
+  void _onSpinComplete(String selectedOption) async {
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = false;
+          _shouldAnimateText = true;
+          _textColor = _getCurrentOptionColor;
+        });
+      }
+    });
+
+    await _audioManager.playEndSpinSound();
+  }
+
+  void _onSpinEndPrematurely() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _isSpinning = false;
+          _shouldAnimateText = false;
+        });
+      }
+    });
+  }
+
+  void _onPointingOptionChanged(SpinnerOption option) {
+    if (_isSpinning && option != _currentSpinnerOption) {
+      _audioManager.playSpinSoundIfAvailable();
+      // Use addPostFrameCallback to ensure setState is not called during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _currentSpinnerOption = option;
+          });
+        }
+      });
+    }
+  }
+
+  void setShouldAnimateFalse() {
+    // Use addPostFrameCallback to ensure setState is not called during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _shouldAnimateText = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _loadActiveWheel() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final spinnerModel = await SpinnerStorageService.loadActiveSpinner();
+      if (spinnerModel == null) {
+        throw Exception('Spinner model is unexpectedly null.');
+      }
+
+      setState(() {
+        // Check if this is the same spinner and preserve current option if possible
+        SpinnerOption? preservedOption;
+        if (_activeSpinner != null &&
+            _activeSpinner!.id == spinnerModel.id &&
+            _currentSpinnerOption != null) {
+          // Try to find the same option in the new spinner model
+          preservedOption = spinnerModel.options
+              .where((option) => option.text == _currentSpinnerOption!.text)
+              .firstOrNull;
+        }
+
+        _activeSpinner = spinnerModel;
+        _currentSpinnerOption = preservedOption ?? spinnerModel.options.first;
+        _isLoading = false;
+      });
+
+      await _audioManager.preloadAudioSources(_activeSpinner);
+    } catch (e) {
+      // Handle error by setting loading to false and showing empty state
+      setState(() {
+        _activeSpinner = null;
+        _currentSpinnerOption = null;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Color get _getCurrentOptionColor {
+    final defaultColor = Colors.black;
+    if (_activeSpinner == null || _currentSpinnerOption == null) {
+      return defaultColor;
+    }
+
+    final optionIdx = _activeSpinner!.options.indexOf(_currentSpinnerOption!);
+    if (optionIdx == -1) return defaultColor;
+
+    return _activeSpinner!.getCircularBackgroundColor(optionIdx);
   }
 }
 
