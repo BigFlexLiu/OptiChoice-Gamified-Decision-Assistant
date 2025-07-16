@@ -325,9 +325,6 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                 ],
                 AddOptionItemWidget(
                   index: numOptions,
-                  color:
-                      spinner.backgroundColors[activeOptionsWithIndex.length %
-                          spinner.backgroundColors.length],
                   onTap: () => _showAddOptionDialog(),
                 ),
 
@@ -711,13 +708,11 @@ class OptionListItem extends StatelessWidget {
 
 class AddOptionItemWidget extends StatelessWidget {
   final int index;
-  final Color color;
   final VoidCallback onTap;
 
   const AddOptionItemWidget({
     super.key,
     required this.index,
-    required this.color,
     required this.onTap,
   });
 
@@ -754,12 +749,12 @@ class AddOptionItemWidget extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: colorSampleDecoration(context, color),
+                decoration: colorSampleDecoration(context, Colors.white),
                 child: Center(
                   child: Text(
                     '${index + 1}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
