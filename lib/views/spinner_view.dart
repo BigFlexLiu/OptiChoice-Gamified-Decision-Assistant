@@ -20,6 +20,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   bool _isSpinning = false;
   bool _isLoading = true;
   bool _shouldAnimateText = false;
+  bool _showCompleteSpinActions = false;
   Color _textColor = Colors.black;
 
   // Audio manager for spinner sounds
@@ -113,6 +114,28 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
               _buildCurrentPointingOption(),
             ],
           ),
+          if (_showCompleteSpinActions)
+            Column(
+              children: [
+                Expanded(child: Container()),
+                SizedBox(height: 8),
+                if (_activeSpinner != null &&
+                    _activeSpinner!.activeOptionsCount > 2)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (_activeSpinner != null &&
+                          _currentSpinnerOption != null) {
+                        _activeSpinner!.toggleOptionIsActive(
+                          _currentSpinnerOption!,
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.incomplete_circle), // the icon
+                    label: Text('Remove Slice'), // the text
+                  ),
+                SizedBox(height: 48),
+              ],
+            ),
         ],
       ),
     );
@@ -243,6 +266,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
           _isSpinning = false;
           _shouldAnimateText = true;
           _textColor = _getCurrentOptionColor;
+          _showCompleteSpinActions = true;
         });
       }
     });
