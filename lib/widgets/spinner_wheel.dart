@@ -373,7 +373,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
               angle: _animation.value,
               child: Icon(
                 Icons.cached_sharp,
-                color: currentOptionColor,
+                color: Colors.black,
                 size: innerCircleSize,
               ),
             );
