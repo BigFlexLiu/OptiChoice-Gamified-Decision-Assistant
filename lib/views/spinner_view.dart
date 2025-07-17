@@ -20,7 +20,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   bool _isSpinning = false;
   bool _isLoading = true;
   bool _shouldAnimateText = false;
+
   bool _showCompleteSpinActions = false;
+  bool _showRemoveSlice = false;
+
   Color _textColor = Colors.black;
 
   // Audio manager for spinner sounds
@@ -31,7 +34,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _audioManager = SpinnerAudioManager();
-    _loadActiveWheel();
+    _loadActiveSpinner();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -46,13 +49,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _audioManager.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _loadActiveWheel();
-    }
   }
 
   @override
@@ -93,7 +89,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
-              ElevatedButton(onPressed: _loadActiveWheel, child: Text('Retry')),
+              ElevatedButton(
+                onPressed: _loadActiveSpinner,
+                child: Text('Retry'),
+              ),
             ],
           ),
         ),
@@ -119,7 +118,8 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
               children: [
                 Expanded(child: Container()),
                 SizedBox(height: 8),
-                if (_activeSpinner != null &&
+                if (_showRemoveSlice &&
+                    _activeSpinner != null &&
                     _activeSpinner!.activeOptionsCount > 2)
                   ElevatedButton.icon(
                     onPressed: () {
@@ -155,8 +155,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
               await Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (context) => AllSpinnerView()));
-              // Reload active wheel when returning from all spinners view
-              await _loadActiveWheel();
+              await _loadActiveSpinner();
             },
           ),
         ),
@@ -244,7 +243,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     );
 
     // Reload active wheel when returning from management screen
-    await _loadActiveWheel();
+    await _loadActiveSpinner();
   }
 
   void _onSpinStart() {
@@ -267,6 +266,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
           _shouldAnimateText = true;
           _textColor = _getCurrentOptionColor;
           _showCompleteSpinActions = true;
+          _showRemoveSlice = true;
         });
       }
     });
@@ -310,7 +310,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _loadActiveWheel() async {
+  Future<void> _loadActiveSpinner() async {
     setState(() => _isLoading = true);
 
     try {
