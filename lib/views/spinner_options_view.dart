@@ -388,6 +388,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       onTap: () {
                         setState(() {
                           spinner.setAllOptionsActive();
+                          _hasChanges = true;
                         });
                       },
                       borderRadius: BorderRadius.circular(12),
