@@ -128,6 +128,9 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
                         _activeSpinner!.toggleOptionIsActive(
                           _currentSpinnerOption!,
                         );
+                        setState(() {
+                          _showRemoveSlice = true;
+                        });
                       }
                     },
                     icon: Icon(Icons.incomplete_circle), // the icon
