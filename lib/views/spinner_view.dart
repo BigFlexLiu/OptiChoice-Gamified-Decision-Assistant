@@ -129,7 +129,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
                           _currentSpinnerOption!,
                         );
                         setState(() {
-                          _showRemoveSlice = true;
+                          _showRemoveSlice = false;
                         });
                       }
                     },
