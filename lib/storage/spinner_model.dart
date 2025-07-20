@@ -68,7 +68,7 @@ class SpinnerModel {
   }
 
   bool shouldUseBlendedColorAtIdx(int idx) {
-    int lastIdx = options.length - 1;
+    int lastIdx = activeOptions.length - 1;
     if (idx != lastIdx) {
       return false;
     }
