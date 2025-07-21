@@ -84,10 +84,10 @@ class SpinnerModel {
 
   Color blend(Color a, Color b, {double t = 0.5}) {
     return Color.fromARGB(
-      (a.alpha * (1 - t) + b.alpha * t).round(),
-      (a.red * (1 - t) + b.red * t).round(),
-      (a.green * (1 - t) + b.green * t).round(),
-      (a.blue * (1 - t) + b.blue * t).round(),
+      ((a.a * (1 - t) + b.a * t) * 255).round(),
+      ((a.r * (1 - t) + b.r * t) * 255).round(),
+      ((a.g * (1 - t) + b.g * t) * 255).round(),
+      ((a.b * (1 - t) + b.b * t) * 255).round(),
     );
   }
 
