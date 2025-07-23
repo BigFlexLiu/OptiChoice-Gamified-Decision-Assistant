@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../consts/color_themes.dart';
 import '../../utils/widget_utils.dart';
-import '../../views/custom_color_picker_view.dart';
+import '../../views/color_picker_view.dart';
 import '../default_divider.dart';
 
 class ColorThemeSelector extends StatelessWidget {
@@ -21,7 +21,7 @@ class ColorThemeSelector extends StatelessWidget {
   void _showCustomColorPicker(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => CustomColorPickerView(
+        builder: (context) => ColorPickerView(
           initialColors: customColors,
           onColorsChanged: (colors) {
             onCustomColorsChanged(colors);
