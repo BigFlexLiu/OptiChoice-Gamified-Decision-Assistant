@@ -140,6 +140,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                 ElevatedButton(
                   onPressed: () async {
                     await _saveChanges();
+                    Navigator.of(context).pop(false);
                   },
                   child: Text('Save'),
                 ),
