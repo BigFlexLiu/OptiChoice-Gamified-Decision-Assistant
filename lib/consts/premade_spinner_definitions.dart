@@ -51,7 +51,7 @@ class PremadeSpinnerDefinitions {
       SpinnerOption(text: 'Yes'),
       SpinnerOption(text: 'No'),
     ],
-    colors: [Colors.green, Colors.red],
+    colors: twoSliceColors,
   );
 
   static SpinnerModel get whatToEatSpinner => createSpinner(
@@ -60,13 +60,19 @@ class PremadeSpinnerDefinitions {
       'Pizza',
       'Sushi',
       'Burgers',
+      'Burrito',
+      'Bacon',
+      'Hot dog',
+      'BBQ',
+      'chicken',
+      'steak',
       'Salad',
       'Pasta',
       'Tacos',
       'Sandwich',
       'Skip Meal',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.orange, Colors.deepOrange],
+    colors: fourSliceColors,
   );
 
   static SpinnerModel get whatToWatchSpinner => createSpinner(
@@ -80,7 +86,7 @@ class PremadeSpinnerDefinitions {
       'Sports',
       'News',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.blue, Colors.indigo],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
@@ -93,21 +99,21 @@ class PremadeSpinnerDefinitions {
       'Restaurant',
       'Stay home',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.teal, Colors.tealAccent],
+    colors: fourSliceColors,
   );
 
   static SpinnerModel get whatToDoSpinner => createSpinner(
     name: 'What to Do',
     options: [
-      'Read a book',
+      'Read book',
       'Watch TV',
-      'Go for a walk',
-      'Play a game',
+      'Stroll',
+      'Play game',
       'Clean something',
-      'Take a nap',
+      'Take nap',
       'Call someone',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.purple, Colors.deepPurple],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get workoutSpinner => createSpinner(
@@ -121,19 +127,19 @@ class PremadeSpinnerDefinitions {
       'Stretching',
       'Rest day',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.red, Colors.pink],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get whoPaysSpinner => createSpinner(
     name: 'Who Pays',
     options: [
-      'User 1',
-      'User 2',
-      'User 3',
-      'User 4',
+      'Person 1',
+      'Person 2',
+      'Person 3',
+      'Person 4',
       'Split',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.brown.shade300, Colors.amber.shade600],
+    colors: fiveSliceColors,
   );
 
   static SpinnerModel get choreSpinner => createSpinner(
@@ -147,7 +153,7 @@ class PremadeSpinnerDefinitions {
       'Dust',
       'Mop floors',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.grey, Colors.cyan],
+    colors: fourSliceColors,
   );
 
   static SpinnerModel get breakActivitySpinner => createSpinner(
@@ -158,9 +164,8 @@ class PremadeSpinnerDefinitions {
       'Walk around',
       'Deep breaths',
       'Meditate',
-      'Quick tidy',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.lightBlue, Colors.cyan],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get truthOrDareSpinner => createSpinner(
@@ -173,19 +178,19 @@ class PremadeSpinnerDefinitions {
       'Group dare',
       'Tell a secret',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.pink, Colors.deepPurple],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get dice6Spinner => createSpinner(
     name: 'Roll a Die (d6)',
     options: List.generate(6, (i) => SpinnerOption(text: '${i + 1}')),
-    colors: [Colors.grey, Colors.blueGrey],
+    colors: [Colors.grey.shade700, Colors.blueGrey.shade700],
   );
 
   static SpinnerModel get dice20Spinner => createSpinner(
     name: 'Roll a Die (d20)',
     options: List.generate(20, (i) => SpinnerOption(text: '${i + 1}')),
-    colors: [Colors.grey, Colors.indigo],
+    colors: [Colors.indigo.shade700, Colors.blueGrey.shade600],
   );
 
   static SpinnerModel get dateNightSpinner => createSpinner(
@@ -193,12 +198,12 @@ class PremadeSpinnerDefinitions {
     options: [
       'Movie night',
       'Cook together',
-      'Go for a walk',
+      'Take a stroll',
       'Play a game',
       'Try a new restaurant',
       'Stay in and relax',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.red, Colors.deepOrange],
+    colors: threeSliceColors,
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
@@ -215,7 +220,7 @@ class PremadeSpinnerDefinitions {
       'What was your first job?',
       'What\'s a hobby you enjoy?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.lightGreen, Colors.lightBlue],
+    colors: fiveSliceColors,
   );
 
   static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
@@ -232,7 +237,7 @@ class PremadeSpinnerDefinitions {
       'What would you do with a million dollars?',
       'What do you value most in a friendship?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.teal, Colors.cyan],
+    colors: fiveSliceColors,
   );
 
   static SpinnerModel get icebreakerSillySpinner => createSpinner(
@@ -249,6 +254,42 @@ class PremadeSpinnerDefinitions {
       'Which superpower would you want?',
       'If you had to eat one meal forever?',
     ].map((text) => SpinnerOption(text: text)).toList(),
-    colors: [Colors.amber, Colors.purple],
+    colors: fiveSliceColors,
   );
 }
+
+final List<Color> twoSliceColors = [
+  Color(0xFF007ACC), // Bright blue
+  Color(0xFFFFB400), // Warm amber
+];
+
+final List<Color> threeSliceColors = [
+  Color(0xFFFF5C5C), // Red-rose
+  Color(0xFF5CFF5C), // Spring green
+  Color(0xFF5C5CFF), // Soft blue
+];
+
+final List<Color> fourSliceColors = [
+  Color(0xFFFF6B6B), // Coral red
+  Color(0xFFFFD93D), // Golden yellow
+  Color(0xFF6BCB77), // Medium green
+  Color(0xFF4D96FF), // Sky blue
+];
+
+final List<Color> fiveSliceColors = [
+  Color(0xFF007ACC), // Coral red
+  Color(0xFFFF5733), // Golden yellow
+  Color(0xFF28A745), // Medium green
+  Color(0xFFFFC107), // Sky blue
+  Color(0xFF6F42C1), // Purple
+];
+
+final List<Color> sevenSliceColors = [
+  Color(0xFFFF6B6B), // Coral red
+  Color(0xFFFFD93D), // Golden yellow
+  Color(0xFF6BCB77), // Medium green
+  Color(0xFF4D96FF), // Sky blue
+  Color(0xFF845EC2), // Purple
+  Color(0xFFFF9671), // Orange
+  Color(0xFF00C9A7), // Aqua teal
+];
