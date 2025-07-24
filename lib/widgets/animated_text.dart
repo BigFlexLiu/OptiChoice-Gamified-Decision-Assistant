@@ -19,30 +19,68 @@ class AnimatedTextJumpChangeColor extends StatefulWidget {
 }
 
 class _AnimatedTextJumpChangeColorState
-    extends State<AnimatedTextJumpChangeColor> {
+    extends State<AnimatedTextJumpChangeColor>
+    with SingleTickerProviderStateMixin {
   final _animationTime = 500;
-  bool _shouldAnimateJump = false;
-  bool _shouldAnimateFall = false;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      _shouldAnimateJump = widget.shouldAnimate;
-    });
+    _scaleController = AnimationController(
+      duration: Duration(milliseconds: _animationTime),
+      vsync: this,
+    );
+
+    // Create a combined animation that goes up then down
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.5,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.5,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 50,
+      ),
+    ]).animate(_scaleController);
+
+    if (widget.shouldAnimate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startAnimation();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant AnimatedTextJumpChangeColor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          widget.shouldAnimate &&
-          !_shouldAnimateJump &&
-          !_shouldAnimateFall) {
-        setState(() {
-          _shouldAnimateJump = true;
-        });
+    if (widget.shouldAnimate && !oldWidget.shouldAnimate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_scaleController.isAnimating) {
+          _startAnimation();
+        }
+      });
+    }
+  }
+
+  void _startAnimation() {
+    _scaleController.reset();
+    _scaleController.forward().then((_) {
+      if (mounted) {
+        widget.setShouldAnimateFalse();
       }
     });
   }
@@ -52,64 +90,26 @@ class _AnimatedTextJumpChangeColorState
     final theme = Theme.of(context);
     final defaultTextStyle = (theme.textTheme.headlineLarge ?? TextStyle())
         .copyWith(inherit: false, fontWeight: FontWeight.w700);
-    final maxFontSize = theme.textTheme.displayLarge!.fontSize;
 
     Text baseTextWidget = Text(
       widget.text,
       style: defaultTextStyle,
       textAlign: TextAlign.center,
     );
-    if (!_shouldAnimateFall && !_shouldAnimateJump) {
-      return AnimatedDefaultTextStyle(
-        style: baseTextWidget.style!,
-        duration: Duration(),
-        onEnd: null,
-        child: baseTextWidget,
-      );
+
+    if (!widget.shouldAnimate) {
+      return baseTextWidget;
     }
 
-    final jumpEndTextStyle = defaultTextStyle.copyWith(
-      inherit: false,
-      // color: widget.color,
-      fontSize: maxFontSize,
-    );
-    if (_shouldAnimateJump) {
-      return animateJump(jumpEndTextStyle);
-    }
-
-    // Animate fall after the jump
-    final fallEndTextStyle = defaultTextStyle.copyWith(inherit: false);
-    return animateFall(fallEndTextStyle);
-  }
-
-  Widget animateJump(TextStyle endStyle) {
-    return AnimatedDefaultTextStyle(
-      style: endStyle,
-      duration: Duration(milliseconds: _animationTime ~/ 2),
-      onEnd: () => {
-        setState(() {
-          _shouldAnimateJump = false;
-          _shouldAnimateFall = true;
-        }),
+    // Use AnimatedBuilder to listen to scale animation
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: baseTextWidget,
+        );
       },
-      curve: Curves.easeOut,
-      child: Text(widget.text, textAlign: TextAlign.center),
-    );
-  }
-
-  Widget animateFall(TextStyle endStyle) {
-    return AnimatedDefaultTextStyle(
-      style: endStyle,
-      duration: Duration(milliseconds: _animationTime ~/ 2),
-      onEnd: () => {
-        setState(() {
-          _shouldAnimateJump = false;
-          _shouldAnimateFall = false;
-          widget.setShouldAnimateFalse();
-        }),
-      },
-      curve: Curves.easeIn,
-      child: Text(widget.text, textAlign: TextAlign.center),
     );
   }
 }
