@@ -289,7 +289,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   void _onPointingOptionChanged(SpinnerOption option) {
-    if (_isSpinning && option != _currentSpinnerOption) {
+    if (option != _currentSpinnerOption) {
       _audioManager.playSpinSoundIfAvailable();
       // Use addPostFrameCallback to ensure setState is not called during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
