@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../storage/spinner_model.dart';
+import '../../consts/storage_constants.dart';
 
 class EditOptionDialog extends StatefulWidget {
   final SpinnerOption option;
@@ -65,7 +66,7 @@ class _EditOptionDialogState extends State<EditOptionDialog> {
                 hintText: 'Enter option text...',
                 prefixIcon: const Icon(Icons.lightbulb_outline),
               ),
-              maxLength: 100,
+              maxLength: StorageConstants.optionMaxLength,
             ),
           ],
         ),

@@ -22,6 +22,9 @@ class StorageConstants {
     'Soup',
   ];
 
+  // Validation constraints
+  static const int optionMaxLength = 100;
+
   // Legacy key for migration
   static const String oldOptionsKey = 'decision_spin_options';
 }

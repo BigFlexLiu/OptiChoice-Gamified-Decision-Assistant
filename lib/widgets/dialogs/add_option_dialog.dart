@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../consts/storage_constants.dart';
 
 class AddOptionDialog extends StatefulWidget {
   final Function(String) onOptionAdded;
@@ -35,6 +36,7 @@ class _AddOptionDialogState extends State<AddOptionDialog> {
           labelText: 'Option text',
           hintText: 'Enter new option...',
         ),
+        maxLength: StorageConstants.optionMaxLength,
         autofocus: true,
         onSubmitted: (_) => _addOption(),
       ),
