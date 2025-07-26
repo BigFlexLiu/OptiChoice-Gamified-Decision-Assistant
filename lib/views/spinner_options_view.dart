@@ -1,4 +1,5 @@
 import 'package:decision_spinner/consts/color_themes.dart';
+import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
@@ -327,10 +328,11 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     );
                   }),
                 ],
-                AddOptionItemWidget(
-                  index: numOptions,
-                  onTap: () => _showAddOptionDialog(),
-                ),
+                if (StorageConstants.optionMaxCount > spinner.options.length)
+                  AddOptionItemWidget(
+                    index: numOptions,
+                    onTap: () => _showAddOptionDialog(),
+                  ),
 
                 // Inactive options section
                 if (inactiveOptionsWithIndex.isNotEmpty) ...[
