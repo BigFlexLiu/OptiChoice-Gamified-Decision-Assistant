@@ -117,7 +117,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
             Column(
               children: [
                 Expanded(child: Container()),
-                SizedBox(height: 8),
+                SizedBox(height: 24),
                 if (_showRemoveSlice &&
                     _activeSpinner != null &&
                     _activeSpinner!.activeOptionsCount > 2)
@@ -133,10 +133,20 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
                         });
                       }
                     },
-                    icon: Icon(Icons.incomplete_circle), // the icon
-                    label: Text('Remove Slice'), // the text
+                    icon: Icon(
+                      Icons.incomplete_circle,
+                      size: Theme.of(context).textTheme.bodyLarge!.fontSize,
+                    ), // the icon
+                    label: Text(
+                      'Remove Slice',
+                      style: TextStyle(
+                        fontSize: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge!.fontSize,
+                      ),
+                    ), // the text
                   ),
-                SizedBox(height: 48),
+                SizedBox(height: 72),
               ],
             ),
         ],
