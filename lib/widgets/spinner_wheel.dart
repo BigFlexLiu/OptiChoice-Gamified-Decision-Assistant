@@ -308,21 +308,29 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   Widget _buildSpinnerWheel() {
-    final containerHeight = widget.size ?? 350;
-    final shadowSize = containerHeight * 0.914; // 320/350 ratio
-    final wheelSize = containerHeight * 0.857; // 300/350 ratio
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate available width with 16px margins on both sides
+        final availableWidth = MediaQuery.of(context).size.width;
 
-    return SizedBox(
-      height: containerHeight,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _buildWheelShadow(shadowSize),
-          _buildAnimatedWheel(wheelSize),
-          _buildPointer(containerHeight),
-          _buildCenterCircle(wheelSize),
-        ],
-      ),
+        // Use the widget.size if provided, otherwise use available width
+        final containerSize = widget.size ?? availableWidth;
+        final shadowSize = containerSize * 0.914; // 320/350 ratio
+        final wheelSize = containerSize * 0.857; // 300/350 ratio
+
+        return SizedBox(
+          height: containerSize,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _buildWheelShadow(shadowSize),
+              _buildAnimatedWheel(wheelSize),
+              _buildPointer(containerSize),
+              _buildCenterCircle(wheelSize),
+            ],
+          ),
+        );
+      },
     );
   }
 
