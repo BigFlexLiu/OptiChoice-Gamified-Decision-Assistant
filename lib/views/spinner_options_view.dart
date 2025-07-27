@@ -304,29 +304,33 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  ...activeOptionsWithIndex.asMap().entries.map((entry) {
-                    final displayIndex = entry.key;
-                    final originalIndex = entry.value.key;
-                    final option = entry.value.value;
-                    final activeCount = spinner.activeOptionsCount;
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: activeOptionsWithIndex.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        _reorderActiveOptions(oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final originalIndex = activeOptionsWithIndex[index].key;
+                      final option = activeOptionsWithIndex[index].value;
+                      final activeCount = spinner.activeOptionsCount;
 
-                    return OptionListItem(
-                      key: ValueKey('active_${option.text}_$originalIndex'),
-                      index: originalIndex,
-                      displayIndex: displayIndex + 1,
-                      option: option,
-                      backgroundColor: _getActiveOptionBackgroundColor(
-                        displayIndex,
-                      ),
-                      foregroundColor: _getActiveOptionForegroundColor(
-                        displayIndex,
-                      ),
-                      onTap: () => _showOptionDialog(originalIndex, option),
-                      onActiveToggled: activeCount > 2
-                          ? () => _toggleOptionActive(originalIndex)
-                          : null,
-                    );
-                  }),
+                      return OptionListItem(
+                        key: ValueKey('active_${option.text}_$originalIndex'),
+                        index: originalIndex,
+                        reorderIndex: index,
+                        displayIndex: index + 1,
+                        option: option,
+                        backgroundColor: _getActiveOptionBackgroundColor(index),
+                        foregroundColor: _getActiveOptionForegroundColor(index),
+                        onTap: () => _showOptionDialog(originalIndex, option),
+                        onActiveToggled: activeCount > 2
+                            ? () => _toggleOptionActive(originalIndex)
+                            : null,
+                        showDragHandle: true,
+                      );
+                    },
+                  ),
                 ],
                 if (StorageConstants.optionMaxCount > spinner.options.length)
                   AddOptionItemWidget(
@@ -592,6 +596,43 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     });
   }
 
+  void _reorderActiveOptions(int oldIndex, int newIndex) {
+    setState(() {
+      // Adjust newIndex if moving down
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+
+      // Get all active options with their current indices
+      final activeOptionsData = <({SpinnerOption option, int originalIndex})>[];
+      for (int i = 0; i < spinner.options.length; i++) {
+        if (spinner.options[i].isActive) {
+          activeOptionsData.add((option: spinner.options[i], originalIndex: i));
+        }
+      }
+
+      // Reorder the active options
+      final item = activeOptionsData.removeAt(oldIndex);
+      activeOptionsData.insert(newIndex, item);
+
+      // Create a new options list preserving inactive options in their original positions
+      final newOptions = <SpinnerOption>[];
+      int activeIndex = 0;
+
+      for (int i = 0; i < spinner.options.length; i++) {
+        if (spinner.options[i].isActive) {
+          newOptions.add(activeOptionsData[activeIndex].option);
+          activeIndex++;
+        } else {
+          newOptions.add(spinner.options[i]);
+        }
+      }
+
+      spinner.options = newOptions;
+      _hasChanges = true;
+    });
+  }
+
   // Helper methods for color assignment
   Color _getActiveOptionBackgroundColor(int activeIndex) {
     return spinner.backgroundColors[activeIndex %
@@ -617,21 +658,26 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 class OptionListItem extends StatelessWidget {
   final int index;
   final int? displayIndex;
+  final int?
+  reorderIndex; // Index for reordering within the active/inactive list
   final SpinnerOption option;
   final Color backgroundColor;
   final Color foregroundColor;
   final VoidCallback onTap;
   final VoidCallback? onActiveToggled;
+  final bool showDragHandle;
 
   const OptionListItem({
     super.key,
     required this.index,
     this.displayIndex,
+    this.reorderIndex,
     required this.option,
     required this.backgroundColor,
     required this.foregroundColor,
     required this.onTap,
     this.onActiveToggled,
+    this.showDragHandle = false,
   });
 
   @override
@@ -748,6 +794,17 @@ class OptionListItem extends StatelessWidget {
                       color: theme.colorScheme.onSecondaryContainer,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
+
+              // Drag handle
+              if (showDragHandle)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.drag_handle,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    size: 20,
                   ),
                 ),
             ],
