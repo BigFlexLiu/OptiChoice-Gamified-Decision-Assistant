@@ -24,8 +24,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   bool _showCompleteSpinActions = false;
   bool _showRemoveSlice = false;
 
-  Color _textColor = Colors.black;
-
   // Audio manager for spinner sounds
   late SpinnerAudioManager _audioManager;
 
@@ -35,13 +33,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _audioManager = SpinnerAudioManager();
     _loadActiveSpinner();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _textColor = _getCurrentOptionColor;
-        });
-      }
-    });
   }
 
   @override
@@ -201,7 +192,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         _currentSpinnerOption?.text ?? "",
         _shouldAnimateText,
         setShouldAnimateFalse,
-        _textColor,
       ),
     );
   }
@@ -277,7 +267,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         setState(() {
           _isSpinning = false;
           _shouldAnimateText = true;
-          _textColor = _getCurrentOptionColor;
           _showCompleteSpinActions = true;
           _showRemoveSlice = true;
         });
@@ -346,6 +335,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
         _activeSpinner = spinnerModel;
         _currentSpinnerOption = preservedOption ?? spinnerModel.options.first;
+        _showRemoveSlice = false;
         _isLoading = false;
       });
 
