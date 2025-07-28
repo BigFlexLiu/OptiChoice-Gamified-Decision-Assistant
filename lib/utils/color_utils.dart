@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 extension ColorListUtils on List<Color> {
   /// Checks if the list contains a color with the same ARGB value
   bool containsColorValue(Color color) {
-    return any((c) => c.value == color.value);
+    return any((c) => c.toARGB32() == color.toARGB32());
   }
 
   /// Finds the index of a color with the same ARGB value
   int indexOfColorValue(Color color) {
     for (int i = 0; i < length; i++) {
-      if (this[i].value == color.value) {
+      if (this[i].toARGB32() == color.toARGB32()) {
         return i;
       }
     }
@@ -34,7 +34,7 @@ extension ColorListUtils on List<Color> {
     if (length != other.length) return false;
 
     for (int i = 0; i < length; i++) {
-      if (this[i].value != other[i].value) {
+      if (this[i].toARGB32() != other[i].toARGB32()) {
         return false;
       }
     }
@@ -44,7 +44,11 @@ extension ColorListUtils on List<Color> {
 
 class ColorUtils {
   static List<int> colorToRgb(Color color) {
-    return [color.red, color.green, color.blue];
+    return [
+      (color.r * 255).round(),
+      (color.g * 255).round(),
+      (color.b * 255).round(),
+    ];
   }
 
   static Color rgbToColor(List<int> rgb) {
@@ -226,12 +230,12 @@ class FgColorResult {
 extension ColorExtensions on Color {
   /// Check if two colors have the same ARGB value
   bool hasSameValueAs(Color other) {
-    return value == other.value;
+    return toARGB32() == other.toARGB32();
   }
 
   /// Convert color to a serializable map
   Map<String, dynamic> toMap() {
-    return {'value': value};
+    return {'value': toARGB32()};
   }
 
   /// Create color from serializable map
@@ -241,7 +245,7 @@ extension ColorExtensions on Color {
 
   /// Convert color to hex string
   String toHex() {
-    return '#${value.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    return '#${toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
   }
 
   /// Create color from hex string

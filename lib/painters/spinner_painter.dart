@@ -8,6 +8,8 @@ class SpinnerPainter extends CustomPainter {
   final SpinnerOption? selectedOption;
   final double? wheelSize;
 
+  static const double spinnerBorderWidth = 5;
+
   SpinnerPainter({
     required this.spinnerModel,
     required this.rotation,
@@ -15,66 +17,114 @@ class SpinnerPainter extends CustomPainter {
     this.wheelSize,
   });
 
-  List<String> get options => spinnerModel.options.map((e) => e.text).toList();
+  @override
+  bool shouldRepaint(covariant SpinnerPainter oldDelegate) {
+    return oldDelegate._options != _options ||
+        oldDelegate.rotation != rotation ||
+        oldDelegate.selectedOption != selectedOption ||
+        oldDelegate.wheelSize != wheelSize;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (options.isEmpty) return;
+    if (_options.isEmpty) return;
 
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    final anglePerOption = 2 * math.pi / options.length;
-    for (int i = 0; i < options.length; i++) {
+    final anglePerOption = 2 * math.pi / _options.length;
+    for (int i = 0; i < _options.length; i++) {
       // Start from the top (-π/2) and add rotation
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
       final sweepAngle = anglePerOption;
 
-      final slicePaint = _createSlicePaint(i, center, radius);
-      final foregroundColor = spinnerModel.getCircularForegroundColor(i);
-
-      // Draw slice
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        true,
-        slicePaint,
-      );
-
-      // Draw slice borders
-      final sliceBorderPaint = Paint()
-        ..color = Colors.grey.shade300
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        true,
-        sliceBorderPaint,
-      );
-
-      // Draw text - use the middle of the slice
-      _drawText(
-        canvas,
-        options[i],
-        foregroundColor,
-        center,
-        radius,
-        startAngle + sweepAngle / 2,
-      );
+      _paintSlice(canvas, center, radius, startAngle, sweepAngle, i);
     }
 
-    // Draw outer border around the entire spinner
-    final innerBorderWidth = 8.0;
-    final outerBorderPaint = Paint()
-      ..color = Colors.grey.shade700.withAlpha(64)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = innerBorderWidth;
+    // Draw all slice borders after slices are painted
+    _drawSliceBorders(canvas, center, radius, anglePerOption);
 
-    canvas.drawCircle(center, radius + innerBorderWidth / 2, outerBorderPaint);
+    // Draw outer circle border
+    final outerBorderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = spinnerBorderWidth;
+
+    canvas.drawCircle(center, radius, outerBorderPaint);
+  }
+
+  void _paintSlice(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double startAngle,
+    double sweepAngle,
+    int sliceIndex,
+  ) {
+    final slicePaint = _createSlicePaint(sliceIndex, center, radius);
+    final foregroundColor = spinnerModel.getCircularForegroundColor(sliceIndex);
+
+    // Draw slice
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      true,
+      slicePaint,
+    );
+
+    // Draw text - use the middle of the slice
+    _drawText(
+      canvas,
+      _options[sliceIndex],
+      foregroundColor,
+      center,
+      radius,
+      startAngle + sweepAngle / 2,
+    );
+  }
+
+  void _drawSliceBorders(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double anglePerOption,
+  ) {
+    final sliceBorderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _calculateSliceBorderWidth();
+
+    // Draw a border line for each slice
+    for (int i = 0; i < _options.length; i++) {
+      final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
+
+      // Draw line from center to edge at the start angle
+      final lineStartX = center.dx;
+      final lineStartY = center.dy;
+      final lineEndX = center.dx + radius * math.cos(startAngle);
+      final lineEndY = center.dy + radius * math.sin(startAngle);
+
+      canvas.drawLine(
+        Offset(lineStartX, lineStartY),
+        Offset(lineEndX, lineEndY),
+        sliceBorderPaint,
+      );
+    }
+  }
+
+  double _calculateSliceBorderWidth() {
+    final numSlices = _options.length;
+    if (numSlices <= 0) return 2.0; // Default fallback
+
+    // Base width for 8 slices, scale inversely with number of slices
+    // More slices = thinner borders, fewer slices = thicker borders
+    final baseWidth = 3.0;
+    final baseSlices = 8;
+    final scaledWidth = baseWidth * (baseSlices / numSlices);
+
+    // Clamp between 1.0 and 5.0 to keep borders reasonable
+    return scaledWidth.clamp(1.0, 5.0);
   }
 
   Paint _createSlicePaint(int index, Offset center, double radius) {
@@ -82,18 +132,6 @@ class SpinnerPainter extends CustomPainter {
     return Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-  }
-
-  double _calculateFontSize() {
-    if (wheelSize == null) return 14.0; // Default size
-
-    // Scale font size based on wheel size
-    // Assuming default wheel size of 300 corresponds to 14pt font
-    final scaleFactor = wheelSize! / 200.0;
-    final scaledSize = 14.0 * scaleFactor;
-
-    // Clamp between 12 and 16
-    return scaledSize.clamp(12.0, 20.0);
   }
 
   void _drawText(
@@ -122,7 +160,7 @@ class SpinnerPainter extends CustomPainter {
     textPainter.layout();
 
     // Calculate starting position (just inside border)
-    final textStartRadius = radius - 5;
+    final textStartRadius = radius - spinnerBorderWidth;
     final textStartX = center.dx + textStartRadius * math.cos(angle);
     final textStartY = center.dy + textStartRadius * math.sin(angle);
 
@@ -133,6 +171,18 @@ class SpinnerPainter extends CustomPainter {
     textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
 
     canvas.restore();
+  }
+
+  double _calculateFontSize() {
+    if (wheelSize == null) return 14.0; // Default size
+
+    // Scale font size based on wheel size
+    // Assuming default wheel size of 300 corresponds to 14pt font
+    final scaleFactor = wheelSize! / 200.0;
+    final scaledSize = 14.0 * scaleFactor;
+
+    // Clamp between 12 and 16
+    return scaledSize.clamp(12.0, 20.0);
   }
 
   // Binary search for the longest substring that fits maxTextWidth
@@ -164,11 +214,6 @@ class SpinnerPainter extends CustomPainter {
     return result;
   }
 
-  @override
-  bool shouldRepaint(covariant SpinnerPainter oldDelegate) {
-    return oldDelegate.options != options ||
-        oldDelegate.rotation != rotation ||
-        oldDelegate.selectedOption != selectedOption ||
-        oldDelegate.wheelSize != wheelSize;
-  }
+  List<String> get _options =>
+      spinnerModel.activeOptions.map((e) => e.text).toList();
 }

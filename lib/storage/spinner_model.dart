@@ -67,24 +67,8 @@ class SpinnerModel {
     return foregroundColors[idx % foregroundColors.length];
   }
 
-  Color getCircularColorOfOption(SpinnerOption option) {
-    final optionIdx = options.indexOf(option);
-    if (optionIdx == -1) {
-      return backgroundColors.first;
-    }
-    return getCircularBackgroundColor(optionIdx);
-  }
-
-  Color getCircularForegroundColorOfOption(SpinnerOption option) {
-    final optionIdx = options.indexOf(option);
-    if (optionIdx == -1) {
-      return foregroundColors.first;
-    }
-    return getCircularForegroundColor(optionIdx);
-  }
-
   bool shouldUseBlendedColorAtIdx(int idx) {
-    int lastIdx = options.length - 1;
+    int lastIdx = activeOptions.length - 1;
     if (idx != lastIdx) {
       return false;
     }
@@ -100,11 +84,37 @@ class SpinnerModel {
 
   Color blend(Color a, Color b, {double t = 0.5}) {
     return Color.fromARGB(
-      (a.alpha * (1 - t) + b.alpha * t).round(),
-      (a.red * (1 - t) + b.red * t).round(),
-      (a.green * (1 - t) + b.green * t).round(),
-      (a.blue * (1 - t) + b.blue * t).round(),
+      ((a.a * (1 - t) + b.a * t) * 255).round(),
+      ((a.r * (1 - t) + b.r * t) * 255).round(),
+      ((a.g * (1 - t) + b.g * t) * 255).round(),
+      ((a.b * (1 - t) + b.b * t) * 255).round(),
     );
+  }
+
+  // Get only enabled options
+  List<SpinnerOption> get activeOptions =>
+      options.where((option) => option.isActive).toList();
+
+  // Get only enabled options
+  List<SpinnerOption> get inactiveOptions =>
+      options.where((option) => !option.isActive).toList();
+
+  // Get the count of enabled options
+  int get activeOptionsCount =>
+      options.where((option) => option.isActive).length;
+
+  // Toggle the enabled state of an option
+  void toggleOptionIsActive(SpinnerOption option) {
+    option.isActive = !option.isActive;
+    updatedAt = DateTime.now();
+  }
+
+  // Enable or disable all options
+  void setAllOptionsActive() {
+    for (var option in options) {
+      option.isActive = true;
+    }
+    updatedAt = DateTime.now();
   }
 
   static const _uuid = Uuid();
@@ -113,7 +123,13 @@ class SpinnerModel {
       'id': id,
       'name': name,
       'options': options
-          .map((option) => {'text': option.text, 'weight': option.weight})
+          .map(
+            (option) => {
+              'text': option.text,
+              'weight': option.weight,
+              'isActive': option.isActive,
+            },
+          )
           .toList(),
       'colorThemeIndex': colorThemeIndex,
       'colors': backgroundColors.map((color) => color.toARGB32()).toList(),
@@ -137,8 +153,11 @@ class SpinnerModel {
       name: json['name'],
       options: (json['options'] as List)
           .map(
-            (option) =>
-                SpinnerOption(text: option['text'], weight: option['weight']),
+            (option) => SpinnerOption(
+              text: option['text'],
+              weight: option['weight'],
+              isActive: option['isActive'] ?? true,
+            ),
           )
           .toList(),
       colorThemeIndex: json['colorThemeIndex'],
@@ -174,7 +193,11 @@ class SpinnerModel {
       name: newName ?? '${original.name} (Copy)',
       options: original.options
           .map(
-            (option) => SpinnerOption(text: option.text, weight: option.weight),
+            (option) => SpinnerOption(
+              text: option.text,
+              weight: option.weight,
+              isActive: option.isActive,
+            ),
           )
           .toList(),
       colorThemeIndex: original.colorThemeIndex,
@@ -222,6 +245,7 @@ class SpinnerModel {
 class SpinnerOption {
   String text;
   double weight;
+  bool isActive;
 
-  SpinnerOption({required this.text, this.weight = 1.0});
+  SpinnerOption({required this.text, this.weight = 1.0, this.isActive = true});
 }

@@ -1,9 +1,15 @@
 import 'package:decision_spinner/consts/color_themes.dart';
+import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/views/custom_color_picker_view.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
 import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
+import 'package:decision_spinner/widgets/dialogs/add_option_dialog.dart';
+import 'package:decision_spinner/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:decision_spinner/widgets/dialogs/edit_option_dialog.dart';
+import 'package:decision_spinner/widgets/settings/audio_settings_section.dart';
+import 'package:decision_spinner/widgets/settings/color_theme_selector.dart';
+import 'package:decision_spinner/widgets/settings/spin_duration_section.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
@@ -135,6 +141,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                 ElevatedButton(
                   onPressed: () async {
                     await _saveChanges();
+                    Navigator.of(context).pop(false);
                   },
                   child: Text('Save'),
                 ),
@@ -227,6 +234,18 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     final theme = Theme.of(context);
     final numOptions = spinner.options.length;
 
+    // Separate active and inactive options while preserving original indices
+    final activeOptionsWithIndex = <MapEntry<int, SpinnerOption>>[];
+    final inactiveOptionsWithIndex = <MapEntry<int, SpinnerOption>>[];
+
+    for (int i = 0; i < spinner.options.length; i++) {
+      if (spinner.options[i].isActive) {
+        activeOptionsWithIndex.add(MapEntry(i, spinner.options[i]));
+      } else {
+        inactiveOptionsWithIndex.add(MapEntry(i, spinner.options[i]));
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -246,6 +265,15 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   color: Theme.of(context).hintColor.withAlpha(128),
                 ),
               ),
+              if (inactiveOptionsWithIndex.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '(${activeOptionsWithIndex.length} active, ${inactiveOptionsWithIndex.length} inactive)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ],
           ),
           DefaultDivider(),
@@ -253,29 +281,149 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
           if (spinner.options.isEmpty)
             _buildEmptyState()
           else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: numOptions,
-              onReorder: _reorderOptions,
-              itemBuilder: (context, index) {
-                return OptionListItem(
-                  key: ValueKey(spinner.options[index].text + index.toString()),
-                  index: index,
-                  option: spinner.options[index],
-                  color:
-                      spinner.backgroundColors[index %
-                          spinner.backgroundColors.length],
-                  onTap: () => _showOptionDialog(index, spinner.options[index]),
-                );
-              },
+            Column(
+              children: [
+                // Active options section
+                if (activeOptionsWithIndex.isNotEmpty) ...[
+                  if (inactiveOptionsWithIndex.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Active',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: activeOptionsWithIndex.length,
+                    onReorder: (oldIndex, newIndex) =>
+                        _reorderActiveOptions(oldIndex, newIndex),
+                    itemBuilder: (context, index) {
+                      final originalIndex = activeOptionsWithIndex[index].key;
+                      final option = activeOptionsWithIndex[index].value;
+                      final activeCount = spinner.activeOptionsCount;
+
+                      return OptionListItem(
+                        key: ValueKey('active_${option.text}_$originalIndex'),
+                        index: originalIndex,
+                        reorderIndex: index,
+                        displayIndex: index + 1,
+                        option: option,
+                        backgroundColor: _getActiveOptionBackgroundColor(index),
+                        foregroundColor: _getActiveOptionForegroundColor(index),
+                        onTap: () => _showOptionDialog(originalIndex, option),
+                        onActiveToggled: activeCount > 2
+                            ? () => _toggleOptionActive(originalIndex)
+                            : null,
+                        showDragHandle: true,
+                      );
+                    },
+                  ),
+                ],
+                if (StorageConstants.optionMaxCount > spinner.options.length)
+                  AddOptionItemWidget(
+                    index: numOptions,
+                    onTap: () => _showAddOptionDialog(),
+                  ),
+
+                // Inactive options section
+                if (inactiveOptionsWithIndex.isNotEmpty) ...[
+                  if (activeOptionsWithIndex.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Inactive',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  ...inactiveOptionsWithIndex.asMap().entries.map((entry) {
+                    final displayIndex = entry.key;
+                    final originalIndex = entry.value.key;
+                    final option = entry.value.value;
+
+                    return OptionListItem(
+                      key: ValueKey('inactive_${option.text}_$originalIndex'),
+                      index: originalIndex,
+                      displayIndex:
+                          activeOptionsWithIndex.length + displayIndex + 1,
+                      option: option,
+                      backgroundColor: _getInactiveOptionBackgroundColor(),
+                      foregroundColor: _getInactiveOptionForegroundColor(),
+                      onTap: () => _showOptionDialog(originalIndex, option),
+                      onActiveToggled: () => _toggleOptionActive(originalIndex),
+                    );
+                  }),
+
+                  // Button to activate all inactive options
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.3,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          spinner.setAllOptionsActive();
+                          _hasChanges = true;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "Activate all inactive options",
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.visibility,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          AddOptionItemWidget(
-            index: numOptions,
-            color: spinner
-                .backgroundColors[numOptions % spinner.backgroundColors.length],
-            onTap: () => _showAddOptionDialog(),
-          ),
         ],
       ),
     );
@@ -355,17 +503,6 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   void _updateOptionWeight(int index, double weight) {
     setState(() {
       spinner.options[index].weight = weight;
-      _hasChanges = true;
-    });
-  }
-
-  void _reorderOptions(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final item = spinner.options.removeAt(oldIndex);
-      spinner.options.insert(newIndex, item);
       _hasChanges = true;
     });
   }
@@ -451,152 +588,96 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       ),
     );
   }
-}
 
-class ColorThemeSelector extends StatelessWidget {
-  final int selectedThemeIndex;
-  final List<Color> customColors;
-  final Function(int) onThemeChanged;
-  final Function(List<Color>) onCustomColorsChanged;
-
-  const ColorThemeSelector({
-    super.key,
-    required this.selectedThemeIndex,
-    required this.customColors,
-    required this.onThemeChanged,
-    required this.onCustomColorsChanged,
-  });
-
-  void _showCustomColorPicker(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CustomColorPickerView(
-          initialColors: customColors,
-          onColorsChanged: (colors) {
-            onCustomColorsChanged(colors);
-          },
-        ),
-      ),
-    );
+  void _toggleOptionActive(int index) {
+    setState(() {
+      spinner.options[index].isActive = !spinner.options[index].isActive;
+      _hasChanges = true;
+    });
   }
 
-  Widget _buildThemeSelector({
-    required BuildContext context,
-    required List<Color> colors,
-    required String name,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
+  void _reorderActiveOptions(int oldIndex, int newIndex) {
+    setState(() {
+      // Adjust newIndex if moving down
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-        decoration: BoxDecoration(
-          border: isSelected
-              ? Border.all(color: theme.colorScheme.primary, width: 2)
-              : Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  width: 2,
-                ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: colors.take(4).map((color) {
-                return Container(
-                  width: 16,
-                  height: 16,
-                  margin: const EdgeInsets.only(right: 4),
-                  decoration: colorSampleDecoration(
-                    context,
-                    color,
-                    width: name == 'Custom' ? 1 : 1,
-                    alpha: name == 'Custom' ? 255 : 64,
-                    strokeAlign: BorderSide.strokeAlignInside,
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 4),
-            Text(name, style: theme.textTheme.bodySmall),
-          ],
-        ),
-      ),
-    );
+      // Get all active options with their current indices
+      final activeOptionsData = <({SpinnerOption option, int originalIndex})>[];
+      for (int i = 0; i < spinner.options.length; i++) {
+        if (spinner.options[i].isActive) {
+          activeOptionsData.add((option: spinner.options[i], originalIndex: i));
+        }
+      }
+
+      // Reorder the active options
+      final item = activeOptionsData.removeAt(oldIndex);
+      activeOptionsData.insert(newIndex, item);
+
+      // Create a new options list preserving inactive options in their original positions
+      final newOptions = <SpinnerOption>[];
+      int activeIndex = 0;
+
+      for (int i = 0; i < spinner.options.length; i++) {
+        if (spinner.options[i].isActive) {
+          newOptions.add(activeOptionsData[activeIndex].option);
+          activeIndex++;
+        } else {
+          newOptions.add(spinner.options[i]);
+        }
+      }
+
+      spinner.options = newOptions;
+      _hasChanges = true;
+    });
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // Helper methods for color assignment
+  Color _getActiveOptionBackgroundColor(int activeIndex) {
+    return spinner.backgroundColors[activeIndex %
+        spinner.backgroundColors.length];
+  }
+
+  Color _getActiveOptionForegroundColor(int activeIndex) {
+    return spinner.foregroundColors[activeIndex %
+        spinner.foregroundColors.length];
+  }
+
+  Color _getInactiveOptionBackgroundColor() {
     final theme = Theme.of(context);
+    return theme.colorScheme.surfaceContainerHighest;
+  }
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.palette_outlined,
-                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
-              ),
-              const SizedBox(width: 8),
-              Text('Color Theme', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              // Existing predefined themes
-              ...DefaultColorThemes.all.asMap().entries.map((entry) {
-                final index = entry.key;
-                final colorTheme = entry.value;
-                final isSelected = selectedThemeIndex == index;
-
-                return _buildThemeSelector(
-                  context: context,
-                  colors: colorTheme.colors,
-                  name: colorTheme.name,
-                  isSelected: isSelected,
-                  onTap: () => onThemeChanged(index),
-                );
-              }),
-
-              // Custom theme option
-              _buildThemeSelector(
-                context: context,
-                colors: customColors,
-                name: 'Custom',
-                isSelected: selectedThemeIndex == -1,
-                onTap: () => _showCustomColorPicker(context),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+  Color _getInactiveOptionForegroundColor() {
+    final theme = Theme.of(context);
+    return theme.colorScheme.onSurfaceVariant;
   }
 }
 
 class OptionListItem extends StatelessWidget {
   final int index;
+  final int? displayIndex;
+  final int?
+  reorderIndex; // Index for reordering within the active/inactive list
   final SpinnerOption option;
-  final Color color;
+  final Color backgroundColor;
+  final Color foregroundColor;
   final VoidCallback onTap;
+  final VoidCallback? onActiveToggled;
+  final bool showDragHandle;
 
   const OptionListItem({
     super.key,
     required this.index,
+    this.displayIndex,
+    this.reorderIndex,
     required this.option,
-    required this.color,
+    required this.backgroundColor,
+    required this.foregroundColor,
     required this.onTap,
+    this.onActiveToggled,
+    this.showDragHandle = false,
   });
 
   @override
@@ -606,14 +687,20 @@ class OptionListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: option.isActive
+            ? theme.colorScheme.surface
+            : theme.colorScheme.surface.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: option.isActive
+              ? theme.colorScheme.outline.withValues(alpha: 0.2)
+              : theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withValues(alpha: 0.05),
+            color: theme.shadowColor.withValues(
+              alpha: option.isActive ? 0.05 : 0.02,
+            ),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -630,12 +717,18 @@ class OptionListItem extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: colorSampleDecoration(context, color, alpha: 64),
+                decoration: colorSampleDecoration(
+                  context,
+                  backgroundColor,
+                  alpha: option.isActive ? 64 : 32,
+                ),
                 child: Center(
                   child: Text(
-                    '${index + 1}',
+                    '${displayIndex ?? (index + 1)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: option.isActive
+                          ? foregroundColor
+                          : foregroundColor.withValues(alpha: 0.5),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -648,10 +741,41 @@ class OptionListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(option.text, style: theme.textTheme.bodyLarge),
+                    Text(
+                      option.text,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: option.isActive
+                            ? null
+                            : theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
+                        decoration: option.isActive
+                            ? null
+                            : TextDecoration.lineThrough,
+                      ),
+                    ),
                   ],
                 ),
               ),
+
+              // Active/Inactive toggle button
+              if (onActiveToggled != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    onPressed: onActiveToggled,
+                    icon: Icon(
+                      option.isActive ? Icons.visibility : Icons.visibility_off,
+                      color: option.isActive
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    tooltip: option.isActive
+                        ? 'Disable option'
+                        : 'Enable option',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
 
               // Weight badge (if different from 1.0)
               if (option.weight != 1.0)
@@ -672,6 +796,17 @@ class OptionListItem extends StatelessWidget {
                     ),
                   ),
                 ),
+
+              // Drag handle
+              if (showDragHandle)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.drag_handle,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                ),
             ],
           ),
         ),
@@ -682,13 +817,11 @@ class OptionListItem extends StatelessWidget {
 
 class AddOptionItemWidget extends StatelessWidget {
   final int index;
-  final Color color;
   final VoidCallback onTap;
 
   const AddOptionItemWidget({
     super.key,
     required this.index,
-    required this.color,
     required this.onTap,
   });
 
@@ -725,12 +858,12 @@ class AddOptionItemWidget extends StatelessWidget {
               Container(
                 width: 32,
                 height: 32,
-                decoration: colorSampleDecoration(context, color),
+                decoration: colorSampleDecoration(context, Colors.white),
                 child: Center(
                   child: Text(
                     '${index + 1}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -760,524 +893,5 @@ class AddOptionItemWidget extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class EditOptionDialog extends StatefulWidget {
-  final SpinnerOption option;
-  final bool canDelete;
-  final Function(String, double) onOptionChanged;
-  final VoidCallback onDeleteRequested;
-
-  const EditOptionDialog({
-    super.key,
-    required this.option,
-    required this.canDelete,
-    required this.onOptionChanged,
-    required this.onDeleteRequested,
-  });
-
-  @override
-  State<EditOptionDialog> createState() => _EditOptionDialogState();
-}
-
-class _EditOptionDialogState extends State<EditOptionDialog> {
-  late final TextEditingController _nameController;
-  late double _tempWeight;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.option.text);
-    _tempWeight = widget.option.weight;
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
-        children: [
-          Text('Edit Option'),
-          const Spacer(),
-          if (widget.canDelete)
-            IconButton(
-              tooltip: 'Delete option',
-              icon: Icon(Icons.delete_outline),
-              onPressed: widget.onDeleteRequested,
-            ),
-        ],
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Option name field
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Option text',
-                hintText: 'Enter option text...',
-                prefixIcon: const Icon(Icons.lightbulb_outline),
-              ),
-              maxLength: 100,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_nameController.text.trim().isNotEmpty) {
-              widget.onOptionChanged(_nameController.text, _tempWeight);
-              Navigator.of(context).pop();
-            }
-          },
-          child: Text('Save'),
-        ),
-      ],
-    );
-  }
-}
-
-class AddOptionDialog extends StatefulWidget {
-  final Function(String) onOptionAdded;
-
-  const AddOptionDialog({super.key, required this.onOptionAdded});
-
-  @override
-  State<AddOptionDialog> createState() => _AddOptionDialogState();
-}
-
-class _AddOptionDialogState extends State<AddOptionDialog> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _addOption() {
-    if (_controller.text.trim().isNotEmpty) {
-      widget.onOptionAdded(_controller.text);
-      Navigator.of(context).pop();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Add New Option'),
-      content: TextField(
-        controller: _controller,
-        decoration: InputDecoration(
-          labelText: 'Option text',
-          hintText: 'Enter new option...',
-        ),
-        autofocus: true,
-        onSubmitted: (_) => _addOption(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(onPressed: _addOption, child: Text('Add')),
-      ],
-    );
-  }
-}
-
-class DeleteConfirmationDialog extends StatelessWidget {
-  final String title;
-  final String message;
-  final VoidCallback onConfirmed;
-
-  const DeleteConfirmationDialog({
-    super.key,
-    required this.title,
-    required this.message,
-    required this.onConfirmed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(title),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            onConfirmed();
-            Navigator.of(context).pop();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.error,
-            foregroundColor: Theme.of(context).colorScheme.onError,
-          ),
-          child: Text('Delete'),
-        ),
-      ],
-    );
-  }
-}
-
-class AudioSettingsSection extends StatefulWidget {
-  final String? spinSound;
-  final String? spinEndSound;
-  final List<String> availableSpinSounds;
-  final List<String> availableSpinEndSounds;
-  final Function(String?) onSpinSoundChanged;
-  final Function(String?) onSpinEndSoundChanged;
-
-  const AudioSettingsSection({
-    super.key,
-    required this.spinSound,
-    required this.spinEndSound,
-    required this.availableSpinSounds,
-    required this.availableSpinEndSounds,
-    required this.onSpinSoundChanged,
-    required this.onSpinEndSoundChanged,
-  });
-
-  @override
-  State<AudioSettingsSection> createState() => _AudioSettingsSectionState();
-}
-
-class _AudioSettingsSectionState extends State<AudioSettingsSection> {
-  bool _isPlayingSpinPreview = false;
-  bool _isPlayingEndPreview = false;
-
-  @override
-  void dispose() {
-    AudioUtils.stopPreview();
-    super.dispose();
-  }
-
-  // Helper method to get the current valid spin sound
-  String? get _validSpinSound {
-    if (widget.spinSound == null) return null;
-    return widget.availableSpinSounds.contains(widget.spinSound)
-        ? widget.spinSound
-        : null;
-  }
-
-  // Helper method to get the current valid spin end sound
-  String? get _validSpinEndSound {
-    if (widget.spinEndSound == null) return null;
-    return widget.availableSpinEndSounds.contains(widget.spinEndSound)
-        ? widget.spinEndSound
-        : null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.volume_up_outlined,
-                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
-              ),
-              const SizedBox(width: 8),
-              Text('Audio Settings', style: theme.textTheme.titleSmall),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          _buildAudioSelector(
-            context: context,
-            currentSound: _validSpinSound,
-            availableSounds: widget.availableSpinSounds,
-            onSoundChanged: widget.onSpinSoundChanged,
-            isPlaying: _isPlayingSpinPreview,
-            onPreview: (sound) => _previewAudio(sound, false),
-          ),
-          const SizedBox(height: 16),
-          _buildAudioSelector(
-            context: context,
-            currentSound: _validSpinEndSound,
-            availableSounds: widget.availableSpinEndSounds,
-            onSoundChanged: widget.onSpinEndSoundChanged,
-            isPlaying: _isPlayingEndPreview,
-            onPreview: (sound) => _previewAudio(sound, true),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAudioSelector({
-    required BuildContext context,
-    required String? currentSound,
-    required List<String> availableSounds,
-    required Function(String?) onSoundChanged,
-    required bool isPlaying,
-    required Function(String) onPreview,
-  }) {
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String?>(
-                    value: currentSound,
-                    hint: Text(
-                      availableSounds.isEmpty ? 'Loading...' : 'Select sound',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    isExpanded: true,
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(
-                          'None',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      ...availableSounds.map((sound) {
-                        final isSelected =
-                            sound ==
-                            currentSound; // compare with your selected value
-                        return DropdownMenuItem<String?>(
-                          value: sound,
-                          child: Text(
-                            AudioUtils.formatSoundName(sound),
-                            style: isSelected
-                                ? theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  )
-                                : theme.textTheme.bodyMedium,
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: availableSounds.isEmpty ? null : onSoundChanged,
-                  ),
-                ),
-              ),
-              if (currentSound != null && availableSounds.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: isPlaying ? null : () => onPreview(currentSound),
-                  icon: Icon(
-                    isPlaying ? Icons.stop : Icons.play_arrow,
-                    color: isPlaying
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  tooltip: isPlaying ? 'Stop preview' : 'Preview sound',
-                  style: IconButton.styleFrom(
-                    backgroundColor: theme.colorScheme.surface,
-                    side: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _previewAudio(String soundName, bool isEndSound) async {
-    // Stop any currently playing preview
-    await AudioUtils.stopPreview();
-
-    // Set the appropriate playing state
-    setState(() {
-      if (isEndSound) {
-        _isPlayingEndPreview = true;
-        _isPlayingSpinPreview = false;
-      } else {
-        _isPlayingSpinPreview = true;
-        _isPlayingEndPreview = false;
-      }
-    });
-
-    try {
-      await AudioUtils.previewAudio(soundName, isEndSound);
-    } catch (e) {
-      if (mounted) {
-        showSnackBar(context, 'Error playing audio: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPlayingSpinPreview = false;
-          _isPlayingEndPreview = false;
-        });
-      }
-    }
-  }
-}
-
-class SpinDurationSection extends StatelessWidget {
-  final Duration spinDuration;
-  final Function(Duration) onDurationChanged;
-
-  const SpinDurationSection({
-    super.key,
-    required this.spinDuration,
-    required this.onDurationChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final seconds = spinDuration.inMilliseconds / 1000.0;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.timer_outlined,
-                color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${seconds.toStringAsFixed(1)} ',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                'seconds spin',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: theme.textTheme.titleSmall?.color?.withAlpha(128),
-                ),
-              ),
-            ],
-          ),
-          DefaultDivider(),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              children: [
-                Slider(
-                  value: seconds,
-                  min: 0.5,
-                  max: 5.0,
-                  divisions: 45, // 0.1 second increments
-                  label: '${seconds.toStringAsFixed(1)}s',
-                  onChanged: (value) {
-                    final duration = Duration(
-                      milliseconds: (value * 1000).round(),
-                    );
-                    onDurationChanged(duration);
-                  },
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '1.0s',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    Text(
-                      'Fast',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    Text(
-                      'Slow',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    Text(
-                      '5.0s',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _getDurationDescription(seconds),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getDurationDescription(double seconds) {
-    if (seconds <= 1.5) {
-      return 'Quick spin - great for fast decisions';
-    } else if (seconds <= 2.5) {
-      return 'Balanced spin - good for most situations';
-    } else if (seconds <= 3.5) {
-      return 'Moderate spin - builds anticipation';
-    } else {
-      return 'Long spin - maximum suspense';
-    }
   }
 }

@@ -32,27 +32,20 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
-  int? _currentPointingIndex; // Track the current pointing indexfinal
-  double? wheelSize;
+  int _currentPointingIndex = 0; // Track the current pointing indexfinal
   Color currentOptionColor = Colors.black;
 
-  List<String> get spinnerTextOptions =>
-      widget.spinnerModel.options.map((e) => e.text).toList();
+  // Drag rotation variables
+  bool _isDragging = false;
+  double _lastPanAngle = 0;
+
+  List<SpinnerOption> get spinnerOptions => widget.spinnerModel.activeOptions;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimation();
-    // Initialize with the first option pointing
-    final firstOption = widget.spinnerModel.options.firstOrNull;
-
-    if (firstOption != null && widget.onPointingOptionChanged != null) {
-      _currentPointingIndex = 0; // Set initial pointing index
-      widget.onPointingOptionChanged!(firstOption);
-      setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
-      });
-    }
+    _initializeInitialOption();
   }
 
   @override
@@ -68,20 +61,25 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Reset animation state when widget parameters change
     if (oldWidget.spinnerModel != widget.spinnerModel) {
       _controller.reset();
-      _currentRotation = 0;
-      _currentPointingIndex = null;
+      _initializeAnimation();
 
-      // Re-initialize with the first option pointing
-      final firstOption = widget.spinnerModel.options.firstOrNull;
-      if (firstOption != null && widget.onPointingOptionChanged != null) {
-        _currentPointingIndex = 0;
-        widget.onPointingOptionChanged!(firstOption);
-        setState(() {
-          currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
-            0,
-          );
-        });
-      }
+      _currentPointingIndex = 0;
+      _initializeInitialOption();
+    }
+
+    // Spin got cancelled prematurely
+    if (oldWidget.isSpinning != widget.isSpinning && !widget.isSpinning) {
+      _controller.stop();
+    }
+  }
+
+  void _initializeInitialOption() {
+    final firstOption = spinnerOptions.firstOrNull;
+    if (firstOption != null && widget.onPointingOptionChanged != null) {
+      widget.onPointingOptionChanged!(firstOption);
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
+      });
     }
   }
 
@@ -92,8 +90,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
       vsync: this,
     );
 
+    _initializeCurrentRotation();
     _animation = Tween<double>(
-      begin: 0,
+      begin: _currentRotation,
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
@@ -111,32 +110,43 @@ class SpinnerWheelState extends State<SpinnerWheel>
     });
   }
 
+  void _initializeCurrentRotation() {
+    if (spinnerOptions.isNotEmpty) {
+      final sectionAngle = (2 * math.pi) / spinnerOptions.length;
+      setState(() {
+        _currentRotation =
+            -sectionAngle / 2; // Position at middle of first section
+      });
+    }
+  }
+
   void _updatePointingOption() {
-    if (spinnerTextOptions.isEmpty) return;
+    if (spinnerOptions.isEmpty) return;
 
     final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(
-        widget.spinnerModel.options[pointingIndex],
-      );
+      widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
     }
   }
 
   void _spin() {
-    if (widget.isSpinning || spinnerTextOptions.length < 2) return;
+    if (widget.isSpinning || spinnerOptions.length < 2) return;
 
     widget.onSpinStart();
     _startSpinAnimation();
   }
 
   void _startSpinAnimation() {
+    // Reset drag state when starting spin
+    _isDragging = false;
+
     final random = math.Random();
 
     // Calculate spins based on duration - reduced speed for shorter durations
@@ -152,7 +162,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     // Add random offset to ensure any option can be selected regardless of duration
     // This ensures equal probability for all options
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final randomOffset = random.nextDouble() * sectionAngle;
 
     final finalRotation =
@@ -181,25 +191,109 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void _reportWinner() {
     final winnerOption = _getCurrentPointingOption();
     if (winnerOption != null) {
+      final optionIdx = spinnerOptions.indexOf(winnerOption);
       setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularColorOfOption(
-          winnerOption,
-        );
+        currentOptionColor = optionIdx != -1
+            ? widget.spinnerModel.getCircularBackgroundColor(optionIdx)
+            : widget.spinnerModel.backgroundColors.first;
       });
     }
     widget.onSpinComplete(winnerOption?.text ?? "");
   }
 
   SpinnerOption? _getCurrentPointingOption() {
-    if (spinnerTextOptions.isEmpty) return null;
+    if (spinnerOptions.isEmpty) return null;
 
-    final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerTextOptions.length;
+    // Use current rotation for drag or animation value for spinning
+    final rotationValue = _isDragging ? _currentRotation : _animation.value;
+    final normalizedRotation = rotationValue % (2 * math.pi);
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
     final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
     final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerTextOptions.length;
+        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
 
-    return widget.spinnerModel.options[pointingIndex];
+    return spinnerOptions[pointingIndex];
+  }
+
+  // Drag handling methods
+  void _onPanStart(DragStartDetails details, double wheelSize) {
+    if (widget.isSpinning) return;
+
+    _isDragging = true;
+    _controller.stop();
+
+    final center = Offset(wheelSize / 2, wheelSize / 2);
+    final localPosition = details.localPosition - center;
+    _lastPanAngle = math.atan2(localPosition.dy, localPosition.dx);
+
+    // Call onPointingOptionChanged immediately when drag starts
+    if (widget.onPointingOptionChanged != null) {
+      _updatePointingOptionForDrag();
+    }
+  }
+
+  void _onPanUpdate(DragUpdateDetails details, double wheelSize) {
+    if (widget.isSpinning || !_isDragging) return;
+
+    final center = Offset(wheelSize / 2, wheelSize / 2);
+    final localPosition = details.localPosition - center;
+    final currentAngle = math.atan2(localPosition.dy, localPosition.dx);
+
+    // Calculate the angle difference
+    double angleDelta = currentAngle - _lastPanAngle;
+
+    // Handle angle wrap-around
+    if (angleDelta > math.pi) {
+      angleDelta -= 2 * math.pi;
+    } else if (angleDelta < -math.pi) {
+      angleDelta += 2 * math.pi;
+    }
+
+    // Update rotation
+    setState(() {
+      _currentRotation += angleDelta;
+    });
+
+    // Update pointing option during drag - this will call onPointingOptionChanged
+    if (widget.onPointingOptionChanged != null) {
+      _updatePointingOptionForDrag();
+    }
+
+    _lastPanAngle = currentAngle;
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (widget.isSpinning) return;
+
+    _isDragging = false;
+
+    // Update the pointing option after drag ends
+    if (widget.onPointingOptionChanged != null) {
+      _updatePointingOptionForDrag();
+    }
+  }
+
+  void _updatePointingOptionForDrag() {
+    if (spinnerOptions.isEmpty) return;
+
+    final normalizedRotation = _currentRotation % (2 * math.pi);
+    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
+    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
+    final pointingIndex =
+        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
+
+    // Only call the callback if the pointing index has changed
+    if (_currentPointingIndex != pointingIndex) {
+      _currentPointingIndex = pointingIndex;
+      widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
+
+      // Update the current option color
+      setState(() {
+        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
+          pointingIndex,
+        );
+      });
+    }
   }
 
   @override
@@ -214,21 +308,29 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   Widget _buildSpinnerWheel() {
-    final containerHeight = widget.size ?? 350;
-    final shadowSize = containerHeight * 0.914; // 320/350 ratio
-    final wheelSize = containerHeight * 0.857; // 300/350 ratio
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate available width with 16px margins on both sides
+        final availableWidth = MediaQuery.of(context).size.width;
 
-    return SizedBox(
-      height: containerHeight,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _buildWheelShadow(shadowSize),
-          _buildAnimatedWheel(wheelSize),
-          _buildPointer(containerHeight),
-          _buildCenterCircle(wheelSize),
-        ],
-      ),
+        // Use the widget.size if provided, otherwise use available width
+        final containerSize = widget.size ?? availableWidth;
+        final shadowSize = containerSize * 0.914; // 320/350 ratio
+        final wheelSize = containerSize * 0.857; // 300/350 ratio
+
+        return SizedBox(
+          height: containerSize,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _buildWheelShadow(shadowSize),
+              _buildAnimatedWheel(wheelSize),
+              _buildPointer(containerSize),
+              _buildCenterCircle(wheelSize),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -250,36 +352,46 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   Widget _buildAnimatedWheel(double size) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.rotate(
-          angle: _animation.value,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: size * 0.05, // 15/300 ratio
-                  offset: Offset(0, size * 0.0167), // 5/300 ratio
-                ),
-              ],
-            ),
-            child: CustomPaint(
-              painter: SpinnerPainter(
-                spinnerModel: widget.spinnerModel,
-                rotation: 0, // Rotation is handled by Transform.rotate
-                selectedOption: _getCurrentPointingOption(),
-                wheelSize: size, // Pass the wheel size for text scaling
+    return GestureDetector(
+      onPanStart: (details) => _onPanStart(details, size),
+      onPanUpdate: (details) => _onPanUpdate(details, size),
+      onPanEnd: _onPanEnd,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          // Use current rotation for drag or animation value for spinning
+          final rotationAngle = _isDragging
+              ? _currentRotation
+              : _animation.value;
+
+          return Transform.rotate(
+            angle: rotationAngle,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: size * 0.05, // 15/300 ratio
+                    offset: Offset(0, size * 0.0167), // 5/300 ratio
+                  ),
+                ],
               ),
-              size: Size(size, size),
+              child: CustomPaint(
+                painter: SpinnerPainter(
+                  spinnerModel: widget.spinnerModel,
+                  rotation: 0, // Rotation is handled by Transform.rotate
+                  selectedOption: _getCurrentPointingOption(),
+                  wheelSize: size, // Pass the wheel size for text scaling
+                ),
+                size: Size(size, size),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -369,7 +481,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
               angle: _animation.value,
               child: Icon(
                 Icons.cached_sharp,
-                color: currentOptionColor,
+                color: Colors.black,
                 size: innerCircleSize,
               ),
             );
