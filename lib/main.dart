@@ -13,8 +13,6 @@ class SpinnerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Decision Spinner',
 
-      // theme: AppTheme.light,
-      // darkTheme: AppTheme.dark,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
