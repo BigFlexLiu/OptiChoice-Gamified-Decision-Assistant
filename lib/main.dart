@@ -1,7 +1,13 @@
 import 'package:decision_spinner/views/spinner_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize SoLoud audio engine
+  await SoLoud.instance.init();
+
   runApp(SpinnerApp());
 }
 

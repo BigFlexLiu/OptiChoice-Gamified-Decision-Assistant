@@ -35,7 +35,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  audioplayers: ^6.5.0
+  flutter_soloud: ^2.0.3
   logger: ^2.6.0
   flutter_reorderable_grid_view: ^5.5.0
 
