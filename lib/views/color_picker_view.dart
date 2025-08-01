@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter_reorderable_grid_view/widgets/widgets.dart';
 
 class ColorPickerView extends StatefulWidget {
@@ -258,6 +261,83 @@ class ColorWheel extends StatefulWidget {
 }
 
 class _ColorWheelState extends State<ColorWheel> {
+  static ui.Image? _globalCache;
+  static Future<ui.Image>? _generating;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCache();
+  }
+
+  void _initCache() async {
+    if (_globalCache != null) {
+      setState(() {});
+      return;
+    }
+
+    _generating ??= _generateColorWheel();
+    _globalCache = await _generating;
+    if (mounted) setState(() {});
+  }
+
+  static Future<ui.Image> _generateColorWheel() async {
+    const size = 300;
+    final pixels = Uint8List(size * size * 4);
+    const center = size * 0.5;
+    const radius = size * 0.5;
+
+    for (int y = 0, i = 0; y < size; y++) {
+      final dy = y - center;
+      for (int x = 0; x < size; x++, i += 4) {
+        final dx = x - center;
+        final distSq = dx * dx + dy * dy;
+
+        if (distSq <= radius * radius) {
+          final angle = math.atan2(dy, dx);
+          final hue = (angle * 57.2958 + 360) % 360; // 180/π ≈ 57.2958
+          final sat = math.sqrt(distSq) / radius;
+
+          // Correct HSV to RGB using full value (brightness = 1.0)
+          final h60 = hue / 60;
+          final c = sat; // chroma = saturation * value (where value = 1.0)
+          final x = c * (1 - (h60 % 2 - 1).abs());
+          final m = 1.0 - c; // m = value - chroma = 1.0 - sat
+
+          final (r, g, b) = switch (h60.floor()) {
+            0 => (c + m, x + m, m),
+            1 => (x + m, c + m, m),
+            2 => (m, c + m, x + m),
+            3 => (m, x + m, c + m),
+            4 => (x + m, m, c + m),
+            _ => (c + m, m, x + m),
+          };
+
+          pixels[i] = (r * 255).round();
+          pixels[i + 1] = (g * 255).round();
+          pixels[i + 2] = (b * 255).round();
+          pixels[i + 3] = 255;
+        }
+      }
+    }
+
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      pixels,
+      size,
+      size,
+      ui.PixelFormat.rgba8888,
+      completer.complete,
+    );
+    return completer.future;
+  }
+
+  @override
+  void dispose() {
+    // Don't dispose the globally cached image, just clear local reference
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -277,49 +357,47 @@ class _ColorWheelState extends State<ColorWheel> {
           widget.onColorSelected(color);
         }
       },
-      child: CustomPaint(
-        size: const Size(300, 300),
-        painter: ColorWheelPainter(),
-      ),
+      child: _globalCache != null
+          ? CustomPaint(
+              size: const Size(300, 300),
+              painter: CachedColorWheelPainter(_globalCache!),
+            )
+          : const SizedBox(
+              width: 300,
+              height: 300,
+              child: Center(child: CircularProgressIndicator()),
+            ),
     );
   }
 
   Color? _getColorFromPosition(Offset position, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2;
-    final distance = (position - center).distance;
+    final center = size.width * 0.5;
+    final dx = position.dx - center;
+    final dy = position.dy - center;
+    final distSq = dx * dx + dy * dy;
 
-    if (distance > radius) return null;
+    if (distSq > center * center) return null;
 
-    final angle = math.atan2(position.dy - center.dy, position.dx - center.dx);
-    final hue = (angle * 180 / math.pi + 360) % 360;
-    final saturation = distance / radius;
+    final hue = (math.atan2(dy, dx) * 57.2958 + 360) % 360;
+    final saturation = math.sqrt(distSq) / center;
 
     return HSVColor.fromAHSV(1.0, hue, saturation, 1.0).toColor();
   }
 }
 
-class ColorWheelPainter extends CustomPainter {
+class CachedColorWheelPainter extends CustomPainter {
+  final ui.Image cachedImage;
+
+  CachedColorWheelPainter(this.cachedImage);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2;
-
-    for (int i = 0; i < 360; i++) {
-      final hue = i.toDouble();
-      for (double r = 0; r < radius; r += 1) {
-        final saturation = r / radius;
-        final color = HSVColor.fromAHSV(1.0, hue, saturation, 1.0).toColor();
-
-        final x = center.dx + r * math.cos(i * math.pi / 180);
-        final y = center.dy + r * math.sin(i * math.pi / 180);
-
-        final paint = Paint()..color = color;
-        canvas.drawCircle(Offset(x, y), 1.5, paint);
-      }
-    }
+    // Simply draw the cached image
+    canvas.drawImage(cachedImage, Offset.zero, Paint());
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CachedColorWheelPainter oldDelegate) {
+    return oldDelegate.cachedImage != cachedImage;
+  }
 }
