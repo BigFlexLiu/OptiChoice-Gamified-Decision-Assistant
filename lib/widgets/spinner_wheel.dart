@@ -39,11 +39,22 @@ class SpinnerWheelState extends State<SpinnerWheel>
   bool _isDragging = false;
   double _lastPanAngle = 0;
 
+  // Cached calculations for efficiency
+  double _sectionAngle = 0;
+  final double _twoPi = 2 * math.pi;
+
   List<SpinnerOption> get spinnerOptions => widget.spinnerModel.activeOptions;
+
+  void _updateCachedCalculations() {
+    if (spinnerOptions.isNotEmpty) {
+      _sectionAngle = _twoPi / spinnerOptions.length;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _updateCachedCalculations();
     _initializeAnimation();
     _initializeInitialOption();
   }
@@ -61,6 +72,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Reset animation state when widget parameters change
     if (oldWidget.spinnerModel != widget.spinnerModel) {
       _controller.reset();
+      _updateCachedCalculations();
       _initializeAnimation();
 
       _currentPointingIndex = 0;
@@ -96,12 +108,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    // Add listener to track rotation during animation
-    _animation.addListener(() {
-      if (widget.onPointingOptionChanged != null && widget.isSpinning) {
-        _updatePointingOption();
-      }
-    });
+    // Add listener to track rotation during animation - only when spinning
+    _animation.addListener(_onAnimationUpdate);
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -110,24 +118,33 @@ class SpinnerWheelState extends State<SpinnerWheel>
     });
   }
 
+  void _onAnimationUpdate() {
+    if (widget.onPointingOptionChanged != null && widget.isSpinning) {
+      _updatePointingOption();
+    }
+  }
+
   void _initializeCurrentRotation() {
     if (spinnerOptions.isNotEmpty) {
-      final sectionAngle = (2 * math.pi) / spinnerOptions.length;
       setState(() {
         _currentRotation =
-            -sectionAngle / 2; // Position at middle of first section
+            -_sectionAngle / 2; // Position at middle of first section
       });
     }
+  }
+
+  int _calculatePointingIndex(double rotationValue) {
+    if (spinnerOptions.isEmpty) return 0;
+
+    final normalizedRotation = rotationValue % _twoPi;
+    final pointerAngle = (_twoPi - normalizedRotation) % _twoPi;
+    return (pointerAngle / _sectionAngle).floor() % spinnerOptions.length;
   }
 
   void _updatePointingOption() {
     if (spinnerOptions.isEmpty) return;
 
-    final normalizedRotation = _animation.value % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
-    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
-    final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
+    final pointingIndex = _calculatePointingIndex(_animation.value);
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
@@ -162,11 +179,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     // Add random offset to ensure any option can be selected regardless of duration
     // This ensures equal probability for all options
-    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
-    final randomOffset = random.nextDouble() * sectionAngle;
+    final randomOffset = random.nextDouble() * _sectionAngle;
 
     final finalRotation =
-        _currentRotation + (randomSpins * 2 * math.pi) + randomOffset;
+        _currentRotation + (randomSpins * _twoPi) + randomOffset;
 
     // Update controller duration to match spinner's configured duration
     _controller.duration = widget.spinnerModel.spinDuration;
@@ -177,11 +193,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     // Re-add the listener for the new animation
-    _animation.addListener(() {
-      if (widget.onPointingOptionChanged != null && widget.isSpinning) {
-        _updatePointingOption();
-      }
-    });
+    _animation.addListener(_onAnimationUpdate);
 
     _currentRotation = finalRotation;
     _controller.reset();
@@ -206,11 +218,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     // Use current rotation for drag or animation value for spinning
     final rotationValue = _isDragging ? _currentRotation : _animation.value;
-    final normalizedRotation = rotationValue % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
-    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
-    final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
+    final pointingIndex = _calculatePointingIndex(rotationValue);
 
     return spinnerOptions[pointingIndex];
   }
@@ -221,6 +229,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     _isDragging = true;
     _controller.stop();
+
+    // Sync _currentRotation with the animation value to prevent jerks
+    _currentRotation = _animation.value;
 
     final center = Offset(wheelSize / 2, wheelSize / 2);
     final localPosition = details.localPosition - center;
@@ -267,6 +278,16 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     _isDragging = false;
 
+    // Update the animation to start from the current drag position
+    // This prevents jerks when transitioning back to animation-based rotation
+    _animation = Tween<double>(
+      begin: _currentRotation,
+      end: _currentRotation,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    // Re-add the listener for consistency
+    _animation.addListener(_onAnimationUpdate);
+
     // Update the pointing option after drag ends
     if (widget.onPointingOptionChanged != null) {
       _updatePointingOptionForDrag();
@@ -276,11 +297,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void _updatePointingOptionForDrag() {
     if (spinnerOptions.isEmpty) return;
 
-    final normalizedRotation = _currentRotation % (2 * math.pi);
-    final sectionAngle = (2 * math.pi) / spinnerOptions.length;
-    final pointerAngle = (2 * math.pi - normalizedRotation) % (2 * math.pi);
-    final pointingIndex =
-        (pointerAngle / sectionAngle).floor() % spinnerOptions.length;
+    final pointingIndex = _calculatePointingIndex(_currentRotation);
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {

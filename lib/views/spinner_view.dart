@@ -349,16 +349,4 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
       });
     }
   }
-
-  Color get _getCurrentOptionColor {
-    final defaultColor = Colors.black;
-    if (_activeSpinner == null || _currentSpinnerOption == null) {
-      return defaultColor;
-    }
-
-    final optionIdx = _activeSpinner!.options.indexOf(_currentSpinnerOption!);
-    if (optionIdx == -1) return defaultColor;
-
-    return _activeSpinner!.getCircularBackgroundColor(optionIdx);
-  }
 }
