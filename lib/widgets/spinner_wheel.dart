@@ -33,7 +33,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late Animation<double> _animation;
   double _currentRotation = 0;
   int _currentPointingIndex = 0; // Track the current pointing indexfinal
-  Color currentOptionColor = Colors.black;
 
   // Drag rotation variables
   bool _isDragging = false;
@@ -89,9 +88,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final firstOption = spinnerOptions.firstOrNull;
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       widget.onPointingOptionChanged!(firstOption);
-      setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(0);
-      });
     }
   }
 
@@ -202,14 +198,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   void _reportWinner() {
     final winnerOption = _getCurrentPointingOption();
-    if (winnerOption != null) {
-      final optionIdx = spinnerOptions.indexOf(winnerOption);
-      setState(() {
-        currentOptionColor = optionIdx != -1
-            ? widget.spinnerModel.getCircularBackgroundColor(optionIdx)
-            : widget.spinnerModel.backgroundColors.first;
-      });
-    }
     widget.onSpinComplete(winnerOption?.text ?? "");
   }
 
@@ -303,13 +291,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
       widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
-
-      // Update the current option color
-      setState(() {
-        currentOptionColor = widget.spinnerModel.getCircularBackgroundColor(
-          pointingIndex,
-        );
-      });
     }
   }
 
