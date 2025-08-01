@@ -7,6 +7,7 @@ import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
 import 'package:decision_spinner/widgets/dialogs/add_option_dialog.dart';
 import 'package:decision_spinner/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:decision_spinner/widgets/dialogs/edit_option_dialog.dart';
+import 'package:decision_spinner/widgets/dialogs/unsaved_changes_dialog.dart';
 import 'package:decision_spinner/widgets/settings/audio_settings_section.dart';
 import 'package:decision_spinner/widgets/settings/color_theme_selector.dart';
 import 'package:decision_spinner/widgets/settings/spin_duration_section.dart';
@@ -128,30 +129,17 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       canPop: !_hasChanges,
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop && _hasChanges) {
-          final dialogResult = await showDialog<bool>(
+          final dialogResult = await showDialog<String>(
             context: context,
-            builder: (context) => AlertDialog(
-              title: Text('Unsaved Changes'),
-              content: Text('Do you want to save them?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('Discard'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveChanges();
-                    Navigator.of(context).pop(false);
-                  },
-                  child: Text('Save'),
-                ),
-              ],
-            ),
+            builder: (context) => const UnsavedChangesDialog(),
           );
 
-          if (dialogResult == false && context.mounted) {
+          if (dialogResult == 'save') {
+            await _saveChanges();
+          } else if (dialogResult == 'discard' && context.mounted) {
             Navigator.of(context).pop();
           }
+          // If dialogResult is null (dialog dismissed), do nothing - stay on page
         }
       },
       child: Scaffold(

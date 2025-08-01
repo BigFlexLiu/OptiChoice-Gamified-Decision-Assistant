@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter_reorderable_grid_view/widgets/widgets.dart';
+import '../widgets/dialogs/unsaved_changes_dialog.dart';
 
 class ColorPickerView extends StatefulWidget {
   final List<Color> initialColors;
@@ -46,28 +47,22 @@ class _ColorPickerViewState extends State<ColorPickerView> {
   }
 
   Future<void> _showDiscardChangesDialog() async {
-    await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Unsaved Changes'),
-          content: const Text('Do you want to save them?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Discard'),
-            ),
-            TextButton(
-              onPressed: () {
-                _saveColors();
-                // Navigator.of(context).pop(true);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (BuildContext context) => const UnsavedChangesDialog(),
     );
+
+    if (result == 'save') {
+      _saveColors();
+    } else if (result == 'discard') {
+      // Reset to initial colors and close the page
+      selectedColors = List.from(_initialColors);
+      widget.onColorsChanged(selectedColors);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+    // If result is null (dialog dismissed), do nothing - stay on page
   }
 
   void _setCurrentColor(Color color) {
