@@ -43,6 +43,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
   final double _twoPi = 2 * math.pi;
 
   List<SpinnerOption> get spinnerOptions => widget.spinnerModel.activeOptions;
+  double get _currentRotationAngle =>
+      _isDragging ? _currentRotation : _animation.value;
 
   void _updateCachedCalculations() {
     if (spinnerOptions.isNotEmpty) {
@@ -357,10 +359,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
-          // Use current rotation for drag or animation value for spinning
-          final rotationAngle = _isDragging
-              ? _currentRotation
-              : _animation.value;
+          // Extract rotation angle calculation for reuse
+          final rotationAngle = _currentRotationAngle;
 
           return Transform.rotate(
             angle: rotationAngle,
@@ -475,8 +475,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
         child: AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
+            final rotationAngle = _currentRotationAngle;
             return Transform.rotate(
-              angle: _animation.value,
+              angle: rotationAngle,
               child: Icon(
                 Icons.cached_sharp,
                 color: Colors.black,
