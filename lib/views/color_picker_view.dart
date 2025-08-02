@@ -9,8 +9,6 @@ import '../widgets/dialogs/unsaved_changes_dialog.dart';
 // Constants
 const int _kMaxSelectedColors = 12;
 const int _kMinSelectedColors = 2;
-const double _kColorWheelMargin = 96.0;
-const double _kMinColorWheelSize = 200.0;
 const int _kColorWheelResolution = 400;
 
 class ColorPickerView extends StatefulWidget {
@@ -172,22 +170,12 @@ class _ColorPickerViewState extends State<ColorPickerView> {
   }
 
   Widget _buildColorWheelSection() => Expanded(
-    flex: 3,
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final availableSize =
-            math.min(MediaQuery.of(context).size.width, constraints.maxHeight) -
-            _kColorWheelMargin;
-        final wheelSize = math.max(_kMinColorWheelSize, availableSize);
-
-        return Center(
-          child: ColorWheel(
-            onColorSelected: _setCurrentColor,
-            size: wheelSize,
-            brightness: _brightness,
-          ),
-        );
-      },
+    child: Center(
+      child: ColorWheel(
+        onColorSelected: _setCurrentColor,
+        size: null, // Let ColorWheel handle its own sizing
+        brightness: _brightness,
+      ),
     ),
   );
 
@@ -278,63 +266,61 @@ class _ColorPickerViewState extends State<ColorPickerView> {
   }
 
   Widget _buildSelectedColorsSection() {
-    return Expanded(
-      flex: 1,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Expanded(
-              child: ReorderableBuilder(
-                scrollController: _scrollController,
-                onReorder: _reorderColors,
-                fadeInDuration: const Duration(milliseconds: 100),
-                releasedChildDuration: const Duration(milliseconds: 0),
-                positionDuration: const Duration(microseconds: 0),
-                builder: (children) => GridView(
-                  controller: _scrollController,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 1,
-                  ),
-                  children: children,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 120,
+            ), // Enough for 2 rows
+            child: ReorderableBuilder(
+              scrollController: _scrollController,
+              onReorder: _reorderColors,
+              fadeInDuration: const Duration(milliseconds: 100),
+              releasedChildDuration: const Duration(milliseconds: 0),
+              positionDuration: const Duration(microseconds: 0),
+              builder: (children) => GridView(
+                shrinkWrap: true,
+                controller: _scrollController,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 6,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
                 ),
-                children: List.generate(selectedColors.length, (index) {
-                  final color = selectedColors[index];
-                  return GestureDetector(
-                    key: Key('color_$index'),
-                    onTap: selectedColors.length > _kMinSelectedColors
-                        ? () => _removeSelectedColor(color)
-                        : null,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.close,
-                          color: selectedColors.length > _kMinSelectedColors
-                              ? Colors.white70
-                              : Colors.white30,
-                          size: 20,
-                        ),
+                children: children,
+              ),
+              children: List.generate(selectedColors.length, (index) {
+                final color = selectedColors[index];
+                return GestureDetector(
+                  key: Key('color_$index'),
+                  onTap: selectedColors.length > _kMinSelectedColors
+                      ? () => _removeSelectedColor(color)
+                      : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300, width: 2),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.close,
+                        color: selectedColors.length > _kMinSelectedColors
+                            ? Colors.white70
+                            : Colors.white30,
+                        size: 20,
                       ),
                     ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -363,8 +349,6 @@ class ColorWheel extends StatefulWidget {
 class _ColorWheelState extends State<ColorWheel> {
   static ui.Image? _globalCache;
   static Future<ui.Image>? _generating;
-
-  double get _wheelSize => widget.size ?? 300.0;
 
   @override
   void initState() {
@@ -455,31 +439,39 @@ class _ColorWheelState extends State<ColorWheel> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _handleColorSelection,
-      onPanUpdate: _handleColorSelectionUpdate,
-      child: Container(
-        width: _wheelSize,
-        height: _wheelSize,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: _globalCache != null ? 0.4 : 0.1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size =
+            math.min(constraints.maxWidth, constraints.maxHeight) * 0.8;
+        return Center(
+          child: GestureDetector(
+            onTapDown: _handleColorSelection,
+            onPanUpdate: _handleColorSelectionUpdate,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: _globalCache != null ? 0.4 : 0.1,
+                    ),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              child: _globalCache != null
+                  ? CustomPaint(
+                      size: Size(size, size),
+                      painter: CachedColorWheelPainter(_globalCache!),
+                    )
+                  : const Center(child: CircularProgressIndicator()),
             ),
-          ],
-        ),
-        child: _globalCache != null
-            ? CustomPaint(
-                size: Size(_wheelSize, _wheelSize),
-                painter: CachedColorWheelPainter(_globalCache!),
-              )
-            : const Center(child: CircularProgressIndicator()),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -492,10 +484,7 @@ class _ColorWheelState extends State<ColorWheel> {
   void _selectColorAt(Offset globalPosition) {
     final box = context.findRenderObject() as RenderBox;
     final localPosition = box.globalToLocal(globalPosition);
-    final color = _getColorFromPosition(
-      localPosition,
-      Size(_wheelSize, _wheelSize),
-    );
+    final color = _getColorFromPosition(localPosition, box.size);
     if (color != null) widget.onColorSelected(color);
   }
 
