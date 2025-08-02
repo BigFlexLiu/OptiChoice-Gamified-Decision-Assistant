@@ -12,7 +12,6 @@ const int _kMinSelectedColors = 2;
 const double _kColorWheelMargin = 96.0;
 const double _kMinColorWheelSize = 200.0;
 const int _kColorWheelResolution = 400;
-const double _kHueConversionFactor = 57.2958;
 
 class ColorPickerView extends StatefulWidget {
   final List<Color> initialColors;
@@ -29,25 +28,27 @@ class ColorPickerView extends StatefulWidget {
 }
 
 class _ColorPickerViewState extends State<ColorPickerView> {
-  List<Color> selectedColors = [];
-  Color currentColor = Color.from(alpha: 255, red: 255, green: 255, blue: 255);
+  late List<Color> selectedColors, _initialColors;
+  Color currentColor = Colors.white;
   final ScrollController _scrollController = ScrollController();
-  late List<Color> _initialColors;
+  double _brightness = 1.0, _hue = 0.0, _saturation = 1.0;
 
   @override
   void initState() {
     super.initState();
     selectedColors = List.from(widget.initialColors);
     _initialColors = List.from(widget.initialColors);
+    final hsv = HSVColor.fromColor(currentColor);
+    _hue = hsv.hue;
+    _saturation = hsv.saturation;
+    _brightness = hsv.value;
   }
 
-  bool _hasChanges() {
-    if (selectedColors.length != _initialColors.length) return true;
-    for (int i = 0; i < selectedColors.length; i++) {
-      if (selectedColors[i] != _initialColors[i]) return true;
-    }
-    return false;
-  }
+  bool _hasChanges() =>
+      selectedColors.length != _initialColors.length ||
+      selectedColors.indexed.any(
+        (e) => e.$2.toARGB32() != _initialColors[e.$1].toARGB32(),
+      );
 
   void _saveColors() {
     widget.onColorsChanged(selectedColors);
@@ -74,27 +75,37 @@ class _ColorPickerViewState extends State<ColorPickerView> {
   }
 
   void _setCurrentColor(Color color) {
+    final hsv = HSVColor.fromColor(color);
     setState(() {
       currentColor = color;
+      _hue = hsv.hue;
+      _saturation = hsv.saturation;
+      _brightness = hsv.value;
     });
   }
 
+  void _setBrightness(double brightness) => setState(() {
+    _brightness = brightness;
+    currentColor = HSVColor.fromAHSV(
+      1.0,
+      _hue,
+      _saturation,
+      _brightness,
+    ).toColor();
+  });
+
   void _addCurrentColorToSelected() {
-    if (selectedColors.length < _kMaxSelectedColors) {
-      setState(() {
-        if (!selectedColors.contains(currentColor)) {
-          selectedColors.add(currentColor);
-        }
-      });
-    }
+    if (selectedColors.length >= _kMaxSelectedColors) return;
+
+    final currentARGB = currentColor.toARGB32();
+    if (selectedColors.any((color) => color.toARGB32() == currentARGB)) return;
+
+    setState(() => selectedColors.add(currentColor));
   }
 
   void _removeSelectedColor(Color color) {
-    if (selectedColors.length > _kMinSelectedColors) {
-      setState(() {
-        selectedColors.remove(color);
-      });
-    }
+    if (selectedColors.length <= _kMinSelectedColors) return;
+    setState(() => selectedColors.remove(color));
   }
 
   void _reorderColors(ReorderedListFunction reorderedListFunction) {
@@ -151,6 +162,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
         body: Column(
           children: [
             _buildColorWheelSection(),
+            _buildBrightnessSliderSection(),
             _buildColorPreviewSection(),
             _buildSelectedColorsSection(),
           ],
@@ -159,46 +171,88 @@ class _ColorPickerViewState extends State<ColorPickerView> {
     );
   }
 
-  Widget _buildColorWheelSection() {
-    return Expanded(
-      flex: 3,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final availableWidth = MediaQuery.of(context).size.width;
-          final availableHeight = constraints.maxHeight;
-          final maxSize =
-              math.min(availableWidth, availableHeight) - _kColorWheelMargin;
-          final wheelSize = math.max(_kMinColorWheelSize, maxSize.toDouble());
+  Widget _buildColorWheelSection() => Expanded(
+    flex: 3,
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final availableSize =
+            math.min(MediaQuery.of(context).size.width, constraints.maxHeight) -
+            _kColorWheelMargin;
+        final wheelSize = math.max(_kMinColorWheelSize, availableSize);
 
-          return Center(
-            child: ColorWheel(
-              onColorSelected: _setCurrentColor,
-              size: wheelSize,
+        return Center(
+          child: ColorWheel(
+            onColorSelected: _setCurrentColor,
+            size: wheelSize,
+            brightness: _brightness,
+          ),
+        );
+      },
+    ),
+  );
+
+  Widget _buildBrightnessSliderSection() {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.brightness_low,
+                color: onSurface.withValues(alpha: 0.6),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Slider(
+                  value: _brightness,
+                  onChanged: _setBrightness,
+                  divisions: 100,
+                  activeColor: theme.colorScheme.primary,
+                  inactiveColor: theme.colorScheme.outline.withValues(
+                    alpha: 0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.brightness_high,
+                color: onSurface.withValues(alpha: 0.6),
+                size: 20,
+              ),
+            ],
+          ),
+          Text(
+            'Brightness: ${(_brightness * 100).round()}%',
+            key: ValueKey(_brightness.round()),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: onSurface.withValues(alpha: 0.7),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildColorPreviewSection() {
+    final canAdd = selectedColors.length < _kMaxSelectedColors;
+
     return GestureDetector(
-      onTap: selectedColors.length < _kMaxSelectedColors
-          ? _addCurrentColorToSelected
-          : null,
+      onTap: canAdd ? _addCurrentColorToSelected : null,
       child: Container(
         height: 60,
-        width: double.infinity,
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selectedColors.length < _kMaxSelectedColors
-              ? currentColor
-              : Colors.grey.shade400,
+          color: canAdd ? currentColor : Colors.grey.shade400,
           border: Border.all(color: Colors.grey.shade300, width: 2),
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -206,11 +260,11 @@ class _ColorPickerViewState extends State<ColorPickerView> {
         ),
         child: Center(
           child: Text(
-            selectedColors.length < _kMaxSelectedColors
+            canAdd
                 ? 'Tap to Add Color (${selectedColors.length}/$_kMaxSelectedColors)'
                 : 'Maximum $_kMaxSelectedColors colors reached',
             style: TextStyle(
-              color: selectedColors.length < _kMaxSelectedColors
+              color: canAdd
                   ? (currentColor.computeLuminance() > 0.5
                         ? Colors.black
                         : Colors.white)
@@ -293,8 +347,14 @@ class _ColorPickerViewState extends State<ColorPickerView> {
 class ColorWheel extends StatefulWidget {
   final Function(Color) onColorSelected;
   final double? size;
+  final double brightness;
 
-  const ColorWheel({super.key, required this.onColorSelected, this.size});
+  const ColorWheel({
+    super.key,
+    required this.onColorSelected,
+    this.size,
+    this.brightness = 1.0,
+  });
 
   @override
   State<ColorWheel> createState() => _ColorWheelState();
@@ -315,16 +375,19 @@ class _ColorWheelState extends State<ColorWheel> {
   @override
   void didUpdateWidget(ColorWheel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.brightness != widget.brightness) {
+      // Brightness change doesn't require cache regeneration
+      // The wheel display stays the same, only selection changes
+    }
   }
 
   void _initCache() async {
     if (_globalCache != null) {
-      setState(() {});
+      if (mounted) setState(() {});
       return;
     }
 
-    _generating ??= _generateColorWheel();
-    _globalCache = await _generating;
+    _globalCache = await (_generating ??= _generateColorWheel());
     if (mounted) setState(() {});
   }
 
@@ -333,18 +396,25 @@ class _ColorWheelState extends State<ColorWheel> {
     final pixels = Uint8List(size * size * 4);
     const center = size * 0.5;
     const radius = center;
+    const radiusSquared = radius * radius;
+
+    // Pre-calculate constant for radian to degree conversion
+    const rad2deg = 180.0 / math.pi;
 
     for (int y = 0, i = 0; y < size; y++) {
       final dy = y - center;
+      final dySquared = dy * dy;
+
       for (int x = 0; x < size; x++, i += 4) {
         final dx = x - center;
-        final distSq = dx * dx + dy * dy;
+        final distSq = dx * dx + dySquared;
 
-        if (distSq <= radius * radius) {
-          final hue = (math.atan2(dy, dx) * _kHueConversionFactor + 360) % 360;
+        if (distSq <= radiusSquared) {
+          // More efficient hue calculation
+          final hue = (math.atan2(dy, dx) * rad2deg + 360) % 360;
           final sat = math.sqrt(distSq) / radius;
 
-          // HSV to RGB conversion
+          // Optimized HSV to RGB conversion
           final h60 = hue / 60;
           final c = sat;
           final x = c * (1 - (h60 % 2 - 1).abs());
@@ -359,9 +429,10 @@ class _ColorWheelState extends State<ColorWheel> {
             _ => (c + m, m, x + m),
           };
 
-          pixels[i] = (r * 255).round();
-          pixels[i + 1] = (g * 255).round();
-          pixels[i + 2] = (b * 255).round();
+          // Direct assignment without rounding for better performance
+          pixels[i] = (r * 255).toInt();
+          pixels[i + 1] = (g * 255).toInt();
+          pixels[i + 2] = (b * 255).toInt();
           pixels[i + 3] = 255;
         }
       }
@@ -387,7 +458,7 @@ class _ColorWheelState extends State<ColorWheel> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: _handleColorSelection,
-      onPanUpdate: _handleColorSelection,
+      onPanUpdate: _handleColorSelectionUpdate,
       child: Container(
         width: _wheelSize,
         height: _wheelSize,
@@ -395,7 +466,9 @@ class _ColorWheelState extends State<ColorWheel> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(_globalCache != null ? 0.4 : 0.1),
+              color: Colors.black.withValues(
+                alpha: _globalCache != null ? 0.4 : 0.1,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -411,37 +484,40 @@ class _ColorWheelState extends State<ColorWheel> {
     );
   }
 
-  void _handleColorSelection(details) {
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final localPosition = box.globalToLocal(details.globalPosition);
+  void _handleColorSelection(TapDownDetails details) =>
+      _selectColorAt(details.globalPosition);
+
+  void _handleColorSelectionUpdate(DragUpdateDetails details) =>
+      _selectColorAt(details.globalPosition);
+
+  void _selectColorAt(Offset globalPosition) {
+    final box = context.findRenderObject() as RenderBox;
+    final localPosition = box.globalToLocal(globalPosition);
     final color = _getColorFromPosition(
       localPosition,
       Size(_wheelSize, _wheelSize),
     );
-    if (color != null) {
-      widget.onColorSelected(color);
-    }
+    if (color != null) widget.onColorSelected(color);
   }
 
   Color? _getColorFromPosition(Offset position, Size size) {
     final center = size.width * 0.5;
-    final dx = position.dx - center;
-    final dy = position.dy - center;
+    final (dx, dy) = (position.dx - center, position.dy - center);
     final distSq = dx * dx + dy * dy;
 
     if (distSq > center * center) return null;
 
-    final hue = (math.atan2(dy, dx) * _kHueConversionFactor + 360) % 360;
+    final hue = (math.atan2(dy, dx) * 180.0 / math.pi + 360) % 360;
     final saturation = math.sqrt(distSq) / center;
 
-    return HSVColor.fromAHSV(1.0, hue, saturation, 1.0).toColor();
+    return HSVColor.fromAHSV(1.0, hue, saturation, widget.brightness).toColor();
   }
 }
 
 class CachedColorWheelPainter extends CustomPainter {
   final ui.Image cachedImage;
 
-  CachedColorWheelPainter(this.cachedImage);
+  const CachedColorWheelPainter(this.cachedImage);
 
   @override
   void paint(Canvas canvas, Size size) {
