@@ -410,7 +410,6 @@ class _ColorWheelState extends State<ColorWheel> {
         final distSq = dx * dx + dySquared;
 
         if (distSq <= radiusSquared) {
-          // More efficient hue calculation
           final hue = (math.atan2(dy, dx) * rad2deg + 360) % 360;
           final sat = math.sqrt(distSq) / radius;
 

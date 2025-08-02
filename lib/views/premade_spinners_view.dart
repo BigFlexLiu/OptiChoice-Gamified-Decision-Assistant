@@ -134,13 +134,13 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
     return [
       SpinnerCardAction(
         icon: Icons.add_circle,
-        label: 'Add to My Spinners',
+        label: 'Add',
         onPressed: () => _addSpinner(context, spinner),
         color: theme.colorScheme.primary,
       ),
       SpinnerCardAction(
         icon: Icons.preview,
-        label: 'Preview Options',
+        label: 'Preview',
         onPressed: () => _showPreview(context, spinner),
         color: theme.colorScheme.secondary,
       ),
