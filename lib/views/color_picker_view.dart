@@ -287,7 +287,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
                 controller: _scrollController,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 6,
-                  crossAxisSpacing: 8,
+                  crossAxisSpacing: 4,
                   mainAxisSpacing: 8,
                   childAspectRatio: 1,
                 ),
@@ -303,7 +303,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(8),
+                      shape: BoxShape.circle,
                       border: Border.all(color: Colors.grey.shade300, width: 2),
                     ),
                     child: Center(
