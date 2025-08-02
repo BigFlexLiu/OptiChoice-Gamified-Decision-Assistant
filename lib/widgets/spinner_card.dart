@@ -171,21 +171,21 @@ class SpinnerCard extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 24,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Icon(icon, size: 18),
-            ),
-          ),
+          SizedBox(width: 24, child: Icon(icon, size: 18)),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(
-              label,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
+            child: Transform.translate(
+              offset: const Offset(
+                0,
+                1,
+              ), // Slight downward adjustment to align with icon baseline
+              child: Text(
+                label,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         ],
