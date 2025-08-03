@@ -342,6 +342,9 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
       final spinnerName = _spinners[id]?.name ?? 'Unknown';
       showSnackBar(context, 'Active spinner set to "$spinnerName"');
+
+      // Navigate back to the previous screen
+      Navigator.of(context).pop();
     } else {
       showSnackBar(context, 'Failed to set active spinner');
     }
