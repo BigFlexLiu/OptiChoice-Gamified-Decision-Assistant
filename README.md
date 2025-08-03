@@ -1,16 +1,62 @@
-# decision_spin
+# Decision Spinner
 
-A new Flutter project.
+Decision Spinner is a Flutter-based mobile application designed to help users make decisions in a fun and interactive way. The app features a customizable spinner that users can configure with their own options, making it perfect for games, decision-making, or just having fun.
 
-## Getting Started
+## Features
+- Customizable spinner with user-defined options.
+- Portrait-only orientation for a consistent user experience.
+- Integrated audio effects using the SoLoud audio engine.
+- Adaptive theme that switches based on the system's theme preference.
 
-This project is a starting point for a Flutter application.
+## Requirements
+- Flutter SDK (version 3.0 or higher).
+- Dart (version 2.17 or higher).
+- Android Studio or Xcode for building and running the app on Android or iOS devices.
 
-A few resources to get you started if this is your first Flutter project:
+## Installation
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/BigFlexLiu/decision_spinner.git
+   cd decision_spinner
+   ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the app:**
+   - For Android:
+     ```bash
+     flutter run -d android
+     ```
+   - For iOS:
+     ```bash
+     flutter run -d ios
+     ```
+   - For Web:
+     ```bash
+     flutter run -d web
+     ```
+
+## Usage
+1. Launch the app on your device.
+2. Add your custom options to the spinner.
+3. Spin the wheel and let the app help you make a decision!
+
+## Development
+To contribute to this project:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Commit your changes and push them to your fork.
+4. Submit a pull request to the `production` branch.
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Acknowledgments
+- Built with Flutter and Dart.
+- Audio powered by the SoLoud audio engine.
+
