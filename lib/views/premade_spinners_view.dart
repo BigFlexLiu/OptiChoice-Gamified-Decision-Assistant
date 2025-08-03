@@ -121,6 +121,7 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
           isActive: false,
           canReorder: false,
           actions: _buildActions(context, spinner),
+          isFromPremadeSpinners: true,
         );
       },
     );

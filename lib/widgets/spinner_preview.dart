@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'spinner_wheel.dart';
 import '../storage/spinner_model.dart';
 import '../storage/spinner_storage_service.dart';
+import '../utils/widget_utils.dart';
 import 'dialogs/spinner_conflict_dialog.dart';
 
 class SpinnerPreview extends StatefulWidget {
@@ -9,6 +10,7 @@ class SpinnerPreview extends StatefulWidget {
   final double? size;
   final bool showSpinButton;
   final VoidCallback? onTap;
+  final bool isFromPremadeSpinners;
 
   const SpinnerPreview({
     super.key,
@@ -16,6 +18,7 @@ class SpinnerPreview extends StatefulWidget {
     this.size,
     this.showSpinButton = false,
     this.onTap,
+    this.isFromPremadeSpinners = false,
   });
 
   @override
@@ -40,6 +43,16 @@ class _SpinnerPreviewState extends State<SpinnerPreview> {
 
   Future<void> _handleSpinnerTap(BuildContext context) async {
     try {
+      // If this is from All Spinners view (not premade spinners),
+      // simply set as active and navigate back
+      if (!widget.isFromPremadeSpinners) {
+        await SpinnerStorageService.setActiveSpinnerId(widget.spinner.id);
+        SpinnerStorageService.clearCache();
+        if (context.mounted) Navigator.of(context).pop(true);
+        return;
+      }
+
+      // For premade spinners, show conflict dialogs as before
       SpinnerConflictResult? dialogResult;
       String? targetSpinnerId;
 
@@ -103,12 +116,11 @@ class _SpinnerPreviewState extends State<SpinnerPreview> {
       if (context.mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to set spinner as active: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (widget.isFromPremadeSpinners) {
+          showErrorSnackBar(context, 'Error: ${e.toString()}');
+        } else {
+          showErrorSnackBar(context, 'Failed to set spinner as active: $e');
+        }
       }
     }
   }
