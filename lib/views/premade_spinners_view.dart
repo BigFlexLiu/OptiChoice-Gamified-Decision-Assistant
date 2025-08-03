@@ -3,6 +3,7 @@ import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/spinner_card.dart';
+import 'package:decision_spinner/widgets/dialogs/spinner_conflict_dialog.dart';
 import 'package:flutter/material.dart';
 
 class PremadeSpinnersView extends StatelessWidget {
@@ -149,41 +150,66 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
 
   Future<void> _addSpinner(BuildContext context, SpinnerModel spinner) async {
     try {
-      final finalName = await _generateUniqueName(spinner.name);
-      spinner.name = finalName;
+      SpinnerConflictResult? dialogResult;
+      String? targetSpinnerId;
 
-      final createdSpinner = await SpinnerStorageService.saveSpinner(spinner);
-      await SpinnerStorageService.setActiveSpinnerId(spinner.id);
+      // Check for existing spinner with same content first
+      final existingSpinnerWithSameContent =
+          await SpinnerStorageService.findSpinnerWithIdenticalContent(spinner);
 
-      if (createdSpinner && context.mounted) {
-        SpinnerStorageService.clearCache();
-        Navigator.of(context).pop(true);
-      } else if (context.mounted) {
-        showErrorSnackBar(
-          context,
-          'Failed to create spinner. Please try again.',
+      if (existingSpinnerWithSameContent != null) {
+        // Found identical content
+        if (!context.mounted) return;
+        dialogResult = await showDialog<SpinnerConflictResult>(
+          context: context,
+          builder: (context) => SpinnerConflictDialog(
+            proposedName: spinner.name,
+            existingSpinnerWithSameContent: existingSpinnerWithSameContent,
+          ),
         );
+        if (dialogResult?.action == SpinnerConflictAction.useExisting) {
+          targetSpinnerId = existingSpinnerWithSameContent.id;
+        }
+      } else if (await SpinnerStorageService.spinnerNameExists(spinner.name)) {
+        // Name conflict only
+        final existingSpinnerWithSameName =
+            await SpinnerStorageService.findSpinnerByName(spinner.name);
+        if (!context.mounted) return;
+
+        dialogResult = await showDialog<SpinnerConflictResult>(
+          context: context,
+          builder: (context) => SpinnerConflictDialog(
+            proposedName: spinner.name,
+            existingSpinnerWithSameName: existingSpinnerWithSameName,
+          ),
+        );
+        if (dialogResult?.action == SpinnerConflictAction.useExisting &&
+            existingSpinnerWithSameName != null) {
+          targetSpinnerId = existingSpinnerWithSameName.id;
+        }
       }
+
+      // Handle dialog result and determine target spinner
+      if (dialogResult?.action == SpinnerConflictAction.createNew &&
+          dialogResult?.newName != null) {
+        spinner.name = dialogResult!.newName!;
+        await SpinnerStorageService.saveSpinner(spinner);
+        targetSpinnerId = spinner.id;
+      } else if (dialogResult?.action == SpinnerConflictAction.cancel) {
+        return; // User cancelled
+      } else if (targetSpinnerId == null) {
+        // No conflicts, save directly
+        await SpinnerStorageService.saveSpinner(spinner);
+        targetSpinnerId = spinner.id;
+      }
+
+      // Set active spinner and cleanup
+      await SpinnerStorageService.setActiveSpinnerId(targetSpinnerId);
+      SpinnerStorageService.clearCache();
+      if (context.mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (context.mounted) {
-        showErrorSnackBar(context, 'Error: ${e.toString()}');
-      }
+      if (context.mounted) showErrorSnackBar(context, 'Error: ${e.toString()}');
     }
-  }
-
-  Future<String> _generateUniqueName(String baseName) async {
-    if (!await SpinnerStorageService.spinnerNameExists(baseName)) {
-      return baseName;
-    }
-
-    int counter = 1;
-    String candidateName;
-    do {
-      candidateName = '$baseName ($counter)';
-      counter++;
-    } while (await SpinnerStorageService.spinnerNameExists(candidateName));
-
-    return candidateName;
   }
 
   void _showPreview(BuildContext context, SpinnerModel spinner) {

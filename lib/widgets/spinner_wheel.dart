@@ -455,38 +455,42 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final innerCircleSize = circleSize * 0.75;
     final borderWidth = circleSize * 0.08;
 
-    return InkWell(
-      onTap: _spin,
-      child: Container(
-        width: circleSize,
-        height: circleSize,
-        decoration: BoxDecoration(
-          gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey, width: borderWidth),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: circleSize * 0.2,
-              offset: Offset(0, circleSize * 0.06),
+    final centerWidget = Container(
+      width: circleSize,
+      height: circleSize,
+      decoration: BoxDecoration(
+        gradient: RadialGradient(colors: [Colors.white, Colors.grey[100]!]),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey, width: borderWidth),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: circleSize * 0.2,
+            offset: Offset(0, circleSize * 0.06),
+          ),
+        ],
+      ),
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final rotationAngle = _currentRotationAngle;
+          return Transform.rotate(
+            angle: rotationAngle,
+            child: Icon(
+              Icons.cached_sharp,
+              color: Colors.black,
+              size: innerCircleSize,
             ),
-          ],
-        ),
-        child: AnimatedBuilder(
-          animation: _animation,
-          builder: (context, child) {
-            final rotationAngle = _currentRotationAngle;
-            return Transform.rotate(
-              angle: rotationAngle,
-              child: Icon(
-                Icons.cached_sharp,
-                color: Colors.black,
-                size: innerCircleSize,
-              ),
-            );
-          },
-        ),
+          );
+        },
       ),
     );
+
+    // Only make it tappable if showSpinButton is true
+    if (widget.showSpinButton) {
+      return InkWell(onTap: _spin, child: centerWidget);
+    } else {
+      return centerWidget;
+    }
   }
 }

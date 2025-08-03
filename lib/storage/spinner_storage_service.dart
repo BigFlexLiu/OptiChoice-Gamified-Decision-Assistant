@@ -102,6 +102,17 @@ class SpinnerStorageService extends BaseStorageService {
     return allSpinners[id];
   }
 
+  /// Find a spinner by name (more efficient than getAllSpinners + filter)
+  static Future<SpinnerModel?> findSpinnerByName(String name) async {
+    final allSpinners = await loadAllSpinners();
+    for (final spinner in allSpinners.values) {
+      if (spinner.name == name) {
+        return spinner;
+      }
+    }
+    return null;
+  }
+
   /// Save a spinner model
   static Future<bool> saveSpinner(SpinnerModel spinner) async {
     final allSpinners = await loadAllSpinners();
@@ -111,92 +122,139 @@ class SpinnerStorageService extends BaseStorageService {
     return await saveAllSpinners(allSpinners);
   }
 
+  /// Generate a unique name for a spinner by appending a number if needed
+  static Future<String> generateUniqueName(
+    String baseName, {
+    String? excludeId,
+    Map<String, SpinnerModel>? spinners,
+  }) async {
+    // Use provided spinners map or load from cache/storage
+    final allSpinners = spinners ?? await loadAllSpinners();
+
+    // Check if base name is unique
+    final nameExists = allSpinners.values.any(
+      (spinner) => spinner.name == baseName && spinner.id != excludeId,
+    );
+
+    if (!nameExists) return baseName;
+
+    // Find unique name with counter
+    for (int counter = 1; ; counter++) {
+      final candidateName = '$baseName ($counter)';
+      final candidateExists = allSpinners.values.any(
+        (spinner) => spinner.name == candidateName && spinner.id != excludeId,
+      );
+      if (!candidateExists) return candidateName;
+    }
+  }
+
+  /// Check if a spinner with identical content already exists
+  static Future<SpinnerModel?> findSpinnerWithIdenticalContent(
+    SpinnerModel targetSpinner, {
+    Map<String, SpinnerModel>? spinners,
+  }) async {
+    final allSpinners = spinners ?? await loadAllSpinners();
+
+    for (final existingSpinner in allSpinners.values) {
+      if (existingSpinner.id == targetSpinner.id) continue;
+
+      if (_areSpinnersContentIdentical(targetSpinner, existingSpinner)) {
+        return existingSpinner;
+      }
+    }
+    return null;
+  }
+
+  /// Compare two spinners to see if their content is identical (excluding name and metadata)
+  static bool _areSpinnersContentIdentical(
+    SpinnerModel spinner1,
+    SpinnerModel spinner2,
+  ) {
+    // Compare options
+    if (spinner1.options.length != spinner2.options.length) return false;
+    for (int i = 0; i < spinner1.options.length; i++) {
+      final option1 = spinner1.options[i];
+      final option2 = spinner2.options[i];
+      if (option1.text != option2.text ||
+          option1.weight != option2.weight ||
+          option1.isActive != option2.isActive) {
+        return false;
+      }
+    }
+
+    // Compare color theme and background colors
+    if (spinner1.colorThemeIndex != spinner2.colorThemeIndex ||
+        spinner1.backgroundColors.length != spinner2.backgroundColors.length) {
+      return false;
+    }
+
+    for (int i = 0; i < spinner1.backgroundColors.length; i++) {
+      if (spinner1.backgroundColors[i] != spinner2.backgroundColors[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// Create a new spinner
   static Future<SpinnerModel?> createSpinner(
     String name,
     List<SpinnerOption> options, {
     int colorThemeIndex = 0,
   }) async {
-    // Use cached data if available
+    if (colorThemeIndex > DefaultColorThemes.count) return null;
+
     final allSpinners = await loadAllSpinners();
-
-    // Check if name already exists
-    final existingNames = allSpinners.values.map((r) => r.name).toSet();
-    if (existingNames.contains(name)) {
-      return null; // Spinner with this name already exists
-    }
-
-    // Sanity check
-    if (colorThemeIndex > DefaultColorThemes.count) {
-      return null;
-    }
+    final finalName = await generateUniqueName(name, spinners: allSpinners);
 
     final newSpinner = SpinnerModel(
-      name: name,
+      name: finalName,
       options: options,
       colorThemeIndex: colorThemeIndex,
       backgroundColors: DefaultColorThemes.getByIndex(colorThemeIndex)!.colors,
     );
 
-    saveSpinner(newSpinner);
+    allSpinners[newSpinner.id] = newSpinner;
     final success = await saveAllSpinners(allSpinners);
 
     if (success) {
       await setActiveSpinnerId(newSpinner.id);
       return newSpinner;
     }
-
     return null;
   }
 
   /// Delete a spinner
   static Future<bool> deleteSpinner(String id) async {
-    // Use cached data if available
     final allSpinners = await loadAllSpinners();
 
-    if (allSpinners.length <= 1) {
-      return false; // Cannot delete the last spinner
-    }
-
-    if (!allSpinners.containsKey(id)) {
-      return false; // Spinner doesn't exist
-    }
+    if (allSpinners.length <= 1 || !allSpinners.containsKey(id)) return false;
 
     allSpinners.remove(id);
     final success = await saveAllSpinners(allSpinners);
 
-    // If the deleted spinner was active, set the first available as active
-    final activeId = await getActiveSpinnerId();
-    if (activeId == id) {
-      final firstSpinnerId = allSpinners.keys.first;
-      await setActiveSpinnerId(firstSpinnerId);
+    // Set new active spinner if the deleted one was active
+    if (success && await getActiveSpinnerId() == id) {
+      await setActiveSpinnerId(allSpinners.keys.first);
     }
-
     return success;
   }
 
   /// Rename a spinner
   static Future<bool> renameSpinner(String id, String newName) async {
-    // Use cached data if available
     final allSpinners = await loadAllSpinners();
+    final spinner = allSpinners[id];
+    if (spinner == null) return false;
 
-    if (!allSpinners.containsKey(id)) {
-      return false; // Spinner doesn't exist
-    }
+    // Check if new name already exists (excluding current spinner)
+    final nameExists = allSpinners.values.any(
+      (s) => s.name == newName && s.id != id,
+    );
+    if (nameExists) return false;
 
-    // Check if new name already exists
-    final existingNames = allSpinners.values
-        .where((r) => r.id != id)
-        .map((r) => r.name)
-        .toSet();
-    if (existingNames.contains(newName)) {
-      return false; // New name already exists
-    }
-
-    final spinner = allSpinners[id]!;
     spinner.name = newName;
     spinner.updatedAt = DateTime.now();
-
     return await saveAllSpinners(allSpinners);
   }
 
@@ -236,12 +294,6 @@ class SpinnerStorageService extends BaseStorageService {
     return allSpinners.values.toList();
   }
 
-  /// Get list of all spinner names with their IDs
-  static Future<Map<String, String>> getSpinnerNamesWithIds() async {
-    final allSpinners = await loadAllSpinners();
-    return allSpinners.map((id, spinner) => MapEntry(spinner.name, id));
-  }
-
   /// Check if a spinner name exists
   static Future<bool> spinnerNameExists(String name, {String? id}) async {
     final allSpinners = await loadAllSpinners();
@@ -250,77 +302,23 @@ class SpinnerStorageService extends BaseStorageService {
     );
   }
 
-  /// Check if a spinner ID exists
-  static Future<bool> spinnerIdExists(String id) async {
-    final allSpinners = await loadAllSpinners();
-    return allSpinners.containsKey(id);
-  }
-
-  /// Duplicate a spinner
+  /// Duplicate a spinner with automatic unique name generation
   static Future<SpinnerModel?> duplicateSpinner(
     String originalId,
     String newName,
   ) async {
-    // Use cached data if available
     final allSpinners = await loadAllSpinners();
+    final originalSpinner = allSpinners[originalId];
+    if (originalSpinner == null) return null;
 
-    if (!allSpinners.containsKey(originalId)) {
-      return null; // Original spinner doesn't exist
-    }
-
-    // Check if new name already exists
-    final existingNames = allSpinners.values.map((r) => r.name).toSet();
-    if (existingNames.contains(newName)) {
-      return null; // New name already exists
-    }
-
-    final originalSpinner = allSpinners[originalId]!;
+    final finalName = await generateUniqueName(newName, spinners: allSpinners);
     final duplicatedSpinner = SpinnerModel.duplicate(
       originalSpinner,
-      newName: newName,
+      newName: finalName,
     );
 
     allSpinners[duplicatedSpinner.id] = duplicatedSpinner;
-    final success = await saveAllSpinners(allSpinners);
-
-    return success ? duplicatedSpinner : null;
-  }
-
-  /// Clear all spinners and reset to default
-  static Future<bool> clearAllSpinners() async {
-    try {
-      await BaseStorageService.remove(StorageConstants.spinnersKey);
-      await BaseStorageService.remove(StorageConstants.activeSpinnerKey);
-
-      // Recreate default spinner
-      final defaultSpinner = _createDefaultSpinnerModel();
-      final defaultSpinners = {defaultSpinner.id: defaultSpinner};
-      await saveAllSpinners(defaultSpinners);
-      await setActiveSpinnerId(defaultSpinner.id);
-
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Reset a specific spinner to defaults
-  static Future<bool> resetSpinnerToDefaults(String id) async {
-    final allSpinners = _cachedSpinners != null
-        ? Map<String, SpinnerModel>.from(_cachedSpinners!)
-        : await loadAllSpinners();
-
-    if (!allSpinners.containsKey(id)) {
-      return false; // Spinner doesn't exist
-    }
-
-    final spinner = allSpinners[id]!;
-    spinner.options = StorageConstants.defaultOptions
-        .map((text) => SpinnerOption(text: text, weight: 1.0))
-        .toList();
-    spinner.updatedAt = DateTime.now();
-
-    return await saveAllSpinners(allSpinners);
+    return await saveAllSpinners(allSpinners) ? duplicatedSpinner : null;
   }
 
   /// Save spinner order
@@ -358,15 +356,5 @@ class SpinnerStorageService extends BaseStorageService {
   static void clearCache() {
     _cachedSpinners = null;
     _cachedActiveSpinnerId = null;
-  }
-
-  /// Check if cache is loaded
-  static bool get isCacheLoaded =>
-      _cachedSpinners != null && _cachedActiveSpinnerId != null;
-
-  /// Preload cache - useful for app initialization
-  static Future<void> preloadCache() async {
-    await loadAllSpinners();
-    await getActiveSpinnerId();
   }
 }
