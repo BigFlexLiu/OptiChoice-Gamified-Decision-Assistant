@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/views/premade_spinners_view.dart';
 import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
@@ -429,31 +428,6 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
               )
             : Text('All Spinners'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.library_books),
-            onPressed: () async {
-              // Navigate to premade spinners and wait for result
-              final result = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (context) => const PremadeSpinnersView(),
-                ),
-              );
-
-              // If a spinner was successfully added, reload the data
-              if (result == true) {
-                await _loadData();
-                // Get the name of the newly active spinner for the success message
-                final activeSpinner = _spinners[_activeSpinnerId];
-                if (activeSpinner != null) {
-                  showSnackBar(
-                    context,
-                    'Spinner "${activeSpinner.name}" has been added and set as active!',
-                  );
-                }
-              }
-            },
-            tooltip: 'Premade spinners',
-          ),
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: _toggleSearch,

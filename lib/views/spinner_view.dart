@@ -1,5 +1,6 @@
 import 'package:decision_spinner/utils/spinner_audio_manager.dart';
 import 'package:decision_spinner/views/all_spinners_view.dart';
+import 'package:decision_spinner/views/premade_spinners_view.dart';
 import 'package:decision_spinner/views/spinner_options_view.dart';
 import 'package:decision_spinner/widgets/animated_text.dart';
 import 'package:decision_spinner/widgets/spinner_wheel.dart';
@@ -148,18 +149,38 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      leading: Tooltip(
+        message: 'All Spinners',
+        child: IconButton(
+          icon: Icon(Icons.list),
+          onPressed: () async {
+            _onSpinEndPrematurely();
+            await Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => AllSpinnerView()));
+            await _loadActiveSpinner();
+          },
+        ),
+      ),
       title: Text(_activeSpinner?.name ?? 'Decision Spinner'),
       actions: [
         Tooltip(
-          message: 'All Spinners',
+          message: 'Premade Spinners',
           child: IconButton(
-            icon: Icon(Icons.list),
+            icon: Icon(Icons.library_books),
             onPressed: () async {
               _onSpinEndPrematurely();
-              await Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (context) => AllSpinnerView()));
-              await _loadActiveSpinner();
+              // Navigate to premade spinners and wait for result
+              final result = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
+                  builder: (context) => const PremadeSpinnersView(),
+                ),
+              );
+
+              // If a spinner was successfully added, reload the active spinner
+              if (result == true) {
+                await _loadActiveSpinner();
+              }
             },
           ),
         ),
@@ -348,20 +369,5 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         _isLoading = false;
       });
     }
-<<<<<<< HEAD
-  }
-
-  Color get _getCurrentOptionColor {
-    final defaultColor = Colors.black;
-    if (_activeSpinner == null || _currentSpinnerOption == null) {
-      return defaultColor;
-    }
-
-    final optionIdx = _activeSpinner!.options.indexOf(_currentSpinnerOption!);
-    if (optionIdx == -1) return defaultColor;
-
-    return _activeSpinner!.getCircularBackgroundColor(optionIdx);
-=======
->>>>>>> compatibility-fixes
   }
 }
