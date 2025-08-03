@@ -112,10 +112,10 @@ class SpinnerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Spinner Preview
-                    SpinnerPreview(size: 196, spinner: spinner),
-                    const SizedBox(width: 16),
+                    Expanded(child: SpinnerPreview(spinner: spinner)),
+                    const SizedBox(width: 8),
                     // Action Buttons
-                    Expanded(
+                    IntrinsicWidth(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: actions
@@ -153,44 +153,42 @@ class SpinnerCard extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color.withValues(alpha: 0.1),
-          foregroundColor: color,
-          elevation: 0,
-          textStyle: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: color.withValues(alpha: 0.3)),
-          ),
-          alignment: Alignment.centerLeft,
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        foregroundColor: color,
+        elevation: 0,
+        textStyle: theme.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w600,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 24,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Icon(icon, size: 18),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: color.withValues(alpha: 0.3)),
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: 24, child: Icon(icon, size: 18)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Transform.translate(
+              offset: const Offset(
+                0,
+                1,
+              ), // Slight downward adjustment to align with icon baseline
               child: Text(
                 label,
-                softWrap: true,
-                overflow: TextOverflow.visible,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

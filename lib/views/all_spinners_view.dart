@@ -571,7 +571,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       actions.addAll([
         SpinnerCardAction(
           icon: Icons.star,
-          label: 'Set as Active',
+          label: 'Set Active',
           onPressed: () => _setActiveSpinner(spinnerId),
           color: theme.colorScheme.tertiary,
         ),

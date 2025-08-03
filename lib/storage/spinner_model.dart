@@ -77,10 +77,8 @@ class SpinnerModel {
     return 0 == lastColorIndex;
   }
 
-  Color get blendedBackgroundColor => blend(
-    backgroundColors[0],
-    backgroundColors[(options.length - 2) % backgroundColors.length],
-  );
+  Color get blendedBackgroundColor =>
+      blend(backgroundColors[0], backgroundColors[1]);
 
   Color blend(Color a, Color b, {double t = 0.5}) {
     return Color.fromARGB(

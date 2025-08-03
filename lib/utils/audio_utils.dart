@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:decision_spinner/utils/logger.dart';
 import 'package:flutter/services.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 class AudioUtils {
   static const String spinAudioPath = 'assets/audio/spin_audio';
   static const String spinEndAudioPath = 'assets/audio/spin_end_audio';
 
-  // Static audio player for previews
-  static final AudioPlayer _previewPlayer = AudioPlayer();
+  // Static sound handle for previews
+  static SoundHandle? _previewHandle;
 
   static Future<List<String>> getSpinAudioFiles() async {
     return await _getAudioFiles(spinAudioPath);
@@ -70,16 +70,12 @@ class AudioUtils {
   // Preview audio functionality
   static Future<void> previewAudio(String fileName, bool isEndSound) async {
     try {
-      // Stop any currently playing preview
-      await _previewPlayer.stop();
-
-      // Determine the correct path (without "assets/" prefix)
-      String audioPath = isEndSound
+      await stopPreview();
+      final audioPath = isEndSound
           ? getSpinEndAudioPath(fileName)
           : getSpinAudioPath(fileName);
-
-      // Play the audio using AssetSource (which automatically adds "assets/")
-      await _previewPlayer.play(AssetSource(audioPath));
+      final audioSource = await SoLoud.instance.loadAsset('assets/$audioPath');
+      _previewHandle = await SoLoud.instance.play(audioSource);
     } catch (e, stackTrace) {
       logger.e('Error playing preview audio', error: e, stackTrace: stackTrace);
       throw Exception('Failed to play audio preview');
@@ -88,7 +84,10 @@ class AudioUtils {
 
   static Future<void> stopPreview() async {
     try {
-      await _previewPlayer.stop();
+      if (_previewHandle != null) {
+        await SoLoud.instance.stop(_previewHandle!);
+        _previewHandle = null;
+      }
     } catch (e, stackTrace) {
       logger.e(
         "Error stopping preview audio",
@@ -96,10 +95,6 @@ class AudioUtils {
         stackTrace: stackTrace,
       );
     }
-  }
-
-  static void dispose() {
-    _previewPlayer.dispose();
   }
 
   static String formatSoundName(String fileName) {

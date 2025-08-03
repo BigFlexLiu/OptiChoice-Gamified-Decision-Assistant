@@ -4,12 +4,10 @@ class AnimatedTextJumpChangeColor extends StatefulWidget {
   final String text;
   final bool shouldAnimate;
   final void Function() setShouldAnimateFalse;
-  final Color? color;
   const AnimatedTextJumpChangeColor(
     this.text,
     this.shouldAnimate,
-    this.setShouldAnimateFalse,
-    this.color, {
+    this.setShouldAnimateFalse, {
     super.key,
   });
 
