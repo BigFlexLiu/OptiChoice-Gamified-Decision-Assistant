@@ -8,7 +8,7 @@ class SpinnerWheel extends StatefulWidget {
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
-  final Function(SpinnerOption)? onPointingOptionChanged;
+  final Function(Slice)? onPointingOptionChanged;
   final double? size;
   final bool showSpinButton;
 
@@ -42,13 +42,13 @@ class SpinnerWheelState extends State<SpinnerWheel>
   double _sectionAngle = 0;
   final double _twoPi = 2 * math.pi;
 
-  List<SpinnerOption> get spinnerOptions => widget.spinnerModel.activeOptions;
+  List<Slice> get spinnerSlices => widget.spinnerModel.activeSlices;
   double get _currentRotationAngle =>
       _isDragging ? _currentRotation : _animation.value;
 
   void _updateCachedCalculations() {
-    if (spinnerOptions.isNotEmpty) {
-      _sectionAngle = _twoPi / spinnerOptions.length;
+    if (spinnerSlices.isNotEmpty) {
+      _sectionAngle = _twoPi / spinnerSlices.length;
     }
   }
 
@@ -87,7 +87,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _initializeInitialOption() {
-    final firstOption = spinnerOptions.firstOrNull;
+    final firstOption = spinnerSlices.firstOrNull;
     if (firstOption != null && widget.onPointingOptionChanged != null) {
       widget.onPointingOptionChanged!(firstOption);
     }
@@ -123,7 +123,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _initializeCurrentRotation() {
-    if (spinnerOptions.isNotEmpty) {
+    if (spinnerSlices.isNotEmpty) {
       setState(() {
         _currentRotation =
             -_sectionAngle / 2; // Position at middle of first section
@@ -132,27 +132,27 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   int _calculatePointingIndex(double rotationValue) {
-    if (spinnerOptions.isEmpty) return 0;
+    if (spinnerSlices.isEmpty) return 0;
 
     final normalizedRotation = rotationValue % _twoPi;
     final pointerAngle = (_twoPi - normalizedRotation) % _twoPi;
-    return (pointerAngle / _sectionAngle).floor() % spinnerOptions.length;
+    return (pointerAngle / _sectionAngle).floor() % spinnerSlices.length;
   }
 
   void _updatePointingOption() {
-    if (spinnerOptions.isEmpty) return;
+    if (spinnerSlices.isEmpty) return;
 
     final pointingIndex = _calculatePointingIndex(_animation.value);
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
+      widget.onPointingOptionChanged!(spinnerSlices[pointingIndex]);
     }
   }
 
   void _spin() {
-    if (widget.isSpinning || spinnerOptions.length < 2) return;
+    if (widget.isSpinning || spinnerSlices.length < 2) return;
 
     widget.onSpinStart();
     _startSpinAnimation();
@@ -176,7 +176,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         baseSpins + random.nextDouble() - 0.5; // Smaller random variance
 
     // Add random offset to ensure any option can be selected regardless of duration
-    // This ensures equal probability for all options
+    // This ensures equal probability for all slices
     final randomOffset = random.nextDouble() * _sectionAngle;
 
     final finalRotation =
@@ -203,14 +203,14 @@ class SpinnerWheelState extends State<SpinnerWheel>
     widget.onSpinComplete(winnerOption?.text ?? "");
   }
 
-  SpinnerOption? _getCurrentPointingOption() {
-    if (spinnerOptions.isEmpty) return null;
+  Slice? _getCurrentPointingOption() {
+    if (spinnerSlices.isEmpty) return null;
 
     // Use current rotation for drag or animation value for spinning
     final rotationValue = _isDragging ? _currentRotation : _animation.value;
     final pointingIndex = _calculatePointingIndex(rotationValue);
 
-    return spinnerOptions[pointingIndex];
+    return spinnerSlices[pointingIndex];
   }
 
   // Drag handling methods
@@ -285,14 +285,14 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _updatePointingOptionForDrag() {
-    if (spinnerOptions.isEmpty) return;
+    if (spinnerSlices.isEmpty) return;
 
     final pointingIndex = _calculatePointingIndex(_currentRotation);
 
     // Only call the callback if the pointing index has changed
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(spinnerOptions[pointingIndex]);
+      widget.onPointingOptionChanged!(spinnerSlices[pointingIndex]);
     }
   }
 

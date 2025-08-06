@@ -10,7 +10,7 @@ class SpinnerPreview extends StatefulWidget {
   final double? size;
   final bool showSpinButton;
   final VoidCallback? onTap;
-  final bool isFromPremadeSpinners;
+  final bool isFromSpinnerTemplates;
 
   const SpinnerPreview({
     super.key,
@@ -18,7 +18,7 @@ class SpinnerPreview extends StatefulWidget {
     this.size,
     this.showSpinButton = false,
     this.onTap,
-    this.isFromPremadeSpinners = false,
+    this.isFromSpinnerTemplates = false,
   });
 
   @override
@@ -43,16 +43,15 @@ class _SpinnerPreviewState extends State<SpinnerPreview> {
 
   Future<void> _handleSpinnerTap(BuildContext context) async {
     try {
-      // If this is from All Spinners view (not premade spinners),
+      // If this is from Manage Spinners view,
       // simply set as active and navigate back
-      if (!widget.isFromPremadeSpinners) {
+      if (!widget.isFromSpinnerTemplates) {
         await SpinnerStorageService.setActiveSpinnerId(widget.spinner.id);
         SpinnerStorageService.clearCache();
         if (context.mounted) Navigator.of(context).pop(true);
         return;
       }
 
-      // For premade spinners, show conflict dialogs as before
       SpinnerConflictResult? dialogResult;
       String? targetSpinnerId;
 
@@ -116,7 +115,7 @@ class _SpinnerPreviewState extends State<SpinnerPreview> {
       if (context.mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (context.mounted) {
-        if (widget.isFromPremadeSpinners) {
+        if (widget.isFromSpinnerTemplates) {
           showErrorSnackBar(context, 'Error: ${e.toString()}');
         } else {
           showErrorSnackBar(context, 'Failed to set spinner as active: $e');

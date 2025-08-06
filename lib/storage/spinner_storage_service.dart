@@ -6,13 +6,11 @@ import 'spinner_model.dart';
 import 'package:flutter/material.dart';
 
 class SpinnerStorageService extends BaseStorageService {
-  // Cache for all spinners data
   static Map<String, SpinnerModel>? _cachedSpinners;
   static String? _cachedActiveSpinnerId;
   // Cache for the active spinner model
   static SpinnerModel? _cachedActiveSpinner;
 
-  /// Internal method to load all spinners from storage
   static Future<Map<String, SpinnerModel>> loadAllSpinners() async {
     // Return cached data if available
     if (_cachedSpinners != null) {
@@ -50,8 +48,8 @@ class SpinnerStorageService extends BaseStorageService {
   static SpinnerModel _createDefaultSpinnerModel() {
     return SpinnerModel(
       name: StorageConstants.defaultSpinnerName,
-      options: StorageConstants.defaultOptions
-          .map((text) => SpinnerOption(text: text, weight: 1.0))
+      slices: StorageConstants.defaultSlices
+          .map((text) => Slice(text: text, weight: 1.0))
           .toList(),
       colorThemeIndex: -1,
       backgroundColors: [
@@ -179,7 +177,7 @@ class SpinnerStorageService extends BaseStorageService {
             'id': spinner.id,
             'name': spinner.name,
             'updatedAt': spinner.updatedAt.toIso8601String(),
-            'optionCount': spinner.options.length,
+            'optionCount': spinner.slices.length,
           },
         )
         .toList();
@@ -286,11 +284,11 @@ class SpinnerStorageService extends BaseStorageService {
     SpinnerModel spinner1,
     SpinnerModel spinner2,
   ) {
-    // Compare options
-    if (spinner1.options.length != spinner2.options.length) return false;
-    for (int i = 0; i < spinner1.options.length; i++) {
-      final option1 = spinner1.options[i];
-      final option2 = spinner2.options[i];
+    // Compare slices
+    if (spinner1.slices.length != spinner2.slices.length) return false;
+    for (int i = 0; i < spinner1.slices.length; i++) {
+      final option1 = spinner1.slices[i];
+      final option2 = spinner2.slices[i];
       if (option1.text != option2.text ||
           option1.weight != option2.weight ||
           option1.isActive != option2.isActive) {
@@ -316,7 +314,7 @@ class SpinnerStorageService extends BaseStorageService {
   /// Create a new spinner
   static Future<SpinnerModel?> createSpinner(
     String name,
-    List<SpinnerOption> options, {
+    List<Slice> slices, {
     int colorThemeIndex = 0,
   }) async {
     if (colorThemeIndex > DefaultColorThemes.count) return null;
@@ -326,7 +324,7 @@ class SpinnerStorageService extends BaseStorageService {
 
     final newSpinner = SpinnerModel(
       name: finalName,
-      options: options,
+      slices: slices,
       colorThemeIndex: colorThemeIndex,
       backgroundColors: DefaultColorThemes.getByIndex(colorThemeIndex)!.colors,
     );

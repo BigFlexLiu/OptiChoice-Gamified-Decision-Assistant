@@ -15,21 +15,21 @@ import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
 
-class SpinnerOptionsView extends StatefulWidget {
+class EditSpinnerView extends StatefulWidget {
   final SpinnerModel spinner;
   final Function(SpinnerModel)? onSpinnerChanged;
 
-  const SpinnerOptionsView({
+  const EditSpinnerView({
     super.key,
     required this.spinner,
     this.onSpinnerChanged,
   });
 
   @override
-  SpinnerOptionsViewState createState() => SpinnerOptionsViewState();
+  EditSpinnerViewState createState() => EditSpinnerViewState();
 }
 
-class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
+class EditSpinnerViewState extends State<EditSpinnerView> {
   final TextEditingController _textController = TextEditingController();
   bool _hasChanges = false;
   bool _isLoading = false;
@@ -171,7 +171,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       onDurationChanged: _updateSpinDuration,
                     ),
                     const SizedBox(height: 8),
-                    _buildOptionsListSection(),
+                    _buildSlicesListSection(),
                   ],
                 ),
               ),
@@ -218,19 +218,19 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     );
   }
 
-  Widget _buildOptionsListSection() {
+  Widget _buildSlicesListSection() {
     final theme = Theme.of(context);
-    final numOptions = spinner.options.length;
+    final numSlices = spinner.slices.length;
 
-    // Separate active and inactive options while preserving original indices
-    final activeOptionsWithIndex = <MapEntry<int, SpinnerOption>>[];
-    final inactiveOptionsWithIndex = <MapEntry<int, SpinnerOption>>[];
+    // Separate active and inactive slices while preserving original indices
+    final activeSlicesWithIndex = <MapEntry<int, Slice>>[];
+    final inactiveSlicesWithIndex = <MapEntry<int, Slice>>[];
 
-    for (int i = 0; i < spinner.options.length; i++) {
-      if (spinner.options[i].isActive) {
-        activeOptionsWithIndex.add(MapEntry(i, spinner.options[i]));
+    for (int i = 0; i < spinner.slices.length; i++) {
+      if (spinner.slices[i].isActive) {
+        activeSlicesWithIndex.add(MapEntry(i, spinner.slices[i]));
       } else {
-        inactiveOptionsWithIndex.add(MapEntry(i, spinner.options[i]));
+        inactiveSlicesWithIndex.add(MapEntry(i, spinner.slices[i]));
       }
     }
 
@@ -246,17 +246,17 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                 color: theme.textTheme.bodyMedium?.color?.withAlpha(128),
               ),
               const SizedBox(width: 8),
-              Text('$numOptions', style: theme.textTheme.titleSmall),
+              Text('$numSlices', style: theme.textTheme.titleSmall),
               Text(
-                ' Options',
+                ' Slices',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: Theme.of(context).hintColor.withAlpha(128),
                 ),
               ),
-              if (inactiveOptionsWithIndex.isNotEmpty) ...[
+              if (inactiveSlicesWithIndex.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 Text(
-                  '(${activeOptionsWithIndex.length} active, ${inactiveOptionsWithIndex.length} inactive)',
+                  '(${activeSlicesWithIndex.length} active, ${inactiveSlicesWithIndex.length} inactive)',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -266,14 +266,14 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
           ),
           DefaultDivider(),
           const SizedBox(height: 12),
-          if (spinner.options.isEmpty)
+          if (spinner.slices.isEmpty)
             _buildEmptyState()
           else
             Column(
               children: [
-                // Active options section
-                if (activeOptionsWithIndex.isNotEmpty) ...[
-                  if (inactiveOptionsWithIndex.isNotEmpty) ...[
+                // Active slices section
+                if (activeSlicesWithIndex.isNotEmpty) ...[
+                  if (inactiveSlicesWithIndex.isNotEmpty) ...[
                     Row(
                       children: [
                         Expanded(child: Divider()),
@@ -295,13 +295,13 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                   ReorderableListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: activeOptionsWithIndex.length,
+                    itemCount: activeSlicesWithIndex.length,
                     onReorder: (oldIndex, newIndex) =>
-                        _reorderActiveOptions(oldIndex, newIndex),
+                        _reorderActiveSlices(oldIndex, newIndex),
                     itemBuilder: (context, index) {
-                      final originalIndex = activeOptionsWithIndex[index].key;
-                      final option = activeOptionsWithIndex[index].value;
-                      final activeCount = spinner.activeOptionsCount;
+                      final originalIndex = activeSlicesWithIndex[index].key;
+                      final option = activeSlicesWithIndex[index].value;
+                      final activeCount = spinner.activeSlicesCount;
 
                       return OptionListItem(
                         key: ValueKey('active_${option.text}_$originalIndex'),
@@ -320,15 +320,15 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     },
                   ),
                 ],
-                if (StorageConstants.optionMaxCount > spinner.options.length)
+                if (StorageConstants.optionMaxCount > spinner.slices.length)
                   AddOptionItemWidget(
-                    index: numOptions,
+                    index: numSlices,
                     onTap: () => _showAddOptionDialog(),
                   ),
 
-                // Inactive options section
-                if (inactiveOptionsWithIndex.isNotEmpty) ...[
-                  if (activeOptionsWithIndex.isNotEmpty) ...[
+                // Inactive slices section
+                if (inactiveSlicesWithIndex.isNotEmpty) ...[
+                  if (activeSlicesWithIndex.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -349,7 +349,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  ...inactiveOptionsWithIndex.asMap().entries.map((entry) {
+                  ...inactiveSlicesWithIndex.asMap().entries.map((entry) {
                     final displayIndex = entry.key;
                     final originalIndex = entry.value.key;
                     final option = entry.value.value;
@@ -358,7 +358,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                       key: ValueKey('inactive_${option.text}_$originalIndex'),
                       index: originalIndex,
                       displayIndex:
-                          activeOptionsWithIndex.length + displayIndex + 1,
+                          activeSlicesWithIndex.length + displayIndex + 1,
                       option: option,
                       backgroundColor: _getInactiveOptionBackgroundColor(),
                       foregroundColor: _getInactiveOptionForegroundColor(),
@@ -367,7 +367,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     );
                   }),
 
-                  // Button to activate all inactive options
+                  // Button to activate all inactive slices
                   Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 8),
                     decoration: BoxDecoration(
@@ -382,7 +382,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                     child: InkWell(
                       onTap: () {
                         setState(() {
-                          spinner.setAllOptionsActive();
+                          spinner.setAllSlicesActive();
                           _hasChanges = true;
                         });
                       },
@@ -393,7 +393,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
                           children: [
                             Expanded(
                               child: Text(
-                                "Activate all inactive options",
+                                "Activate all inactive slices",
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w500,
@@ -431,14 +431,14 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No options yet',
+            'No slice yet',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Add some options to get started',
+            'Add some slices to get started',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -470,9 +470,9 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
   }
 
   void _removeOption(int index) {
-    if (spinner.options.length > 2) {
+    if (spinner.slices.length > 2) {
       setState(() {
-        spinner.options.removeAt(index);
+        spinner.slices.removeAt(index);
         _hasChanges = true;
       });
     }
@@ -480,9 +480,9 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   void _editOption(int index, String newValue) {
     if (newValue.trim().isNotEmpty &&
-        newValue.trim() != spinner.options[index].text) {
+        newValue.trim() != spinner.slices[index].text) {
       setState(() {
-        spinner.options[index].text = newValue;
+        spinner.slices[index].text = newValue;
         _hasChanges = true;
       });
     }
@@ -490,7 +490,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   void _updateOptionWeight(int index, double weight) {
     setState(() {
-      spinner.options[index].weight = weight;
+      spinner.slices[index].weight = weight;
       _hasChanges = true;
     });
   }
@@ -525,7 +525,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   void _addOption(String text) {
     setState(() {
-      spinner.options.add(SpinnerOption(text: text.trim()));
+      spinner.slices.add(Slice(text: text.trim()));
       _hasChanges = true;
     });
   }
@@ -540,12 +540,12 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
     );
   }
 
-  void _showOptionDialog(int index, SpinnerOption option) {
+  void _showOptionDialog(int index, Slice option) {
     showDialog(
       context: context,
       builder: (context) => EditOptionDialog(
         option: option,
-        canDelete: spinner.options.length > 2,
+        canDelete: spinner.slices.length > 2,
         onOptionChanged: (newText, newWeight) {
           _editOption(index, newText);
           _updateOptionWeight(index, newWeight);
@@ -571,7 +571,7 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
       builder: (context) => DeleteConfirmationDialog(
         title: 'Delete Option',
         message:
-            'Are you sure you want to delete "${spinner.options[index].text}"?',
+            'Are you sure you want to delete "${spinner.slices[index].text}"?',
         onConfirmed: () => _removeOption(index),
       ),
     );
@@ -579,44 +579,44 @@ class SpinnerOptionsViewState extends State<SpinnerOptionsView> {
 
   void _toggleOptionActive(int index) {
     setState(() {
-      spinner.options[index].isActive = !spinner.options[index].isActive;
+      spinner.slices[index].isActive = !spinner.slices[index].isActive;
       _hasChanges = true;
     });
   }
 
-  void _reorderActiveOptions(int oldIndex, int newIndex) {
+  void _reorderActiveSlices(int oldIndex, int newIndex) {
     setState(() {
       // Adjust newIndex if moving down
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
 
-      // Get all active options with their current indices
-      final activeOptionsData = <({SpinnerOption option, int originalIndex})>[];
-      for (int i = 0; i < spinner.options.length; i++) {
-        if (spinner.options[i].isActive) {
-          activeOptionsData.add((option: spinner.options[i], originalIndex: i));
+      // Get all active slices with their current indices
+      final activeSlicesData = <({Slice option, int originalIndex})>[];
+      for (int i = 0; i < spinner.slices.length; i++) {
+        if (spinner.slices[i].isActive) {
+          activeSlicesData.add((option: spinner.slices[i], originalIndex: i));
         }
       }
 
-      // Reorder the active options
-      final item = activeOptionsData.removeAt(oldIndex);
-      activeOptionsData.insert(newIndex, item);
+      // Reorder the active slices
+      final item = activeSlicesData.removeAt(oldIndex);
+      activeSlicesData.insert(newIndex, item);
 
-      // Create a new options list preserving inactive options in their original positions
-      final newOptions = <SpinnerOption>[];
+      // Create a new slices list preserving inactive slices in their original positions
+      final newSlices = <Slice>[];
       int activeIndex = 0;
 
-      for (int i = 0; i < spinner.options.length; i++) {
-        if (spinner.options[i].isActive) {
-          newOptions.add(activeOptionsData[activeIndex].option);
+      for (int i = 0; i < spinner.slices.length; i++) {
+        if (spinner.slices[i].isActive) {
+          newSlices.add(activeSlicesData[activeIndex].option);
           activeIndex++;
         } else {
-          newOptions.add(spinner.options[i]);
+          newSlices.add(spinner.slices[i]);
         }
       }
 
-      spinner.options = newOptions;
+      spinner.slices = newSlices;
       _hasChanges = true;
     });
   }
@@ -648,7 +648,7 @@ class OptionListItem extends StatelessWidget {
   final int? displayIndex;
   final int?
   reorderIndex; // Index for reordering within the active/inactive list
-  final SpinnerOption option;
+  final Slice option;
   final Color backgroundColor;
   final Color foregroundColor;
   final VoidCallback onTap;

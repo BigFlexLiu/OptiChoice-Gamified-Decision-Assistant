@@ -1,4 +1,4 @@
-import 'package:decision_spinner/consts/premade_spinner_definitions.dart';
+import 'package:decision_spinner/consts/spinner_template_definitions.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
@@ -6,24 +6,24 @@ import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:decision_spinner/widgets/dialogs/spinner_conflict_dialog.dart';
 import 'package:flutter/material.dart';
 
-class PremadeSpinnersView extends StatelessWidget {
-  const PremadeSpinnersView({super.key});
+class SpinnerTemplatesView extends StatelessWidget {
+  const SpinnerTemplatesView({super.key});
 
   static const _tabs = [
     _TabConfig(
       icon: Icons.person,
       label: 'Solo',
-      description: 'Premade spinners for everyday decisions',
+      description: 'Spinners for everyday decisions',
     ),
     _TabConfig(
       icon: Icons.people,
       label: 'Pair',
-      description: 'Fun spinners for parties and groups',
+      description: 'Spinners for parties and groups',
     ),
     _TabConfig(
       icon: Icons.groups,
       label: 'Group',
-      description: 'Fun spinners for parties and groups',
+      description: 'Dpinners for parties and groups',
     ),
   ];
 
@@ -34,7 +34,7 @@ class PremadeSpinnersView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: const Text('Premade Spinners'),
+          title: const Text('Spinner Templates'),
           bottom: TabBar(
             tabs: _tabs
                 .map((tab) => Tab(icon: Icon(tab.icon), text: tab.label))
@@ -44,17 +44,17 @@ class PremadeSpinnersView extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _PremadeSpinnerTabView(
+            _SpinnerTemplatesTabView(
               config: _tabs[0],
-              spinnerModels: PremadeSpinnerDefinitions.soloDecisions,
+              spinnerModels: SpinnerTemplateDefinitions.soloDecisions,
             ),
-            _PremadeSpinnerTabView(
+            _SpinnerTemplatesTabView(
               config: _tabs[1],
-              spinnerModels: PremadeSpinnerDefinitions.pairDecisions,
+              spinnerModels: SpinnerTemplateDefinitions.pairDecisions,
             ),
-            _PremadeSpinnerTabView(
+            _SpinnerTemplatesTabView(
               config: _tabs[2],
-              spinnerModels: PremadeSpinnerDefinitions.groupDecisions,
+              spinnerModels: SpinnerTemplateDefinitions.groupDecisions,
             ),
           ],
         ),
@@ -75,8 +75,8 @@ class _TabConfig {
   final String description;
 }
 
-class _PremadeSpinnerTabView extends StatefulWidget {
-  const _PremadeSpinnerTabView({
+class _SpinnerTemplatesTabView extends StatefulWidget {
+  const _SpinnerTemplatesTabView({
     required this.config,
     required this.spinnerModels,
   });
@@ -85,10 +85,11 @@ class _PremadeSpinnerTabView extends StatefulWidget {
   final List<SpinnerModel> spinnerModels;
 
   @override
-  State<_PremadeSpinnerTabView> createState() => _PremadeSpinnerTabViewState();
+  State<_SpinnerTemplatesTabView> createState() =>
+      _SpinnerTemplatesTabViewState();
 }
 
-class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
+class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
   final Map<String, bool> _expansionStateByItemId = {};
 
   @override
@@ -121,7 +122,7 @@ class _PremadeSpinnerTabViewState extends State<_PremadeSpinnerTabView> {
           isActive: false,
           canReorder: false,
           actions: _buildActions(context, spinner),
-          isFromPremadeSpinners: true,
+          isFromSpinnerTemplates: true,
         );
       },
     );
@@ -274,9 +275,9 @@ class _PreviewDialog extends StatelessWidget {
         width: double.maxFinite,
         child: ListView.builder(
           shrinkWrap: true,
-          itemCount: spinner.options.length,
+          itemCount: spinner.slices.length,
           itemBuilder: (context, index) {
-            final option = spinner.options[index];
+            final option = spinner.slices[index];
             return ListTile(
               leading: CircleAvatar(
                 radius: 12,

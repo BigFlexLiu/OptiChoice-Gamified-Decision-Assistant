@@ -1,15 +1,15 @@
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
 
-class PremadeSpinnerDefinitions {
+class SpinnerTemplateDefinitions {
   static SpinnerModel createSpinner({
     required String name,
-    required List<SpinnerOption> options,
+    required List<Slice> slices,
     required List<Color> colors,
   }) {
     return SpinnerModel(
       name: name,
-      options: options,
+      slices: slices,
       colorThemeIndex: -1,
       backgroundColors: colors,
       customColors: colors,
@@ -47,16 +47,16 @@ class PremadeSpinnerDefinitions {
 
   static SpinnerModel get yesNoSpinner => createSpinner(
     name: 'Yes or No',
-    options: [
-      SpinnerOption(text: 'Yes'),
-      SpinnerOption(text: 'No'),
+    slices: [
+      Slice(text: 'Yes'),
+      Slice(text: 'No'),
     ],
     colors: twoSliceColors,
   );
 
   static SpinnerModel get whatToEatSpinner => createSpinner(
     name: 'What to Eat',
-    options: [
+    slices: [
       'Pizza',
       'Sushi',
       'Burgers',
@@ -71,13 +71,13 @@ class PremadeSpinnerDefinitions {
       'Tacos',
       'Sandwich',
       'Skip Meal',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fourSliceColors,
   );
 
   static SpinnerModel get whatToWatchSpinner => createSpinner(
     name: 'What to Watch',
-    options: [
+    slices: [
       'Movie',
       'TV Show',
       'Documentary',
@@ -85,26 +85,26 @@ class PremadeSpinnerDefinitions {
       'Anime',
       'Sports',
       'News',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
     name: 'Where to Go',
-    options: [
+    slices: [
       'Coffee shop',
       'Park',
       'Mall',
       'Friend\'s place',
       'Restaurant',
       'Stay home',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fourSliceColors,
   );
 
   static SpinnerModel get whatToDoSpinner => createSpinner(
     name: 'What to Do',
-    options: [
+    slices: [
       'Read book',
       'Watch TV',
       'Stroll',
@@ -112,13 +112,13 @@ class PremadeSpinnerDefinitions {
       'Clean something',
       'Take nap',
       'Call someone',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get workoutSpinner => createSpinner(
     name: 'Workout Type',
-    options: [
+    slices: [
       'Cardio',
       'Strength training',
       'Yoga',
@@ -126,25 +126,25 @@ class PremadeSpinnerDefinitions {
       'HIIT',
       'Stretching',
       'Rest day',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get whoPaysSpinner => createSpinner(
     name: 'Who Pays',
-    options: [
+    slices: [
       'Person 1',
       'Person 2',
       'Person 3',
       'Person 4',
       'Split',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
 
   static SpinnerModel get choreSpinner => createSpinner(
     name: 'Chore Spinner',
-    options: [
+    slices: [
       'Dishes',
       'Laundry',
       'Vacuum',
@@ -152,63 +152,63 @@ class PremadeSpinnerDefinitions {
       'Clean bathroom',
       'Dust',
       'Mop floors',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fourSliceColors,
   );
 
   static SpinnerModel get breakActivitySpinner => createSpinner(
     name: 'Break Activity',
-    options: [
+    slices: [
       'Stretch',
       'Drink water',
       'Walk around',
       'Deep breaths',
       'Meditate',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get truthOrDareSpinner => createSpinner(
     name: 'Truth or Dare',
-    options: [
+    slices: [
       'Truth',
       'Dare',
       'Ask someone',
       'Skip',
       'Group dare',
       'Tell a secret',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get dice6Spinner => createSpinner(
     name: 'Roll a Die (d6)',
-    options: List.generate(6, (i) => SpinnerOption(text: '${i + 1}')),
+    slices: List.generate(6, (i) => Slice(text: '${i + 1}')),
     colors: [Colors.grey.shade700, Colors.blueGrey.shade700],
   );
 
   static SpinnerModel get dice20Spinner => createSpinner(
     name: 'Roll a Die (d20)',
-    options: List.generate(20, (i) => SpinnerOption(text: '${i + 1}')),
+    slices: List.generate(20, (i) => Slice(text: '${i + 1}')),
     colors: [Colors.indigo.shade700, Colors.blueGrey.shade600],
   );
 
   static SpinnerModel get dateNightSpinner => createSpinner(
     name: 'Date Night',
-    options: [
+    slices: [
       'Movie night',
       'Cook together',
       'Take a stroll',
       'Play a game',
       'Try a new restaurant',
       'Stay in and relax',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
     name: 'Icebreaker: Casual',
-    options: [
+    slices: [
       'What\'s your favorite movie?',
       'Coffee or tea?',
       'Morning or night person?',
@@ -219,13 +219,13 @@ class PremadeSpinnerDefinitions {
       'Have you ever met a celebrity?',
       'What was your first job?',
       'What\'s a hobby you enjoy?',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
 
   static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
     name: 'Icebreaker: Personal',
-    options: [
+    slices: [
       'What\'s a goal you\'re working on?',
       'What\'s a book that changed you?',
       'What motivates you?',
@@ -236,13 +236,13 @@ class PremadeSpinnerDefinitions {
       'What\'s a big risk you\'ve taken?',
       'What would you do with a million dollars?',
       'What do you value most in a friendship?',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
 
   static SpinnerModel get icebreakerSillySpinner => createSpinner(
     name: 'Icebreaker: Fun & Silly',
-    options: [
+    slices: [
       'Would you rather fight 1 horse-sized duck or 100 duck-sized horses?',
       'What\'s the weirdest food you\'ve eaten?',
       'If animals could talk, which would be the rudest?',
@@ -253,7 +253,7 @@ class PremadeSpinnerDefinitions {
       'What would your theme song be?',
       'Which superpower would you want?',
       'If you had to eat one meal forever?',
-    ].map((text) => SpinnerOption(text: text)).toList(),
+    ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
 }

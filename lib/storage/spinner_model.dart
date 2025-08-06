@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 class SpinnerModel {
   String id; // Unique identifier
   String name;
-  List<SpinnerOption> options;
+  List<Slice> slices;
   int colorThemeIndex;
   List<Color> _backgroundColors;
   List<Color> customBackgroundColors;
@@ -17,7 +17,7 @@ class SpinnerModel {
   DateTime updatedAt;
   SpinnerModel({
     required this.name,
-    required this.options,
+    required this.slices,
     required this.colorThemeIndex,
     required List<Color> backgroundColors,
     List<Color>? customColors,
@@ -68,7 +68,7 @@ class SpinnerModel {
   }
 
   bool shouldUseBlendedColorAtIdx(int idx) {
-    int lastIdx = activeOptions.length - 1;
+    int lastIdx = activeSlices.length - 1;
     if (idx != lastIdx) {
       return false;
     }
@@ -89,27 +89,21 @@ class SpinnerModel {
     );
   }
 
-  // Get only enabled options
-  List<SpinnerOption> get activeOptions =>
-      options.where((option) => option.isActive).toList();
+  List<Slice> get activeSlices =>
+      slices.where((option) => option.isActive).toList();
 
-  // Get only enabled options
-  List<SpinnerOption> get inactiveOptions =>
-      options.where((option) => !option.isActive).toList();
+  List<Slice> get inactiveSlices =>
+      slices.where((option) => !option.isActive).toList();
 
-  // Get the count of enabled options
-  int get activeOptionsCount =>
-      options.where((option) => option.isActive).length;
+  int get activeSlicesCount => slices.where((option) => option.isActive).length;
 
-  // Toggle the enabled state of an option
-  void toggleOptionIsActive(SpinnerOption option) {
+  void toggleSliceIsActive(Slice option) {
     option.isActive = !option.isActive;
     updatedAt = DateTime.now();
   }
 
-  // Enable or disable all options
-  void setAllOptionsActive() {
-    for (var option in options) {
+  void setAllSlicesActive() {
+    for (var option in slices) {
       option.isActive = true;
     }
     updatedAt = DateTime.now();
@@ -120,7 +114,7 @@ class SpinnerModel {
     return {
       'id': id,
       'name': name,
-      'options': options
+      'slices': slices
           .map(
             (option) => {
               'text': option.text,
@@ -149,9 +143,9 @@ class SpinnerModel {
     return SpinnerModel(
       newId: json['id'],
       name: json['name'],
-      options: (json['options'] as List)
+      slices: (json['slices'] as List)
           .map(
-            (option) => SpinnerOption(
+            (option) => Slice(
               text: option['text'],
               weight: option['weight'],
               isActive: option['isActive'] ?? true,
@@ -189,9 +183,9 @@ class SpinnerModel {
     return SpinnerModel(
       newId: newId,
       name: newName ?? '${original.name} (Copy)',
-      options: original.options
+      slices: original.slices
           .map(
-            (option) => SpinnerOption(
+            (option) => Slice(
               text: option.text,
               weight: option.weight,
               isActive: option.isActive,
@@ -212,7 +206,7 @@ class SpinnerModel {
 
   void copy(SpinnerModel other) {
     name = other.name;
-    options = other.options;
+    slices = other.slices;
     colorThemeIndex = other.colorThemeIndex;
     backgroundColors = other.backgroundColors;
     customBackgroundColors = other.customBackgroundColors;
@@ -228,7 +222,7 @@ class SpinnerModel {
     return 'SpinnerModel('
         'id: $id, '
         'name: $name, '
-        'options: [${options.length} items], '
+        'slices: [${slices.length} items], '
         'colorThemeIndex: $colorThemeIndex, '
         'colors: [${backgroundColors.length} colors], '
         'foregroundColors: [${foregroundColors.length} colors], '
@@ -240,10 +234,10 @@ class SpinnerModel {
   }
 }
 
-class SpinnerOption {
+class Slice {
   String text;
   double weight;
   bool isActive;
 
-  SpinnerOption({required this.text, this.weight = 1.0, this.isActive = true});
+  Slice({required this.text, this.weight = 1.0, this.isActive = true});
 }

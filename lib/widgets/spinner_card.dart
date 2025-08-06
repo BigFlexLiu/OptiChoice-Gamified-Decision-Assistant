@@ -10,7 +10,7 @@ class SpinnerCard extends StatelessWidget {
   final String? subtitle;
   final ValueChanged<bool>? onExpansionChanged;
   final bool isExpanded;
-  final bool isFromPremadeSpinners;
+  final bool isFromSpinnerTemplates;
 
   const SpinnerCard({
     super.key,
@@ -21,7 +21,7 @@ class SpinnerCard extends StatelessWidget {
     this.isActive = false,
     this.canReorder = false,
     this.subtitle,
-    this.isFromPremadeSpinners = false,
+    this.isFromSpinnerTemplates = false,
   });
 
   @override
@@ -97,7 +97,7 @@ class SpinnerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${spinner.options.length} options',
+                  '${spinner.slices.length} slices',
                   style: theme.textTheme.bodyMedium,
                 ),
                 if (subtitle != null)
@@ -117,7 +117,7 @@ class SpinnerCard extends StatelessWidget {
                     Expanded(
                       child: SpinnerPreview(
                         spinner: spinner,
-                        isFromPremadeSpinners: isFromPremadeSpinners,
+                        isFromSpinnerTemplates: isFromSpinnerTemplates,
                       ),
                     ),
                     const SizedBox(width: 8),

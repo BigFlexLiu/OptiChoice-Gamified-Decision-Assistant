@@ -5,16 +5,16 @@ import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
 import '../storage/spinner_storage_service.dart';
 import '../storage/spinner_model.dart';
-import 'spinner_options_view.dart';
+import 'edit_spinner_view.dart';
 
-class AllSpinnerView extends StatefulWidget {
-  const AllSpinnerView({super.key});
+class ManageSpinnerView extends StatefulWidget {
+  const ManageSpinnerView({super.key});
 
   @override
-  State<AllSpinnerView> createState() => _AllSpinnerViewState();
+  State<ManageSpinnerView> createState() => _ManageSpinnerViewState();
 }
 
-class _AllSpinnerViewState extends State<AllSpinnerView> {
+class _ManageSpinnerViewState extends State<ManageSpinnerView> {
   Map<String, SpinnerModel> _spinners = {};
   late String _activeSpinnerId;
   bool _isLoading = true;
@@ -93,16 +93,16 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       nameExists = await SpinnerStorageService.spinnerNameExists(name);
 
       if (!nameExists) {
-        // Create default options
-        final defaultOptions = [
-          SpinnerOption(text: 'Option 1', weight: 1.0),
-          SpinnerOption(text: 'Option 2', weight: 1.0),
-          SpinnerOption(text: 'Option 3', weight: 1.0),
+        // Create default slices
+        final defaultSlices = [
+          Slice(text: 'Option 1', weight: 1.0),
+          Slice(text: 'Option 2', weight: 1.0),
+          Slice(text: 'Option 3', weight: 1.0),
         ];
 
         final newSpinner = await SpinnerStorageService.createSpinner(
           name,
-          defaultOptions,
+          defaultSlices,
         );
 
         if (newSpinner != null) {
@@ -356,7 +356,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
 
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => SpinnerOptionsView(
+        builder: (context) => EditSpinnerView(
           spinner: _spinners[id]!,
           onSpinnerChanged: (updatedSpinner) {
             setState(() {
@@ -429,7 +429,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
                 style: theme.textTheme.titleLarge,
                 onChanged: _onSearchChanged,
               )
-            : Text('All Spinners'),
+            : Text('Manage Spinners'),
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -522,7 +522,7 @@ class _AllSpinnerViewState extends State<AllSpinnerView> {
       actions.addAll([
         SpinnerCardAction(
           icon: Icons.edit,
-          label: 'Edit Options',
+          label: 'Edit Slices',
           onPressed: () => _editSpinner(spinnerId),
           color: theme.colorScheme.primary,
         ),

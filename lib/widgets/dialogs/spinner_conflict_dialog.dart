@@ -58,7 +58,7 @@ class _SpinnerConflictDialogState extends State<SpinnerConflictDialog> {
       title = 'Duplicate Found';
       existingName = widget.existingSpinnerWithSameContent!.name;
       message =
-          'A spinner with identical options already exists: "$existingName"';
+          'A spinner with identical slices already exists: "$existingName"';
     } else {
       title = 'Name Exists';
       existingName =

@@ -12,9 +12,9 @@ class StorageConstants {
   static const String colorThemeKey = 'decision_spinner_color_theme';
 
   // Default values
-  static const String defaultSpinnerName = 'Food Options';
+  static const String defaultSpinnerName = 'Food Slices';
 
-  static const List<String> defaultOptions = [
+  static const List<String> defaultSlices = [
     'Pizza',
     'Burger',
     'Thai',
@@ -25,7 +25,4 @@ class StorageConstants {
   // Validation constraints
   static const int optionMaxLength = 100;
   static const int optionMaxCount = 50;
-
-  // Legacy key for migration
-  static const String oldOptionsKey = 'decision_spin_options';
 }
