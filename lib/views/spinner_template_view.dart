@@ -9,21 +9,24 @@ import 'package:flutter/material.dart';
 class SpinnerTemplatesView extends StatelessWidget {
   const SpinnerTemplatesView({super.key});
 
-  static const _tabs = [
+  static final _tabs = [
     _TabConfig(
-      icon: Icons.person,
-      label: 'Solo',
-      description: 'Spinners for everyday decisions',
+      icon: Icons.home,
+      label: 'Home',
+      description: 'Daily tasks, chores, and household decisions',
+      spinnerTemplates: SpinnerTemplateDefinitions.lifeAndHome,
     ),
     _TabConfig(
-      icon: Icons.people,
-      label: 'Pair',
-      description: 'Spinners for parties and groups',
+      icon: Icons.favorite,
+      label: 'Wellness',
+      description: 'Wellness, mindfulness, and personal growth',
+      spinnerTemplates: SpinnerTemplateDefinitions.healthAndSelfCare,
     ),
     _TabConfig(
-      icon: Icons.groups,
-      label: 'Group',
-      description: 'Dpinners for parties and groups',
+      icon: Icons.celebration,
+      label: 'Fun',
+      description: 'Entertainment, games, and social activities',
+      spinnerTemplates: SpinnerTemplateDefinitions.funAndSocial,
     ),
   ];
 
@@ -44,18 +47,9 @@ class SpinnerTemplatesView extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _SpinnerTemplatesTabView(
-              config: _tabs[0],
-              spinnerModels: SpinnerTemplateDefinitions.soloDecisions,
-            ),
-            _SpinnerTemplatesTabView(
-              config: _tabs[1],
-              spinnerModels: SpinnerTemplateDefinitions.pairDecisions,
-            ),
-            _SpinnerTemplatesTabView(
-              config: _tabs[2],
-              spinnerModels: SpinnerTemplateDefinitions.groupDecisions,
-            ),
+            _SpinnerTemplatesTabView(config: _tabs[0]),
+            _SpinnerTemplatesTabView(config: _tabs[1]),
+            _SpinnerTemplatesTabView(config: _tabs[2]),
           ],
         ),
       ),
@@ -68,21 +62,19 @@ class _TabConfig {
     required this.icon,
     required this.label,
     required this.description,
+    required this.spinnerTemplates,
   });
 
   final IconData icon;
   final String label;
   final String description;
+  final List<SpinnerModel> spinnerTemplates;
 }
 
 class _SpinnerTemplatesTabView extends StatefulWidget {
-  const _SpinnerTemplatesTabView({
-    required this.config,
-    required this.spinnerModels,
-  });
+  const _SpinnerTemplatesTabView({required this.config});
 
   final _TabConfig config;
-  final List<SpinnerModel> spinnerModels;
 
   @override
   State<_SpinnerTemplatesTabView> createState() =>
@@ -92,25 +84,27 @@ class _SpinnerTemplatesTabView extends StatefulWidget {
 class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
   final Map<String, bool> _expansionStateByItemId = {};
 
+  List<SpinnerModel> get spinnerTemplates => widget.config.spinnerTemplates;
+
   @override
   void initState() {
     super.initState();
-    for (SpinnerModel spinnerModel in widget.spinnerModels) {
+    for (SpinnerModel spinnerModel in spinnerTemplates) {
       _expansionStateByItemId[spinnerModel.id] = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.spinnerModels.isEmpty) {
+    if (spinnerTemplates.isEmpty) {
       return _EmptyStateWidget(config: widget.config);
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: widget.spinnerModels.length,
+      itemCount: spinnerTemplates.length,
       itemBuilder: (context, index) {
-        final spinner = widget.spinnerModels[index];
+        final spinner = spinnerTemplates[index];
         final isExpanded = _expansionStateByItemId[spinner.id]!;
 
         return SpinnerCard(

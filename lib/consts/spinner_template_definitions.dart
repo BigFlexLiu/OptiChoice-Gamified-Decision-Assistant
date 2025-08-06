@@ -20,29 +20,51 @@ class SpinnerTemplateDefinitions {
     );
   }
 
-  static List<SpinnerModel> get soloDecisions => [
-    yesNoSpinner,
+  static List<SpinnerModel> get lifeAndHome => [
     whatToEatSpinner,
-    choreSpinner,
-    breakActivitySpinner,
+    whatToWearSpinner,
+    whatToDoTodaySpinner,
+    whenToDoItSpinner,
+    whereToGoGeneralSpinner,
+    whatToCleanSpinner,
+    declutterTaskSpinner,
+    roomToTidySpinner,
+    chorePickerSpinner,
+    homeProjectSpinner,
+    errandToRunSpinner,
+    subscriptionReviewSpinner,
+    budgetingTaskSpinner,
+    morningRoutineSpinner,
+    lunchboxIdeaSpinner,
+  ];
+
+  static List<SpinnerModel> get healthAndSelfCare => [
+    exerciseTypeSpinner,
+    selfCareIdeaSpinner,
+    healthyHabitSpinner,
+    mindfulnessActivitySpinner,
+    breakActivityGeneralSpinner,
+    focusTaskSpinner,
+    randomChallengeSpinner,
+    whatToLearnSpinner,
+    skillToPracticeSpinner,
+    creativePromptSpinner,
+    studyTopicSpinner,
+  ];
+
+  static List<SpinnerModel> get funAndSocial => [
+    whatToWatchGeneralSpinner,
+    whatToListenToSpinner,
+    gameToPlaySpinner,
+    whoToCallSpinner,
+    dateNightIdeaSpinner,
+    groupActivitySpinner,
+    familyNightSpinner,
+    activityForKidsSpinner,
+    homeworkTaskSpinner,
+    randomAppSpinner,
     dice6Spinner,
     dice20Spinner,
-    workoutSpinner,
-  ];
-
-  static List<SpinnerModel> get pairDecisions => [
-    whatToWatchSpinner,
-    dateNightSpinner,
-    whereToGoSpinner,
-    truthOrDareSpinner,
-    icebreakerSillySpinner,
-  ];
-
-  static List<SpinnerModel> get groupDecisions => [
-    whoPaysSpinner,
-    icebreakerCasualSpinner,
-    icebreakerPersonalSpinner,
-    whatToDoSpinner,
   ];
 
   static SpinnerModel get yesNoSpinner => createSpinner(
@@ -73,20 +95,6 @@ class SpinnerTemplateDefinitions {
       'Skip Meal',
     ].map((text) => Slice(text: text)).toList(),
     colors: fourSliceColors,
-  );
-
-  static SpinnerModel get whatToWatchSpinner => createSpinner(
-    name: 'What to Watch',
-    slices: [
-      'Movie',
-      'TV Show',
-      'Documentary',
-      'YouTube',
-      'Anime',
-      'Sports',
-      'News',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: threeSliceColors,
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
@@ -167,20 +175,6 @@ class SpinnerTemplateDefinitions {
     ].map((text) => Slice(text: text)).toList(),
     colors: threeSliceColors,
   );
-
-  static SpinnerModel get truthOrDareSpinner => createSpinner(
-    name: 'Truth or Dare',
-    slices: [
-      'Truth',
-      'Dare',
-      'Ask someone',
-      'Skip',
-      'Group dare',
-      'Tell a secret',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: threeSliceColors,
-  );
-
   static SpinnerModel get dice6Spinner => createSpinner(
     name: 'Roll a Die (d6)',
     slices: List.generate(6, (i) => Slice(text: '${i + 1}')),
@@ -207,7 +201,7 @@ class SpinnerTemplateDefinitions {
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
-    name: 'Icebreaker: Casual',
+    name: 'Icebreaker',
     slices: [
       'What\'s your favorite movie?',
       'Coffee or tea?',
@@ -219,13 +213,6 @@ class SpinnerTemplateDefinitions {
       'Have you ever met a celebrity?',
       'What was your first job?',
       'What\'s a hobby you enjoy?',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
-  static SpinnerModel get icebreakerPersonalSpinner => createSpinner(
-    name: 'Icebreaker: Personal',
-    slices: [
       'What\'s a goal you\'re working on?',
       'What\'s a book that changed you?',
       'What motivates you?',
@@ -236,13 +223,6 @@ class SpinnerTemplateDefinitions {
       'What\'s a big risk you\'ve taken?',
       'What would you do with a million dollars?',
       'What do you value most in a friendship?',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
-  static SpinnerModel get icebreakerSillySpinner => createSpinner(
-    name: 'Icebreaker: Fun & Silly',
-    slices: [
       'Would you rather fight 1 horse-sized duck or 100 duck-sized horses?',
       'What\'s the weirdest food you\'ve eaten?',
       'If animals could talk, which would be the rudest?',
@@ -253,6 +233,604 @@ class SpinnerTemplateDefinitions {
       'What would your theme song be?',
       'Which superpower would you want?',
       'If you had to eat one meal forever?',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  // Life & Home Spinners
+  static SpinnerModel get whatToWearSpinner => createSpinner(
+    name: 'What to Wear',
+    slices: [
+      'Casual',
+      'Comfy/lounge',
+      'Business casual',
+      'Sporty',
+      'All black',
+      'Bright colors',
+      'Weather-based',
+      'Dress/skirt',
+      'Layers',
+      'Whatever\'s clean',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whatToDoTodaySpinner => createSpinner(
+    name: 'What to Do Today',
+    slices: [
+      'Run errands',
+      'Clean something',
+      'Start new project',
+      'Watch movie',
+      'Go for walk',
+      'Learn something',
+      'Call/text someone',
+      'Declutter area',
+      'Journal',
+      'Cook/bake',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whenToDoItSpinner => createSpinner(
+    name: 'When to Do It',
+    slices: [
+      'Right now',
+      'After break',
+      'This morning',
+      'This afternoon',
+      'This evening',
+      'After lunch',
+      'Before bed',
+      'Set timer (25min)',
+      'Tomorrow',
+      'Next weekend',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whereToGoGeneralSpinner => createSpinner(
+    name: 'Where to Go',
+    slices: [
+      'Local café',
+      'Park',
+      'Grocery store',
+      'Friend\'s place',
+      'Library/bookstore',
+      'Stay home',
+      'Random walk',
+      'Gym',
+      'Drive around',
+      'Somewhere new',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whatToCleanSpinner => createSpinner(
+    name: 'What to Clean',
+    slices: [
+      'Kitchen counters',
+      'Bathroom',
+      'Floors',
+      'Fridge/pantry',
+      'Desk/workspace',
+      'Windows/mirrors',
+      'Laundry',
+      'Entryway',
+      'Trash/recycling',
+      'Something bugging you',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get declutterTaskSpinner => createSpinner(
+    name: 'Declutter Task',
+    slices: [
+      'One drawer',
+      'Old clothes',
+      'Digital photos',
+      'Email inbox',
+      'Phone apps',
+      'Bookshelf',
+      'Kitchen utensils',
+      'Junk box',
+      'Wallet/purse',
+      'Papers/receipts',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get roomToTidySpinner => createSpinner(
+    name: 'Room to Tidy',
+    slices: [
+      'Bedroom',
+      'Living room',
+      'Kitchen',
+      'Bathroom',
+      'Entryway',
+      'Office/workspace',
+      'Closet',
+      'Garage/storage',
+      'Kids\' room',
+      'Car interior',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get chorePickerSpinner => createSpinner(
+    name: 'Chore Picker',
+    slices: [
+      'Laundry',
+      'Dishes',
+      'Clean toilet',
+      'Take out trash',
+      'Sweep/vacuum',
+      'Wipe counters',
+      'Change sheets',
+      'Clean mirrors',
+      'Water plants',
+      'Mop floors',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get homeProjectSpinner => createSpinner(
+    name: 'Home Project to Start',
+    slices: [
+      'Organize closet',
+      'Declutter storage',
+      'Hang art/photos',
+      'Rearrange furniture',
+      'Deep clean room',
+      'Label containers',
+      'Touch up paint',
+      'Organize tools',
+      'Sort donations',
+      'Start garden care',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get errandToRunSpinner => createSpinner(
+    name: 'Errand to Run',
+    slices: [
+      'Grocery store',
+      'Post office',
+      'Pharmacy',
+      'Gas station',
+      'Hardware store',
+      'Drop off donation',
+      'Dry cleaning',
+      'Bank/ATM',
+      'Return item',
+      'Car wash',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get subscriptionReviewSpinner => createSpinner(
+    name: 'Subscription to Review',
+    slices: [
+      'Streaming services',
+      'Music apps',
+      'Cloud storage',
+      'News/magazines',
+      'Fitness/gym',
+      'Meal delivery',
+      'Online courses',
+      'Gaming services',
+      'Productivity tools',
+      'Trial subscriptions',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get budgetingTaskSpinner => createSpinner(
+    name: 'Budgeting Task',
+    slices: [
+      'Check balance',
+      'Track expenses',
+      'Categorize spending',
+      'Plan meals',
+      'Review subscriptions',
+      'Set savings goal',
+      'Pay upcoming bill',
+      'Review past budget',
+      'Update tracker',
+      'Check statements',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get morningRoutineSpinner => createSpinner(
+    name: 'Morning Routine Step',
+    slices: [
+      'Drink water',
+      'Stretch/move',
+      'Shower',
+      'Eat breakfast',
+      'Make bed',
+      'Plan day',
+      'Journal',
+      'Meditate 5min',
+      'No phone 30min',
+      'Short walk',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get lunchboxIdeaSpinner => createSpinner(
+    name: 'Lunchbox Idea',
+    slices: [
+      'Sandwich + fruit',
+      'Wrap + veggies',
+      'Leftovers',
+      'Salad + roll',
+      'Pasta salad',
+      'Rice + protein',
+      'Bento box',
+      'Cheese + crackers',
+      'Hummus + pita',
+      'DIY lunchables',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  // Health & Self-Care Spinners
+  static SpinnerModel get exerciseTypeSpinner => createSpinner(
+    name: 'Exercise Type',
+    slices: [
+      'Walk/jog',
+      'Yoga/stretching',
+      'Bodyweight circuit',
+      'Dance workout',
+      'Bike ride',
+      'Core workout',
+      'Strength training',
+      'Gym',
+      'Fitness app/class',
+      'Rest day',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get selfCareIdeaSpinner => createSpinner(
+    name: 'Self-Care Idea',
+    slices: [
+      'Long shower/bath',
+      'Listen to music',
+      'Comfort show/movie',
+      'Journal 10min',
+      'Screen break',
+      'Go outside',
+      'Skincare routine',
+      'Favorite drink',
+      'Meditate/breathe',
+      'Do nothing 15min',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get healthyHabitSpinner => createSpinner(
+    name: 'Healthy Habit to Focus On',
+    slices: [
+      'Drink more water',
+      'Eat veggies',
+      'Sleep earlier',
+      'Stretch daily',
+      'Limit screen time',
+      'Walk after meals',
+      'Cook at home',
+      'Avoid sugar',
+      'Track mood',
+      'Good posture',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get mindfulnessActivitySpinner => createSpinner(
+    name: 'Mindfulness Activity',
+    slices: [
+      '5min meditation',
+      'Body scan',
+      'Free journaling',
+      'Mindful breathing',
+      'Notice 5 things',
+      'Gratitude list',
+      'Do one thing slowly',
+      'Sit in silence',
+      'Guided meditation',
+      'Observe thoughts',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get breakActivityGeneralSpinner => createSpinner(
+    name: 'Break Activity',
+    slices: [
+      'Stretch/walk',
+      'Get water',
+      'Listen to song',
+      'Look outside',
+      'Quick tidy',
+      'Step outside',
+      'Pet/animal photos',
+      'Mindful snack',
+      '10 squats/jumps',
+      'Deep breaths 1min',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get focusTaskSpinner => createSpinner(
+    name: 'Focus Task',
+    slices: [
+      'Reply to email',
+      'Clean desk',
+      'Finish small task',
+      'Most urgent item',
+      'Avoided task',
+      'Start 25min timer',
+      'Plan next 3 hours',
+      'File/sort',
+      'Review document',
+      'Prep for meeting',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get randomChallengeSpinner => createSpinner(
+    name: 'Random Challenge',
+    slices: [
+      'No social media 2hr',
+      'Compliment someone',
+      'Photo something nice',
+      'Write 3 wins today',
+      'Check email 2x only',
+      'Cook from scratch',
+      '2min cold shower',
+      'Clean 10min',
+      'Walk without phone',
+      'Say no to something',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whatToLearnSpinner => createSpinner(
+    name: 'What to Learn Today',
+    slices: [
+      'New word/phrase',
+      'Educational video',
+      'Random article',
+      'Practice language',
+      'Coding challenge',
+      'New recipe',
+      'Historical event',
+      'Scientific concept',
+      'Creative tutorial',
+      'Learning resource',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get skillToPracticeSpinner => createSpinner(
+    name: 'Skill to Practice',
+    slices: [
+      'Typing',
+      'Drawing',
+      'Cooking',
+      'Instrument',
+      'Public speaking',
+      'Mental math',
+      'Writing',
+      'Photo/video editing',
+      'Coding',
+      'Time management',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get creativePromptSpinner => createSpinner(
+    name: 'Creative Prompt',
+    slices: [
+      'Draw current mood',
+      'One paragraph story',
+      'Create with circles',
+      'Useless product idea',
+      'Redesign book cover',
+      'Describe unseen place',
+      'Doodle no lift',
+      'No context dialogue',
+      'Object to character',
+      'Three color scene',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get studyTopicSpinner => createSpinner(
+    name: 'Study Topic',
+    slices: [
+      'History',
+      'Math',
+      'Science',
+      'Language learning',
+      'Geography',
+      'Economics or finance',
+      'Psychology',
+      'Art or design',
+      'Technology',
+      'Philosophy',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  // Fun & Social Spinners
+  static SpinnerModel get whatToWatchGeneralSpinner => createSpinner(
+    name: 'What to Watch',
+    slices: [
+      'Comfort movie',
+      'Random documentary',
+      'New series episode',
+      'YouTube video',
+      'Foreign film',
+      'Classic unseen',
+      'Comedy special',
+      'Nature doc',
+      'Guilty pleasure show',
+      'Watchlist film',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whatToListenToSpinner => createSpinner(
+    name: 'What to Listen To',
+    slices: [
+      'Podcast episode',
+      'Full album',
+      'New music genre',
+      'Movie soundtrack',
+      'Ambient sounds',
+      'Live recording',
+      'Friend\'s playlist',
+      'Lo-fi beats',
+      'Audiobook sample',
+      'Music decade',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get gameToPlaySpinner => createSpinner(
+    name: 'Game to Play',
+    slices: [
+      'Mobile puzzle',
+      'Word game',
+      'Card game',
+      'New video game',
+      'Board game',
+      'Chess/checkers',
+      'Party game',
+      'Co-op multiplayer',
+      'Trivia/quiz',
+      'Old favorite',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get whoToCallSpinner => createSpinner(
+    name: 'Who to Call/Text',
+    slices: [
+      'Close friend',
+      'Family member',
+      'Coworker',
+      'Haven\'t seen lately',
+      'Old classmate',
+      'Someone you miss',
+      'Person to thank',
+      'Neighbor/local friend',
+      'Funny friend',
+      'Group chat',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get dateNightIdeaSpinner => createSpinner(
+    name: 'Date Night Idea',
+    slices: [
+      'Cook together',
+      'Watch movie/show',
+      'Walk/drive',
+      'Board/card game',
+      'New restaurant',
+      'Taste test',
+      'Stargazing',
+      'DIY spa night',
+      'Make playlist',
+      'Local event',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get groupActivitySpinner => createSpinner(
+    name: 'Group Activity',
+    slices: [
+      'Board/party game',
+      'Watch movie',
+      'Cook together',
+      'Walk/hike',
+      'Trivia night',
+      'Group workout',
+      'Karaoke',
+      'Craft project',
+      'Photo challenge',
+      'Shared playlist',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get familyNightSpinner => createSpinner(
+    name: 'Family Night Idea',
+    slices: [
+      'Movie night',
+      'Game night',
+      'Pizza + dessert',
+      'Storytelling',
+      'Puzzle/LEGO',
+      'Backyard activity',
+      'Arts & crafts',
+      'Talent show',
+      'Yes Day',
+      'Photo memories',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get activityForKidsSpinner => createSpinner(
+    name: 'Activity for Kids',
+    slices: [
+      'Drawing/coloring',
+      'Build blocks/LEGO',
+      'Make fort',
+      'Scavenger hunt',
+      'Dance party',
+      'Simple baking',
+      'Water play',
+      'Story time',
+      'Obstacle course',
+      'Playdough/slime',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get homeworkTaskSpinner => createSpinner(
+    name: 'Homework Task to Start With',
+    slices: [
+      'Reading assignment',
+      'Math problems',
+      'Study for quiz',
+      'Write paragraph',
+      'Review notes',
+      'One worksheet',
+      'Organize materials',
+      'Research project',
+      'Make flashcards',
+      'Ask for help',
+    ].map((text) => Slice(text: text)).toList(),
+    colors: fiveSliceColors,
+  );
+
+  static SpinnerModel get randomAppSpinner => createSpinner(
+    name: 'Random App to Use',
+    slices: [
+      'Note-taking app',
+      'Fitness tracker',
+      'Meditation app',
+      'Photo editor',
+      'Language learning',
+      'Calendar/planner',
+      'Music discovery',
+      'Habit tracker',
+      'Creative tool',
+      'Unused game',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
