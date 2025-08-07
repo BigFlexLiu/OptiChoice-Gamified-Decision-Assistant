@@ -338,35 +338,44 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     try {
       final spinnerModel = await SpinnerStorageService.loadActiveSpinner();
       if (spinnerModel == null) {
-        throw Exception('Spinner model is unexpectedly null.');
-      }
-
-      setState(() {
-        // Check if this is the same spinner and preserve current option if possible
-        Slice? preservedOption;
-        if (_activeSpinner != null &&
-            _activeSpinner!.id == spinnerModel.id &&
-            _currentSpinnerOption != null) {
-          // Try to find the same option in the new spinner model
-          preservedOption = spinnerModel.slices
-              .where((option) => option.text == _currentSpinnerOption!.text)
-              .firstOrNull;
+        SpinnerStorageService.clearCache();
+        final retrySpinnerModel =
+            await SpinnerStorageService.loadActiveSpinner();
+        if (retrySpinnerModel == null) {
+          throw Exception('Unable to load spinner');
         }
-
-        _activeSpinner = spinnerModel;
-        _currentSpinnerOption = preservedOption ?? spinnerModel.slices.first;
-        _showRemoveSlice = false;
-        _isLoading = false;
-      });
+        _setActiveSpinnerState(retrySpinnerModel);
+      } else {
+        _setActiveSpinnerState(spinnerModel);
+      }
 
       await _audioManager.preloadAudioSources(_activeSpinner);
     } catch (e) {
-      // Handle error by setting loading to false and showing empty state
       setState(() {
         _activeSpinner = null;
         _currentSpinnerOption = null;
         _isLoading = false;
       });
     }
+  }
+
+  void _setActiveSpinnerState(SpinnerModel spinnerModel) {
+    setState(() {
+      // Check if this is the same spinner and preserve current option if possible
+      Slice? preservedOption;
+      if (_activeSpinner != null &&
+          _activeSpinner!.id == spinnerModel.id &&
+          _currentSpinnerOption != null) {
+        // Try to find the same option in the new spinner model
+        preservedOption = spinnerModel.slices
+            .where((option) => option.text == _currentSpinnerOption!.text)
+            .firstOrNull;
+      }
+
+      _activeSpinner = spinnerModel;
+      _currentSpinnerOption = preservedOption ?? spinnerModel.slices.first;
+      _showRemoveSlice = false;
+      _isLoading = false;
+    });
   }
 }

@@ -31,6 +31,7 @@ class SpinnerStorageService extends BaseStorageService {
       final defaultSpinners = {defaultSpinner.id: defaultSpinner};
       await saveAllSpinners(defaultSpinners);
       await setActiveSpinnerId(defaultSpinner.id);
+      _cachedSpinners = defaultSpinners;
       return defaultSpinners;
     }
   }
@@ -86,10 +87,13 @@ class SpinnerStorageService extends BaseStorageService {
     if (_cachedActiveSpinner != null && _cachedActiveSpinnerId != null) {
       return _cachedActiveSpinner;
     }
+
+    final allSpinners = await loadAllSpinners();
     final activeId = await getActiveSpinnerId();
-    final activeSpinner = await loadSpinnerById(activeId);
-    _cachedActiveSpinner = activeSpinner;
-    return activeSpinner;
+
+    // Get spinner by ID, fallback to first if not found
+    _cachedActiveSpinner = allSpinners[activeId] ?? allSpinners.values.first;
+    return _cachedActiveSpinner;
   }
 
   static SpinnerModel? getCachedSpinnerById(String id) {
@@ -264,7 +268,7 @@ class SpinnerStorageService extends BaseStorageService {
     if (_cachedActiveSpinnerId == null) {
       _cachedActiveSpinnerId = await _getActiveSpinnerId();
       if (_cachedActiveSpinnerId == null) {
-        final allSpinners = _cachedSpinners ?? await loadAllSpinners();
+        final allSpinners = await loadAllSpinners();
         if (allSpinners.isNotEmpty) {
           _cachedActiveSpinnerId = allSpinners.keys.first;
           await setActiveSpinnerId(_cachedActiveSpinnerId!);
