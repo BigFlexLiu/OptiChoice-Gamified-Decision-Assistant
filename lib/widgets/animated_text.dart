@@ -41,13 +41,13 @@ class _AnimatedTextJumpChangeColorState
       TweenSequenceItem(
         tween: Tween<double>(
           begin: 1.0,
-          end: 1.5,
+          end: 2,
         ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 50,
       ),
       TweenSequenceItem(
         tween: Tween<double>(
-          begin: 1.5,
+          begin: 2,
           end: 1.0,
         ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 50,
