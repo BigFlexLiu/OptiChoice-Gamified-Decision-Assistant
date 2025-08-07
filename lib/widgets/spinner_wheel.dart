@@ -32,36 +32,33 @@ class SpinnerWheelState extends State<SpinnerWheel>
   late AnimationController _controller;
   late Animation<double> _animation;
   double _currentRotation = 0;
-  int _currentPointingIndex = 0; // Track the current pointing indexfinal
-
-  // Drag rotation variables
+  int _currentPointingIndex = 0;
   bool _isDragging = false;
   double _lastPanAngle = 0;
-
-  // Cached calculations for efficiency
+  double _dragDirection = 1.0;
   double _sectionAngle = 0;
-  final double _twoPi = 2 * math.pi;
+  bool _animationListenerAttached = false;
+
+  static const double _twoPi = 2 * math.pi;
 
   List<Slice> get spinnerSlices => widget.spinnerModel.activeSlices;
   double get _currentRotationAngle =>
       _isDragging ? _currentRotation : _animation.value;
 
-  void _updateCachedCalculations() {
-    if (spinnerSlices.isNotEmpty) {
-      _sectionAngle = _twoPi / spinnerSlices.length;
+  @override
+  void initState() {
+    super.initState();
+    if (spinnerSlices.isNotEmpty) _sectionAngle = _twoPi / spinnerSlices.length;
+    _initializeAnimation();
+    final firstOption = spinnerSlices.firstOrNull;
+    if (firstOption != null && widget.onPointingOptionChanged != null) {
+      widget.onPointingOptionChanged!(firstOption);
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    _updateCachedCalculations();
-    _initializeAnimation();
-    _initializeInitialOption();
-  }
-
-  @override
   void dispose() {
+    _detachAnimationListener();
     _controller.dispose();
     super.dispose();
   }
@@ -73,11 +70,14 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Reset animation state when widget parameters change
     if (oldWidget.spinnerModel != widget.spinnerModel) {
       _controller.reset();
-      _updateCachedCalculations();
+      if (spinnerSlices.isNotEmpty)
+        _sectionAngle = _twoPi / spinnerSlices.length;
       _initializeAnimation();
-
       _currentPointingIndex = 0;
-      _initializeInitialOption();
+      final firstOption = spinnerSlices.firstOrNull;
+      if (firstOption != null && widget.onPointingOptionChanged != null) {
+        widget.onPointingOptionChanged!(firstOption);
+      }
     }
 
     // Spin got cancelled prematurely
@@ -86,114 +86,115 @@ class SpinnerWheelState extends State<SpinnerWheel>
     }
   }
 
-  void _initializeInitialOption() {
-    final firstOption = spinnerSlices.firstOrNull;
-    if (firstOption != null && widget.onPointingOptionChanged != null) {
-      widget.onPointingOptionChanged!(firstOption);
-    }
-  }
-
   void _initializeAnimation() {
-    // Use the spinner's configured duration
     _controller = AnimationController(
       duration: widget.spinnerModel.spinDuration,
       vsync: this,
     );
-
-    _initializeCurrentRotation();
+    _currentRotation = spinnerSlices.isNotEmpty ? -_sectionAngle / 2 : 0;
     _animation = Tween<double>(
       begin: _currentRotation,
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    // Add listener to track rotation during animation - only when spinning
-    _animation.addListener(_onAnimationUpdate);
-
+    _ensureAnimationListenerAttached();
     _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _reportWinner();
-      }
+      if (status == AnimationStatus.completed) _reportWinner();
     });
+  }
+
+  void _ensureAnimationListenerAttached() {
+    if (!_animationListenerAttached) {
+      _animation.addListener(_onAnimationUpdate);
+      _animationListenerAttached = true;
+    }
+  }
+
+  void _detachAnimationListener() {
+    if (_animationListenerAttached) {
+      _animation.removeListener(_onAnimationUpdate);
+      _animationListenerAttached = false;
+    }
   }
 
   void _onAnimationUpdate() {
     if (widget.onPointingOptionChanged != null && widget.isSpinning) {
-      _updatePointingOption();
-    }
-  }
-
-  void _initializeCurrentRotation() {
-    if (spinnerSlices.isNotEmpty) {
-      setState(() {
-        _currentRotation =
-            -_sectionAngle / 2; // Position at middle of first section
-      });
+      _updatePointingOptionWithRotation(_animation.value);
     }
   }
 
   int _calculatePointingIndex(double rotationValue) {
     if (spinnerSlices.isEmpty) return 0;
-
     final normalizedRotation = rotationValue % _twoPi;
     final pointerAngle = (_twoPi - normalizedRotation) % _twoPi;
     return (pointerAngle / _sectionAngle).floor() % spinnerSlices.length;
   }
 
-  void _updatePointingOption() {
-    if (spinnerSlices.isEmpty) return;
-
-    final pointingIndex = _calculatePointingIndex(_animation.value);
-
-    // Only call the callback if the pointing index has changed
-    if (_currentPointingIndex != pointingIndex) {
-      _currentPointingIndex = pointingIndex;
-      widget.onPointingOptionChanged!(spinnerSlices[pointingIndex]);
-    }
-  }
-
   void _spin() {
-    if (widget.isSpinning || spinnerSlices.length < 2) return;
+    if (spinnerSlices.length < 2) return;
+
+    // If already spinning, stop the current animation first (interrupt)
+    if (widget.isSpinning) {
+      _controller.stop();
+    }
 
     widget.onSpinStart();
     _startSpinAnimation();
   }
 
-  void _startSpinAnimation() {
-    // Reset drag state when starting spin
+  void _startSpinAnimation() => _executeSpinAnimation(
+    _calculateSpinRotations(),
+    widget.spinnerModel.spinDuration,
+  );
+
+  void _startDragBasedSpinAnimation(Offset velocity) {
+    final velocityMagnitude = velocity.distance;
+    final spins =
+        (velocityMagnitude * 0.001).clamp(1.0, 6.0) +
+        (math.Random().nextDouble() - 0.5) * 0.5;
+
+    // Calculate duration based on drag velocity instead of spinner model
+    // Higher velocity = longer spin duration
+    // Scale: 500px/s = 1s, 1500px/s = 3s, 3000px/s = 5s
+    final baseDurationMs = (velocityMagnitude / 500.0 * 1000.0).clamp(
+      500.0,
+      5000.0,
+    );
+    final duration = Duration(milliseconds: baseDurationMs.round());
+
+    _executeSpinAnimation(spins, duration);
+  }
+
+  double _calculateSpinRotations() {
+    final durationSeconds =
+        widget.spinnerModel.spinDuration.inMilliseconds / 1000.0;
+    final baseSpins = 1 + (durationSeconds - 0.5) * (2.5 / 4.5);
+    return baseSpins + math.Random().nextDouble() - 0.5;
+  }
+
+  void _executeSpinAnimation(double spins, Duration duration) {
+    // Reset drag state
     _isDragging = false;
 
     final random = math.Random();
-
-    // Calculate spins based on duration - reduced speed for shorter durations
-    final durationSeconds =
-        widget.spinnerModel.spinDuration.inMilliseconds / 1000.0;
-
-    // Use a more conservative scaling for shorter durations
-    // Minimum 1.5 spins for shortest duration (0.5s), max 4 spins for longest (5s)
-    final baseSpins =
-        1 + (durationSeconds - 0.5) * (2.5 / 4.5); // Linear scale from 1.5 to 4
-    final randomSpins =
-        baseSpins + random.nextDouble() - 0.5; // Smaller random variance
-
-    // Add random offset to ensure any option can be selected regardless of duration
-    // This ensures equal probability for all slices
     final randomOffset = random.nextDouble() * _sectionAngle;
 
+    // Use tracked drag direction for drag-based spins, clockwise for regular spins
+    final spinDirection = _dragDirection.sign;
     final finalRotation =
-        _currentRotation + (randomSpins * _twoPi) + randomOffset;
+        _currentRotation + (spins * _twoPi * spinDirection) + randomOffset;
 
-    // Update controller duration to match spinner's configured duration
-    _controller.duration = widget.spinnerModel.spinDuration;
+    // Update controller and create new animation
+    _controller.duration = duration;
+    _detachAnimationListener();
 
     _animation = Tween<double>(
       begin: _currentRotation,
       end: finalRotation,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    // Re-add the listener for the new animation
-    _animation.addListener(_onAnimationUpdate);
-
+    _ensureAnimationListenerAttached();
     _currentRotation = finalRotation;
+
     _controller.reset();
     _controller.forward();
   }
@@ -213,83 +214,80 @@ class SpinnerWheelState extends State<SpinnerWheel>
     return spinnerSlices[pointingIndex];
   }
 
-  // Drag handling methods
   void _onPanStart(DragStartDetails details, double wheelSize) {
-    if (widget.isSpinning) return;
+    // Allow interrupting spin animation by starting drag
+    if (widget.isSpinning) {
+      _controller.stop();
+      // Notify that spinning was interrupted
+      // Note: We don't call widget.onSpinStart() here as we're interrupting, not starting
+    }
 
     _isDragging = true;
-    _controller.stop();
-
-    // Sync _currentRotation with the animation value to prevent jerks
+    _dragDirection = 1.0;
     _currentRotation = _animation.value;
-
     final center = Offset(wheelSize / 2, wheelSize / 2);
-    final localPosition = details.localPosition - center;
-    _lastPanAngle = math.atan2(localPosition.dy, localPosition.dx);
-
-    // Call onPointingOptionChanged immediately when drag starts
-    if (widget.onPointingOptionChanged != null) {
-      _updatePointingOptionForDrag();
-    }
+    _lastPanAngle = math.atan2(
+      (details.localPosition - center).dy,
+      (details.localPosition - center).dx,
+    );
+    _updatePointingOptionForDrag();
   }
 
   void _onPanUpdate(DragUpdateDetails details, double wheelSize) {
-    if (widget.isSpinning || !_isDragging) return;
-
+    // Allow panning even during spinning (interruption is handled in _onPanStart)
+    if (!_isDragging) return;
     final center = Offset(wheelSize / 2, wheelSize / 2);
     final localPosition = details.localPosition - center;
     final currentAngle = math.atan2(localPosition.dy, localPosition.dx);
-
-    // Calculate the angle difference
     double angleDelta = currentAngle - _lastPanAngle;
 
-    // Handle angle wrap-around
-    if (angleDelta > math.pi) {
-      angleDelta -= 2 * math.pi;
-    } else if (angleDelta < -math.pi) {
-      angleDelta += 2 * math.pi;
+    if (angleDelta > math.pi)
+      angleDelta -= _twoPi;
+    else if (angleDelta < -math.pi)
+      angleDelta += _twoPi;
+
+    if (angleDelta.abs() > 0.01) {
+      final newDirection = angleDelta > 0 ? 1.0 : -1.0;
+      _dragDirection = (_dragDirection * 0.7) + (newDirection * 0.3);
     }
 
-    // Update rotation
-    setState(() {
-      _currentRotation += angleDelta;
-    });
-
-    // Update pointing option during drag - this will call onPointingOptionChanged
-    if (widget.onPointingOptionChanged != null) {
-      _updatePointingOptionForDrag();
-    }
-
+    setState(() => _currentRotation += angleDelta);
+    _updatePointingOptionForDrag();
     _lastPanAngle = currentAngle;
   }
 
   void _onPanEnd(DragEndDetails details) {
-    if (widget.isSpinning) return;
-
+    // Allow pan end processing even if originally spinning (since we can interrupt)
+    if (!_isDragging) return;
     _isDragging = false;
+    final velocityMagnitude = details.velocity.pixelsPerSecond.distance;
 
-    // Update the animation to start from the current drag position
-    // This prevents jerks when transitioning back to animation-based rotation
-    _animation = Tween<double>(
-      begin: _currentRotation,
-      end: _currentRotation,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    // Re-add the listener for consistency
-    _animation.addListener(_onAnimationUpdate);
-
-    // Update the pointing option after drag ends
-    if (widget.onPointingOptionChanged != null) {
+    if (velocityMagnitude > 500.0 && spinnerSlices.length >= 2) {
+      widget.onSpinStart();
+      _startDragBasedSpinAnimation(details.velocity.pixelsPerSecond);
+    } else {
+      _createStaticAnimation();
       _updatePointingOptionForDrag();
     }
   }
 
+  void _createStaticAnimation() {
+    _detachAnimationListener();
+    _animation = Tween<double>(
+      begin: _currentRotation,
+      end: _currentRotation,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _ensureAnimationListenerAttached();
+  }
+
   void _updatePointingOptionForDrag() {
+    if (widget.onPointingOptionChanged == null) return;
+    _updatePointingOptionWithRotation(_currentRotation);
+  }
+
+  void _updatePointingOptionWithRotation(double rotationValue) {
     if (spinnerSlices.isEmpty) return;
-
-    final pointingIndex = _calculatePointingIndex(_currentRotation);
-
-    // Only call the callback if the pointing index has changed
+    final pointingIndex = _calculatePointingIndex(rotationValue);
     if (_currentPointingIndex != pointingIndex) {
       _currentPointingIndex = pointingIndex;
       widget.onPointingOptionChanged!(spinnerSlices[pointingIndex]);
@@ -299,93 +297,22 @@ class SpinnerWheelState extends State<SpinnerWheel>
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [_buildSpinnerWheel()],
-      ),
-    );
-  }
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final containerSize = widget.size ?? constraints.maxWidth;
+          final shadowSize = containerSize * 0.914;
+          final wheelSize = containerSize * 0.857;
 
-  Widget _buildSpinnerWheel() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Calculate available width with 16px margins on both sides
-        final availableWidth = constraints.maxWidth;
-
-        // Use the widget.size if provided, otherwise use available width
-        final containerSize = widget.size ?? availableWidth;
-        final shadowSize = containerSize * 0.914; // 32/35 ratio
-        final wheelSize = containerSize * 0.857; // 30/35 ratio
-
-        return SizedBox(
-          height: containerSize,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _buildWheelShadow(shadowSize),
-              _buildAnimatedWheel(wheelSize),
-              _buildPointer(containerSize),
-              _buildCenterCircle(wheelSize),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildWheelShadow(double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: size * 0.0625, // 20/320 ratio
-            offset: Offset(0, size * 0.03125), // 10/320 ratio
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedWheel(double size) {
-    return GestureDetector(
-      onPanStart: (details) => _onPanStart(details, size),
-      onPanUpdate: (details) => _onPanUpdate(details, size),
-      onPanEnd: _onPanEnd,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          // Extract rotation angle calculation for reuse
-          final rotationAngle = _currentRotationAngle;
-
-          return Transform.rotate(
-            angle: rotationAngle,
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: size * 0.05, // 15/300 ratio
-                    offset: Offset(0, size * 0.0167), // 5/300 ratio
-                  ),
-                ],
-              ),
-              child: CustomPaint(
-                painter: SpinnerPainter(
-                  spinnerModel: widget.spinnerModel,
-                  rotation: 0, // Rotation is handled by Transform.rotate
-                  selectedOption: _getCurrentPointingOption(),
-                  wheelSize: size, // Pass the wheel size for text scaling
-                ),
-                size: Size(size, size),
-              ),
+          return SizedBox(
+            height: containerSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWheelShadow(shadowSize),
+                _buildAnimatedWheel(wheelSize),
+                _buildPointer(containerSize),
+                _buildCenterCircle(wheelSize),
+              ],
             ),
           );
         },
@@ -393,11 +320,59 @@ class SpinnerWheelState extends State<SpinnerWheel>
     );
   }
 
-  Widget _buildPointer(double containerHeight) {
-    final pointerTop = containerHeight * 0.357; // 125/350 ratio
-    final pointerSize =
-        containerHeight * 0.057; // Scale pointer relative to spinner size
+  Widget _buildWheelShadow(double size) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: size * 0.0625,
+          offset: Offset(0, size * 0.03125),
+        ),
+      ],
+    ),
+  );
 
+  Widget _buildAnimatedWheel(double size) => GestureDetector(
+    onPanStart: (details) => _onPanStart(details, size),
+    onPanUpdate: (details) => _onPanUpdate(details, size),
+    onPanEnd: _onPanEnd,
+    child: AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) => Transform.rotate(
+        angle: _currentRotationAngle,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: size * 0.05,
+                offset: Offset(0, size * 0.0167),
+              ),
+            ],
+          ),
+          child: CustomPaint(
+            painter: SpinnerPainter(
+              spinnerModel: widget.spinnerModel,
+              rotation: 0,
+              selectedOption: _getCurrentPointingOption(),
+              wheelSize: size,
+            ),
+            size: Size(size, size),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _buildPointer(double containerHeight) {
+    final pointerTop = containerHeight * 0.357;
+    final pointerSize = containerHeight * 0.057;
     return Positioned(
       top: pointerTop,
       child: Stack(
@@ -410,45 +385,32 @@ class SpinnerWheelState extends State<SpinnerWheel>
     );
   }
 
-  Widget _buildPointerShadow(double baseSize) {
-    final width = baseSize * 0.9; // Proportional to pointer base size
-    final height = baseSize * 1.8; // Proportional to pointer base size
-
-    return Transform.translate(
-      offset: Offset(0, -height * 0.1), // Proportional shadow offset
-      child: Container(
-        width: 0,
-        height: 0,
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: Colors.transparent, width: width),
-            right: BorderSide(color: Colors.transparent, width: width),
-            top: BorderSide(
-              color: Colors.black.withValues(alpha: 1),
-              width: height,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPointerHighlight(double baseSize) {
-    final width = baseSize * 0.75; // Proportional to pointer base size
-    final height = baseSize * 1.5; // Proportional to pointer base size
-
-    return Container(
+  Widget _buildPointerShadow(double baseSize) => Transform.translate(
+    offset: Offset(0, -baseSize * 0.18),
+    child: Container(
       width: 0,
       height: 0,
       decoration: BoxDecoration(
         border: Border(
-          left: BorderSide(color: Colors.transparent, width: width),
-          right: BorderSide(color: Colors.transparent, width: width),
-          top: BorderSide(color: Colors.white, width: height),
+          left: BorderSide(color: Colors.transparent, width: baseSize * 0.9),
+          right: BorderSide(color: Colors.transparent, width: baseSize * 0.9),
+          top: BorderSide(color: Colors.black, width: baseSize * 1.8),
         ),
       ),
-    );
-  }
+    ),
+  );
+
+  Widget _buildPointerHighlight(double baseSize) => Container(
+    width: 0,
+    height: 0,
+    decoration: BoxDecoration(
+      border: Border(
+        left: BorderSide(color: Colors.transparent, width: baseSize * 0.75),
+        right: BorderSide(color: Colors.transparent, width: baseSize * 0.75),
+        top: BorderSide(color: Colors.white, width: baseSize * 1.5),
+      ),
+    ),
+  );
 
   Widget _buildCenterCircle(double wheelSize) {
     final circleSize = wheelSize * 0.167;
