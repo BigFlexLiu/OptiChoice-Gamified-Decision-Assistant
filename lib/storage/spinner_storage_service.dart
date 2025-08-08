@@ -10,6 +10,23 @@ class SpinnerStorageService extends BaseStorageService {
   static String? _cachedActiveSpinnerId;
   static SpinnerModel? _cachedActiveSpinner;
 
+  // Callback for when active spinner changes
+  static void Function(SpinnerModel?)? _onActiveSpinnerChanged;
+
+  /// Register a callback to be notified when the active spinner changes
+  static void setActiveSpinnerChangeCallback(
+    void Function(SpinnerModel?)? callback,
+  ) {
+    _onActiveSpinnerChanged = callback;
+  }
+
+  /// Notify registered callback of active spinner change
+  static void _notifyActiveSpinnerChanged() {
+    if (_onActiveSpinnerChanged != null) {
+      _onActiveSpinnerChanged!(_cachedActiveSpinner);
+    }
+  }
+
   static Future<Map<String, SpinnerModel>> loadAllSpinners() async {
     if (_cachedSpinners != null) return _cachedSpinners!;
 
@@ -93,6 +110,7 @@ class SpinnerStorageService extends BaseStorageService {
 
     // Get spinner by ID, fallback to first if not found
     _cachedActiveSpinner = allSpinners[activeId] ?? allSpinners.values.first;
+    _notifyActiveSpinnerChanged();
     return _cachedActiveSpinner;
   }
 
@@ -129,6 +147,7 @@ class SpinnerStorageService extends BaseStorageService {
     final success = await saveAllSpinners(allSpinners);
     if (success && _cachedActiveSpinner?.id == spinner.id) {
       _cachedActiveSpinner = spinner;
+      _notifyActiveSpinnerChanged();
     }
     return success;
   }
@@ -290,6 +309,7 @@ class SpinnerStorageService extends BaseStorageService {
       } else {
         _cachedActiveSpinner = null;
       }
+      _notifyActiveSpinnerChanged();
     }
     return success;
   }
@@ -298,5 +318,6 @@ class SpinnerStorageService extends BaseStorageService {
     _cachedSpinners = null;
     _cachedActiveSpinnerId = null;
     _cachedActiveSpinner = null;
+    _onActiveSpinnerChanged = null;
   }
 }

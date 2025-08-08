@@ -1,7 +1,9 @@
+import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/views/spinner_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +17,17 @@ void main() async {
   // Initialize SoLoud audio engine
   await SoLoud.instance.init();
 
-  runApp(SpinnerApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) {
+        final provider = SpinnerProvider();
+        // Initialize the provider asynchronously
+        provider.initialize();
+        return provider;
+      },
+      child: SpinnerApp(),
+    ),
+  );
 }
 
 class SpinnerApp extends StatelessWidget {

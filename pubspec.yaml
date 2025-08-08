@@ -38,6 +38,7 @@ dependencies:
   flutter_soloud: ^2.0.3
   logger: ^2.6.0
   flutter_reorderable_grid_view: ^5.5.0
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:
