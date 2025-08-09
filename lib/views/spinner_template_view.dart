@@ -1,10 +1,12 @@
 import 'package:decision_spinner/consts/spinner_template_definitions.dart';
+import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
-import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:decision_spinner/widgets/dialogs/spinner_conflict_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SpinnerTemplatesView extends StatelessWidget {
   const SpinnerTemplatesView({super.key});
@@ -146,12 +148,16 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
 
   Future<void> _addSpinner(BuildContext context, SpinnerModel spinner) async {
     try {
+      final spinnersNotifier = Provider.of<SpinnersNotifier>(
+        context,
+        listen: false,
+      );
       SpinnerConflictResult? dialogResult;
       String? targetSpinnerId;
 
       // Check for existing spinner with same content first
-      final existingSpinnerWithSameContent =
-          await SpinnerStorageService.findSpinnerWithIdenticalContent(spinner);
+      final existingSpinnerWithSameContent = spinnersNotifier
+          .findSpinnerWithIdenticalContent(spinner);
 
       if (existingSpinnerWithSameContent != null) {
         // Found identical content
@@ -166,10 +172,11 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
         if (dialogResult?.action == SpinnerConflictAction.useExisting) {
           targetSpinnerId = existingSpinnerWithSameContent.id;
         }
-      } else if (await SpinnerStorageService.spinnerNameExists(spinner.name)) {
+      } else if (spinnersNotifier.spinnerNameExists(spinner.name)) {
         // Name conflict only
-        final existingSpinnerWithSameName =
-            await SpinnerStorageService.findSpinnerByName(spinner.name);
+        final existingSpinnerWithSameName = spinnersNotifier.findSpinnerByName(
+          spinner.name,
+        );
         if (!context.mounted) return;
 
         dialogResult = await showDialog<SpinnerConflictResult>(
@@ -186,22 +193,25 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
       }
 
       // Handle dialog result and determine target spinner
+      final spinnerProvider = Provider.of<SpinnerProvider>(
+        context,
+        listen: false,
+      );
       if (dialogResult?.action == SpinnerConflictAction.createNew &&
           dialogResult?.newName != null) {
         spinner.name = dialogResult!.newName!;
-        await SpinnerStorageService.saveSpinner(spinner);
+        await spinnerProvider.saveSpinner(spinner);
         targetSpinnerId = spinner.id;
       } else if (dialogResult?.action == SpinnerConflictAction.cancel) {
         return; // User cancelled
       } else if (targetSpinnerId == null) {
         // No conflicts, save directly
-        await SpinnerStorageService.saveSpinner(spinner);
+        await spinnerProvider.saveSpinner(spinner);
         targetSpinnerId = spinner.id;
       }
 
-      // Set active spinner and cleanup
-      await SpinnerStorageService.setActiveSpinnerId(targetSpinnerId);
-      SpinnerStorageService.clearCache();
+      // Set active spinner - no need for clearCache since notifier handles state updates
+      await spinnersNotifier.setActiveSpinnerId(targetSpinnerId);
       if (context.mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (context.mounted) showErrorSnackBar(context, 'Error: ${e.toString()}');

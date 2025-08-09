@@ -1,5 +1,5 @@
 import 'package:decision_spinner/utils/spinner_audio_manager.dart';
-import 'package:decision_spinner/views/manage_spinners_view.dart';
+import 'package:decision_spinner/views/spinner_manager_view.dart';
 import 'package:decision_spinner/views/spinner_template_view.dart';
 import 'package:decision_spinner/views/edit_spinner_view.dart';
 import 'package:decision_spinner/widgets/animated_text.dart';
@@ -182,7 +182,7 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
           onPressed: () async {
             _onSpinEndPrematurely();
             await Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => ManageSpinnerView()),
+              MaterialPageRoute(builder: (context) => SpinnerManagerView()),
             );
             // Provider will automatically refresh when we return
           },
