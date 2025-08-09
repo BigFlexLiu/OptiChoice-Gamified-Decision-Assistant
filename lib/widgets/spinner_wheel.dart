@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
-import '../painters/spinner_painter.dart';
+import 'spinner_display.dart';
 
 class SpinnerWheel extends StatefulWidget {
   final SpinnerModel spinnerModel;
@@ -69,7 +69,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     super.didUpdateWidget(oldWidget);
 
     // Reset animation state when widget parameters change
-    if (oldWidget.spinnerModel != widget.spinnerModel) {
+    if (!oldWidget.spinnerModel.isContentIdenticalTo(widget.spinnerModel)) {
       _controller.reset();
       if (spinnerSlices.isNotEmpty)
         _sectionAngle = _twoPi / spinnerSlices.length;
@@ -101,7 +101,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final containerSize = widget.size ?? constraints.maxWidth;
-          final shadowSize = containerSize * 0.914;
           final wheelSize = containerSize * 0.857;
 
           return SizedBox(
@@ -109,10 +108,8 @@ class SpinnerWheelState extends State<SpinnerWheel>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                _buildWheelShadow(shadowSize),
-                _buildAnimatedWheel(wheelSize),
-                _buildPointer(containerSize),
-                _buildCenterCircle(wheelSize),
+                _buildInteractiveDisplay(containerSize),
+                _buildInteractiveCenterCircle(wheelSize),
               ],
             ),
           );
@@ -121,99 +118,28 @@ class SpinnerWheelState extends State<SpinnerWheel>
     );
   }
 
-  Widget _buildWheelShadow(double size) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.3),
-          blurRadius: size * 0.0625,
-          offset: Offset(0, size * 0.03125),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildAnimatedWheel(double size) => GestureDetector(
-    onPanStart: (details) => _onPanStart(details, size),
-    onPanUpdate: (details) => _onPanUpdate(details, size),
-    onPanEnd: _onPanEnd,
-    child: AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) => Transform.rotate(
-        angle: _currentRotationAngle,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: size * 0.05,
-                offset: Offset(0, size * 0.0167),
-              ),
-            ],
-          ),
-          child: CustomPaint(
-            painter: SpinnerPainter(
-              spinnerModel: widget.spinnerModel,
-              rotation: 0,
-              selectedOption: _getCurrentPointingOption(),
-              wheelSize: size,
-            ),
-            size: Size(size, size),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildPointer(double containerHeight) {
-    final pointerTop = containerHeight * 0.357;
-    final pointerSize = containerHeight * 0.057;
-    return Positioned(
-      top: pointerTop,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _buildPointerShadow(pointerSize),
-          _buildPointerHighlight(pointerSize),
-        ],
+  Widget _buildInteractiveDisplay(double containerSize) {
+    return GestureDetector(
+      onPanStart: (details) => _onPanStart(details, containerSize * 0.857),
+      onPanUpdate: (details) => _onPanUpdate(details, containerSize * 0.857),
+      onPanEnd: _onPanEnd,
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return SpinnerDisplay(
+            spinnerModel: widget.spinnerModel,
+            size: containerSize,
+            rotation: _currentRotationAngle,
+            selectedOption: _getCurrentPointingOption(),
+            showCenterCircle:
+                false, // We'll build our own interactive center circle
+          );
+        },
       ),
     );
   }
 
-  Widget _buildPointerShadow(double baseSize) => Transform.translate(
-    offset: Offset(0, -baseSize * 0.18),
-    child: Container(
-      width: 0,
-      height: 0,
-      decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: Colors.transparent, width: baseSize * 0.9),
-          right: BorderSide(color: Colors.transparent, width: baseSize * 0.9),
-          top: BorderSide(color: Colors.black, width: baseSize * 1.8),
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildPointerHighlight(double baseSize) => Container(
-    width: 0,
-    height: 0,
-    decoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(color: Colors.transparent, width: baseSize * 0.75),
-        right: BorderSide(color: Colors.transparent, width: baseSize * 0.75),
-        top: BorderSide(color: Colors.white, width: baseSize * 1.5),
-      ),
-    ),
-  );
-
-  Widget _buildCenterCircle(double wheelSize) {
+  Widget _buildInteractiveCenterCircle(double wheelSize) {
     final circleSize = wheelSize * 0.167;
     final innerCircleSize = circleSize * 0.75;
     final borderWidth = circleSize * 0.08;

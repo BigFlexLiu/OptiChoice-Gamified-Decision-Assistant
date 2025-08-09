@@ -1,6 +1,6 @@
+import 'package:decision_spinner/widgets/spinner_display.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'spinner_wheel.dart';
 import '../storage/spinner_model.dart';
 import '../providers/spinners_notifier.dart';
 import '../providers/spinner_provider.dart';
@@ -32,14 +32,7 @@ class _SpinnerPreviewState extends State<SpinnerPreview> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTap ?? () => _handleSpinnerTap(context),
-      child: SpinnerWheel(
-        spinnerModel: widget.spinner,
-        isSpinning: false,
-        onSpinStart: () {},
-        onSpinComplete: (_) {},
-        showSpinButton: widget.showSpinButton,
-        size: widget.size,
-      ),
+      child: SpinnerDisplay(spinnerModel: widget.spinner, size: widget.size),
     );
   }
 
