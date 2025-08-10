@@ -1,10 +1,11 @@
 import 'dart:math' as math;
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'spinner_display.dart';
 
 class SpinnerWheel extends StatefulWidget {
-  final SpinnerModel spinnerModel;
   final bool isSpinning;
   final VoidCallback onSpinStart;
   final Function(String) onSpinComplete;
@@ -14,7 +15,6 @@ class SpinnerWheel extends StatefulWidget {
 
   const SpinnerWheel({
     super.key,
-    required this.spinnerModel,
     required this.isSpinning,
     required this.onSpinStart,
     required this.onSpinComplete,
@@ -40,7 +40,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   // Rotation and State Variables
   double _currentRotation = 0;
   int _currentPointingIndex = 0;
-  double _sectionAngle = 0;
+  String? _lastSpinnerId; // Track the last spinner ID to detect changes
 
   // Drag State Variables
   bool _isDragging = false;
@@ -48,15 +48,18 @@ class SpinnerWheelState extends State<SpinnerWheel>
   double _dragDirection = 1.0;
 
   // Getters
-  List<Slice> get spinnerSlices => widget.spinnerModel.activeSlices;
+  SpinnerModel get _activeSpinner =>
+      Provider.of<SpinnerProvider>(context, listen: false).activeSpinner!;
+  List<Slice> get spinnerSlices => _activeSpinner.activeSlices;
   double get _currentRotationAngle =>
       _isDragging ? _currentRotation : _animation.value;
+  double get _sectionAngle => _twoPi / spinnerSlices.length;
 
   // Lifecycle Methods
   @override
   void initState() {
     super.initState();
-    if (spinnerSlices.isNotEmpty) _sectionAngle = _twoPi / spinnerSlices.length;
+    _lastSpinnerId = _activeSpinner.id;
     _initializeAnimation();
     final firstOption = spinnerSlices.firstOrNull;
     if (firstOption != null && widget.onPointingOptionChanged != null) {
@@ -68,20 +71,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   void didUpdateWidget(SpinnerWheel oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Reset animation state when widget parameters change
-    if (!oldWidget.spinnerModel.isContentIdenticalTo(widget.spinnerModel)) {
-      _controller.reset();
-      if (spinnerSlices.isNotEmpty)
-        _sectionAngle = _twoPi / spinnerSlices.length;
-      _initializeAnimation();
-      _currentPointingIndex = 0;
-      final firstOption = spinnerSlices.firstOrNull;
-      if (firstOption != null && widget.onPointingOptionChanged != null) {
-        widget.onPointingOptionChanged!(firstOption);
-      }
-    }
-
-    // Spin got cancelled prematurely
+    // Only reset if the spinning state changed and it was cancelled
     if (oldWidget.isSpinning != widget.isSpinning && !widget.isSpinning) {
       _controller.stop();
     }
@@ -97,28 +87,51 @@ class SpinnerWheelState extends State<SpinnerWheel>
   // Widget Build Methods
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final containerSize = widget.size ?? constraints.maxWidth;
-          final wheelSize = containerSize * 0.857;
+    return Consumer<SpinnerProvider>(
+      builder: (context, spinnerProvider, child) {
+        final activeSpinner = spinnerProvider.activeSpinner;
+        if (activeSpinner == null) {
+          return Container(); // Return empty container if no active spinner
+        }
 
-          return SizedBox(
-            height: containerSize,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _buildInteractiveDisplay(containerSize),
-                _buildInteractiveCenterCircle(wheelSize),
-              ],
-            ),
-          );
-        },
-      ),
+        // Check if the spinner has changed and reset if needed
+        if (_lastSpinnerId != activeSpinner.id) {
+          _lastSpinnerId = activeSpinner.id;
+          // Only reset if we're not currently spinning
+          if (!widget.isSpinning) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _resetForNewSpinner();
+            });
+          }
+        }
+
+        return Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final containerSize = widget.size ?? constraints.maxWidth;
+              final wheelSize = containerSize * 0.857;
+
+              return SizedBox(
+                height: containerSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    _buildInteractiveDisplay(containerSize, activeSpinner),
+                    _buildInteractiveCenterCircle(wheelSize),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildInteractiveDisplay(double containerSize) {
+  Widget _buildInteractiveDisplay(
+    double containerSize,
+    SpinnerModel activeSpinner,
+  ) {
     return GestureDetector(
       onPanStart: (details) => _onPanStart(details, containerSize * 0.857),
       onPanUpdate: (details) => _onPanUpdate(details, containerSize * 0.857),
@@ -127,7 +140,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         animation: _animation,
         builder: (context, child) {
           return SpinnerDisplay(
-            spinnerModel: widget.spinnerModel,
+            spinnerModel: activeSpinner,
             size: containerSize,
             rotation: _currentRotationAngle,
             selectedOption: _getCurrentPointingOption(),
@@ -184,11 +197,25 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   // Animation Setup Methods
+  void _resetForNewSpinner() {
+    if (mounted) {
+      setState(() {
+        _controller.reset();
+        _initializeAnimation();
+        _currentPointingIndex = 0;
+        final firstOption = spinnerSlices.firstOrNull;
+        if (firstOption != null && widget.onPointingOptionChanged != null) {
+          widget.onPointingOptionChanged!(firstOption);
+        }
+      });
+    }
+  }
+
   void _initializeAnimation() {
-    _controller = AnimationController(
-      duration: widget.spinnerModel.spinDuration,
-      vsync: this,
-    );
+    final currentSpinner = _activeSpinner;
+    final duration = currentSpinner.spinDuration;
+
+    _controller = AnimationController(duration: duration, vsync: this);
     _currentRotation = spinnerSlices.isNotEmpty ? -_sectionAngle / 2 : 0;
     _animation = Tween<double>(
       begin: _currentRotation,
@@ -229,8 +256,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   double _calculateSpinRotations() {
-    final durationSeconds =
-        widget.spinnerModel.spinDuration.inMilliseconds / 1000.0;
+    final currentSpinner = _activeSpinner;
+    final duration = currentSpinner.spinDuration;
+    final durationSeconds = duration.inMilliseconds / 1000.0;
     final baseSpins = 1 + (durationSeconds - 0.5) * (2.5 / 4.5);
     return baseSpins + math.Random().nextDouble() - 0.5;
   }
@@ -248,10 +276,10 @@ class SpinnerWheelState extends State<SpinnerWheel>
     _startSpinAnimation();
   }
 
-  void _startSpinAnimation() => _executeSpinAnimation(
-    _calculateSpinRotations(),
-    widget.spinnerModel.spinDuration,
-  );
+  void _startSpinAnimation() {
+    final duration = _activeSpinner.spinDuration;
+    _executeSpinAnimation(_calculateSpinRotations(), duration);
+  }
 
   void _startDragBasedSpinAnimation(Offset velocity) {
     final velocityMagnitude = velocity.distance;
@@ -366,10 +394,11 @@ class SpinnerWheelState extends State<SpinnerWheel>
     final currentAngle = math.atan2(localPosition.dy, localPosition.dx);
     double angleDelta = currentAngle - _lastPanAngle;
 
-    if (angleDelta > math.pi)
+    if (angleDelta > math.pi) {
       angleDelta -= _twoPi;
-    else if (angleDelta < -math.pi)
+    } else if (angleDelta < -math.pi) {
       angleDelta += _twoPi;
+    }
 
     if (angleDelta.abs() > 0.01) {
       final newDirection = angleDelta > 0 ? 1.0 : -1.0;

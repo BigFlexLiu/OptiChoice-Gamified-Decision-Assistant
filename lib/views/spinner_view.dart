@@ -267,7 +267,6 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: SpinnerWheel(
-        spinnerModel: activeSpinner,
         isSpinning: _isSpinning,
         onSpinStart: _onSpinStart,
         onSpinComplete: _onSpinComplete,

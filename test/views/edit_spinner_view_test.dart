@@ -105,7 +105,7 @@ void main() {
 /// Example integration test showing provider interaction
 class MockSpinnersNotifier extends SpinnersNotifier {
   // Override methods for testing
-  Map<String, SpinnerModel> _testSpinners = {};
+  final Map<String, SpinnerModel> _testSpinners = {};
 
   @override
   Map<String, SpinnerModel>? get cachedSpinners => _testSpinners;
