@@ -16,7 +16,8 @@ class SpinnerView extends StatefulWidget {
   SpinnerViewState createState() => SpinnerViewState();
 }
 
-class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
+class SpinnerViewState extends State<SpinnerView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   Slice? _currentSpinnerOption;
   bool _isSpinning = false;
   bool _shouldAnimateText = false;
@@ -27,17 +28,30 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   // Audio manager for spinner sounds
   late SpinnerAudioManager _audioManager;
 
+  // Animation controller for background color animation
+  late AnimationController _backgroundAnimationController;
+  late Animation<Color?> _backgroundColorAnimation;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _audioManager = SpinnerAudioManager();
+
+    // Initialize background color animation controller
+    _backgroundAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _resetBackgroundAnimation();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _audioManager.dispose();
+    _backgroundAnimationController.dispose();
     super.dispose();
   }
 
@@ -58,26 +72,51 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
         // Initialize current option if needed
         _ensureCurrentOptionInitialized(activeSpinner);
 
-        return Scaffold(
-          appBar: _buildAppBar(activeSpinner),
-          body: Stack(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Expanded(child: _buildSpinnerWheelSection(activeSpinner)),
-                ],
+        return AnimatedBuilder(
+          animation: _backgroundColorAnimation,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(color: _backgroundColorAnimation.value),
+              child: GestureDetector(
+                onTap: () {
+                  if (_showCompleteSpinActions) {
+                    setState(() {
+                      _showCompleteSpinActions = false;
+                      _showRemoveSlice = false;
+                    });
+                    _backgroundAnimationController.reverse();
+                  }
+                },
+                child: Scaffold(
+                  backgroundColor: Colors.transparent,
+                  appBar: _buildAppBar(activeSpinner),
+                  body: Stack(
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildSpinnerWheelSection(activeSpinner),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const SizedBox(height: 64),
+                          _buildCurrentPointingOption(activeSpinner),
+                        ],
+                      ),
+                      if (_showCompleteSpinActions)
+                        _buildCompleteSpinActions(
+                          spinnerProvider,
+                          activeSpinner,
+                        ),
+                    ],
+                  ),
+                ),
               ),
-              Column(
-                children: [
-                  const SizedBox(height: 64),
-                  _buildCurrentPointingOption(activeSpinner),
-                ],
-              ),
-              if (_showCompleteSpinActions)
-                _buildCompleteSpinActions(spinnerProvider, activeSpinner),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -153,7 +192,11 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
             onPressed: () {
               if (_currentSpinnerOption != null) {
                 spinnerProvider.toggleSlice(_currentSpinnerOption!);
-                setState(() => _showRemoveSlice = false);
+                setState(() {
+                  _showRemoveSlice = false;
+                  _showCompleteSpinActions = false;
+                });
+                _backgroundAnimationController.reverse();
               }
             },
             icon: Icon(
@@ -296,6 +339,8 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
   }
 
   void _onSpinComplete(String selectedOption) async {
+    _triggerBackgroundAnimation();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -309,15 +354,56 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     await _audioManager.playEndSpinSound();
   }
 
+  void _triggerBackgroundAnimation() {
+    final activeSpinner = Provider.of<SpinnerProvider>(
+      context,
+      listen: false,
+    ).activeSpinner;
+    if (activeSpinner != null && _currentSpinnerOption != null) {
+      final sliceIndex = activeSpinner.activeSlices.indexOf(
+        _currentSpinnerOption!,
+      );
+      if (sliceIndex >= 0) {
+        final sliceColor = activeSpinner.getCircularBackgroundColor(sliceIndex);
+        _animateBackgroundColor(sliceColor);
+      }
+    }
+  }
+
   void _onSpinEndPrematurely() {
+    _resetBackgroundAnimation();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
           _isSpinning = false;
           _shouldAnimateText = false;
+          _showCompleteSpinActions = false;
+          _showRemoveSlice = false;
         });
       }
     });
+  }
+
+  void _resetBackgroundAnimation() {
+    _backgroundAnimationController.reset();
+    _backgroundColorAnimation =
+        ColorTween(begin: Colors.white, end: Colors.white).animate(
+          CurvedAnimation(
+            parent: _backgroundAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
+  }
+
+  void _animateBackgroundColor(Color targetColor) {
+    _backgroundColorAnimation =
+        ColorTween(begin: Colors.white, end: targetColor).animate(
+          CurvedAnimation(
+            parent: _backgroundAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
+    _backgroundAnimationController.forward();
   }
 
   void _onPointingOptionChanged(Slice option) {
