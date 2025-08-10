@@ -40,7 +40,7 @@ class SpinnerViewState extends State<SpinnerView>
 
     // Initialize background color animation controller
     _backgroundAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
@@ -396,8 +396,12 @@ class SpinnerViewState extends State<SpinnerView>
   }
 
   void _animateBackgroundColor(Color targetColor) {
+    // Get the current color from the animation (or white if it's the first time)
+    final currentColor = _backgroundColorAnimation.value ?? Colors.white;
+
+    _backgroundAnimationController.reset();
     _backgroundColorAnimation =
-        ColorTween(begin: Colors.white, end: targetColor).animate(
+        ColorTween(begin: currentColor, end: targetColor).animate(
           CurvedAnimation(
             parent: _backgroundAnimationController,
             curve: Curves.easeInOut,

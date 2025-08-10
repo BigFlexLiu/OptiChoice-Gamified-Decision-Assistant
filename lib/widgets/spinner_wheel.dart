@@ -34,7 +34,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   // Animation Controllers and Variables
   late AnimationController _controller;
-  late Animation<double> _animation;
+  late Animation<double> _rotationAnimation;
   bool _animationListenerAttached = false;
 
   // Rotation and State Variables
@@ -52,7 +52,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       Provider.of<SpinnerProvider>(context, listen: false).activeSpinner!;
   List<Slice> get spinnerSlices => _activeSpinner.activeSlices;
   double get _currentRotationAngle =>
-      _isDragging ? _currentRotation : _animation.value;
+      _isDragging ? _currentRotation : _rotationAnimation.value;
   double get _sectionAngle => _twoPi / spinnerSlices.length;
 
   // Lifecycle Methods
@@ -137,7 +137,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
       onPanUpdate: (details) => _onPanUpdate(details, containerSize * 0.857),
       onPanEnd: _onPanEnd,
       child: AnimatedBuilder(
-        animation: _animation,
+        animation: _rotationAnimation,
         builder: (context, child) {
           return SpinnerDisplay(
             spinnerModel: activeSpinner,
@@ -173,7 +173,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
         ],
       ),
       child: AnimatedBuilder(
-        animation: _animation,
+        animation: _rotationAnimation,
         builder: (context, child) {
           final rotationAngle = _currentRotationAngle;
           return Transform.rotate(
@@ -217,7 +217,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
     _controller = AnimationController(duration: duration, vsync: this);
     _currentRotation = spinnerSlices.isNotEmpty ? -_sectionAngle / 2 : 0;
-    _animation = Tween<double>(
+    _rotationAnimation = Tween<double>(
       begin: _currentRotation,
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
@@ -229,21 +229,21 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   void _ensureAnimationListenerAttached() {
     if (!_animationListenerAttached) {
-      _animation.addListener(_onAnimationUpdate);
+      _rotationAnimation.addListener(_onAnimationUpdate);
       _animationListenerAttached = true;
     }
   }
 
   void _detachAnimationListener() {
     if (_animationListenerAttached) {
-      _animation.removeListener(_onAnimationUpdate);
+      _rotationAnimation.removeListener(_onAnimationUpdate);
       _animationListenerAttached = false;
     }
   }
 
   void _onAnimationUpdate() {
     if (widget.onPointingOptionChanged != null && widget.isSpinning) {
-      _updatePointingOptionWithRotation(_animation.value);
+      _updatePointingOptionWithRotation(_rotationAnimation.value);
     }
   }
 
@@ -315,7 +315,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
     _controller.duration = duration;
     _detachAnimationListener();
 
-    _animation = Tween<double>(
+    _rotationAnimation = Tween<double>(
       begin: _currentRotation,
       end: finalRotation,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
@@ -329,7 +329,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
 
   void _createStaticAnimation() {
     _detachAnimationListener();
-    _animation = Tween<double>(
+    _rotationAnimation = Tween<double>(
       begin: _currentRotation,
       end: _currentRotation,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
@@ -346,7 +346,9 @@ class SpinnerWheelState extends State<SpinnerWheel>
     if (spinnerSlices.isEmpty) return null;
 
     // Use current rotation for drag or animation value for spinning
-    final rotationValue = _isDragging ? _currentRotation : _animation.value;
+    final rotationValue = _isDragging
+        ? _currentRotation
+        : _rotationAnimation.value;
     final pointingIndex = _calculatePointingIndex(rotationValue);
 
     return spinnerSlices[pointingIndex];
@@ -371,13 +373,11 @@ class SpinnerWheelState extends State<SpinnerWheel>
     // Allow interrupting spin animation by starting drag
     if (widget.isSpinning) {
       _controller.stop();
-      // Notify that spinning was interrupted
-      // Note: We don't call widget.onSpinStart() here as we're interrupting, not starting
     }
 
     _isDragging = true;
     _dragDirection = 1.0;
-    _currentRotation = _animation.value;
+    _currentRotation = _rotationAnimation.value;
     final center = Offset(wheelSize / 2, wheelSize / 2);
     _lastPanAngle = math.atan2(
       (details.localPosition - center).dy,
@@ -387,7 +387,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _onPanUpdate(DragUpdateDetails details, double wheelSize) {
-    // Allow panning even during spinning (interruption is handled in _onPanStart)
     if (!_isDragging) return;
     final center = Offset(wheelSize / 2, wheelSize / 2);
     final localPosition = details.localPosition - center;
@@ -411,7 +410,6 @@ class SpinnerWheelState extends State<SpinnerWheel>
   }
 
   void _onPanEnd(DragEndDetails details) {
-    // Allow pan end processing even if originally spinning (since we can interrupt)
     if (!_isDragging) return;
     _isDragging = false;
     final velocityMagnitude = details.velocity.pixelsPerSecond.distance;
