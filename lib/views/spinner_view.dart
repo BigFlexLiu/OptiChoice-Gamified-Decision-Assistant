@@ -219,6 +219,8 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
 
   Widget _buildCurrentPointingOption(SpinnerModel activeSpinner) {
     final theme = Theme.of(context);
+    final sliceIdx = activeSpinner.activeSlices.indexOf(_currentSpinnerOption!);
+    final textColor = activeSpinner.getCircularForegroundColor(sliceIdx);
 
     if (activeSpinner.slices.isEmpty) {
       return Center(
@@ -231,9 +233,10 @@ class SpinnerViewState extends State<SpinnerView> with WidgetsBindingObserver {
     }
 
     return Center(
-      child: AnimatedTextJumpChangeColor(
+      child: AnimatedScalingColorText(
         _currentSpinnerOption?.text ?? "",
         _shouldAnimateText,
+        textColor,
         setShouldAnimateFalse,
       ),
     );

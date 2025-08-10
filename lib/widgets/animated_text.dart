@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 
-class AnimatedTextJumpChangeColor extends StatefulWidget {
+class AnimatedScalingColorText extends StatefulWidget {
   final String text;
   final bool shouldAnimate;
+  final Color color;
   final void Function() setShouldAnimateFalse;
-  const AnimatedTextJumpChangeColor(
+  const AnimatedScalingColorText(
     this.text,
     this.shouldAnimate,
+    this.color,
     this.setShouldAnimateFalse, {
     super.key,
   });
 
   @override
-  State<AnimatedTextJumpChangeColor> createState() =>
-      _AnimatedTextJumpChangeColorState();
+  State<AnimatedScalingColorText> createState() =>
+      _AnimatedScalingColorTextState();
 }
 
-class _AnimatedTextJumpChangeColorState
-    extends State<AnimatedTextJumpChangeColor>
+class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
     with SingleTickerProviderStateMixin {
   final _animationTime = 500;
   late AnimationController _scaleController;
@@ -25,6 +26,9 @@ class _AnimatedTextJumpChangeColorState
 
   // Cache for font size calculations to avoid expensive recalculations
   final Map<String, double> _fontSizeCache = {};
+
+  // Save the animation color locally
+  Color? _savedAnimationColor;
   String _cacheKey(String text, double maxWidth, double maxHeight) =>
       '$text|$maxWidth|$maxHeight';
 
@@ -55,6 +59,8 @@ class _AnimatedTextJumpChangeColorState
     ]).animate(_scaleController);
 
     if (widget.shouldAnimate) {
+      // Save the color when animation starts
+      _savedAnimationColor = widget.color;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _startAnimation();
       });
@@ -68,9 +74,11 @@ class _AnimatedTextJumpChangeColorState
   }
 
   @override
-  void didUpdateWidget(covariant AnimatedTextJumpChangeColor oldWidget) {
+  void didUpdateWidget(covariant AnimatedScalingColorText oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.shouldAnimate && !oldWidget.shouldAnimate) {
+      // Save the color when animation starts
+      _savedAnimationColor = widget.color;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_scaleController.isAnimating) {
           _startAnimation();
@@ -172,6 +180,7 @@ class _AnimatedTextJumpChangeColorState
 
         final adaptiveTextStyle = baseTextStyle.copyWith(
           fontSize: optimalFontSize,
+          color: _savedAnimationColor,
         );
 
         Text baseTextWidget = Text(
