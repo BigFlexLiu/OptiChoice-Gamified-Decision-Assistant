@@ -19,11 +19,16 @@ class SpinnerView extends StatefulWidget {
 class SpinnerViewState extends State<SpinnerView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   Slice? _currentSpinnerOption;
+  Slice? _previousSpinResult;
+
   bool _isSpinning = false;
   bool _shouldAnimateText = false;
 
   bool _showCompleteSpinActions = false;
   bool _showRemoveSlice = false;
+
+  // Track the previous active spinner to detect changes
+  SpinnerModel? _previousActiveSpinner;
 
   // Audio manager for spinner sounds
   late SpinnerAudioManager _audioManager;
@@ -64,6 +69,12 @@ class SpinnerViewState extends State<SpinnerView>
         }
 
         final activeSpinner = spinnerProvider.activeSpinner;
+
+        // Check if the active spinner has changed and reset background animation
+        if (activeSpinner != _previousActiveSpinner) {
+          _previousActiveSpinner = activeSpinner;
+          _resetBackgroundAnimation();
+        }
 
         if (activeSpinner == null) {
           return _buildErrorScreen(spinnerProvider);
@@ -223,7 +234,7 @@ class SpinnerViewState extends State<SpinnerView>
         child: IconButton(
           icon: Icon(Icons.list),
           onPressed: () async {
-            _onSpinEndPrematurely();
+            _onNavigationStart();
             await Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => SpinnerManagerView()),
             );
@@ -238,7 +249,7 @@ class SpinnerViewState extends State<SpinnerView>
           child: IconButton(
             icon: Icon(Icons.library_books),
             onPressed: () async {
-              _onSpinEndPrematurely();
+              _onNavigationStart();
               await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
                   builder: (context) => const SpinnerTemplatesView(),
@@ -262,8 +273,12 @@ class SpinnerViewState extends State<SpinnerView>
 
   Widget _buildCurrentPointingOption(SpinnerModel activeSpinner) {
     final theme = Theme.of(context);
-    final sliceIdx = activeSpinner.activeSlices.indexOf(_currentSpinnerOption!);
-    final textColor = activeSpinner.getCircularForegroundColor(sliceIdx);
+    final sliceIdx = _previousSpinResult != null
+        ? activeSpinner.activeSlices.indexOf(_previousSpinResult!)
+        : -1;
+    final textColor = sliceIdx != -1
+        ? activeSpinner.getCircularForegroundColor(sliceIdx)
+        : Colors.black;
 
     if (activeSpinner.slices.isEmpty) {
       return Center(
@@ -276,7 +291,7 @@ class SpinnerViewState extends State<SpinnerView>
     }
 
     return Center(
-      child: AnimatedScalingColorText(
+      child: AnimatedText(
         _currentSpinnerOption?.text ?? "",
         _shouldAnimateText,
         textColor,
@@ -322,7 +337,7 @@ class SpinnerViewState extends State<SpinnerView>
   }
 
   void _navigateToWheelsManagement(SpinnerModel activeSpinner) async {
-    _onSpinEndPrematurely();
+    _onNavigationStart();
     // Navigate to SpinnerManager
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -338,12 +353,13 @@ class SpinnerViewState extends State<SpinnerView>
     });
   }
 
-  void _onSpinComplete(String selectedOption) async {
+  void _onSpinComplete(Slice result) async {
     _triggerBackgroundAnimation();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
+          _previousSpinResult = result;
           _isSpinning = false;
           _shouldAnimateText = true;
           _showCompleteSpinActions = true;
@@ -370,8 +386,7 @@ class SpinnerViewState extends State<SpinnerView>
     }
   }
 
-  void _onSpinEndPrematurely() {
-    _resetBackgroundAnimation();
+  void _onNavigationStart() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class AnimatedScalingColorText extends StatefulWidget {
+class AnimatedText extends StatefulWidget {
   final String text;
   final bool shouldAnimate;
   final Color color;
   final void Function() setShouldAnimateFalse;
-  const AnimatedScalingColorText(
+  const AnimatedText(
     this.text,
     this.shouldAnimate,
     this.color,
@@ -14,11 +14,10 @@ class AnimatedScalingColorText extends StatefulWidget {
   });
 
   @override
-  State<AnimatedScalingColorText> createState() =>
-      _AnimatedScalingColorTextState();
+  State<AnimatedText> createState() => _AnimatedTextState();
 }
 
-class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
+class _AnimatedTextState extends State<AnimatedText>
     with SingleTickerProviderStateMixin {
   final _animationTime = 500;
   late AnimationController _scaleController;
@@ -27,8 +26,6 @@ class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
   // Cache for font size calculations to avoid expensive recalculations
   final Map<String, double> _fontSizeCache = {};
 
-  // Save the animation color locally
-  Color? _savedAnimationColor;
   String _cacheKey(String text, double maxWidth, double maxHeight) =>
       '$text|$maxWidth|$maxHeight';
 
@@ -59,8 +56,6 @@ class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
     ]).animate(_scaleController);
 
     if (widget.shouldAnimate) {
-      // Save the color when animation starts
-      _savedAnimationColor = widget.color;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _startAnimation();
       });
@@ -74,11 +69,9 @@ class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
   }
 
   @override
-  void didUpdateWidget(covariant AnimatedScalingColorText oldWidget) {
+  void didUpdateWidget(covariant AnimatedText oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.shouldAnimate && !oldWidget.shouldAnimate) {
-      // Save the color when animation starts
-      _savedAnimationColor = widget.color;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_scaleController.isAnimating) {
           _startAnimation();
@@ -180,7 +173,7 @@ class _AnimatedScalingColorTextState extends State<AnimatedScalingColorText>
 
         final adaptiveTextStyle = baseTextStyle.copyWith(
           fontSize: optimalFontSize,
-          color: _savedAnimationColor,
+          color: widget.color,
         );
 
         Text baseTextWidget = Text(

@@ -8,7 +8,7 @@ import 'spinner_display.dart';
 class SpinnerWheel extends StatefulWidget {
   final bool isSpinning;
   final VoidCallback onSpinStart;
-  final Function(String) onSpinComplete;
+  final Function(Slice) onSpinComplete;
   final Function(Slice)? onPointingOptionChanged;
   final double? size;
   final bool showSpinButton;
@@ -339,7 +339,7 @@ class SpinnerWheelState extends State<SpinnerWheel>
   // Result and Option Update Methods
   void _reportWinner() {
     final winnerOption = _getCurrentPointingOption();
-    widget.onSpinComplete(winnerOption?.text ?? "");
+    widget.onSpinComplete(winnerOption!);
   }
 
   Slice? _getCurrentPointingOption() {
