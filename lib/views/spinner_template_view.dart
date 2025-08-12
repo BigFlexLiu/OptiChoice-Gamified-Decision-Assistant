@@ -1,80 +1,226 @@
-import 'package:decision_spinner/consts/spinner_template_definitions.dart';
+import 'package:decision_spinner/consts/category_definitions.dart';
+import 'package:decision_spinner/consts/storage_constants.dart';
+import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/storage/base_storage_service.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
-import 'package:decision_spinner/storage/spinner_storage_service.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/widgets/spinner_card.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_card.dart';
 import 'package:decision_spinner/widgets/dialogs/spinner_conflict_dialog.dart';
+import 'package:decision_spinner/widgets/dialogs/category_reorder_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class SpinnerTemplatesView extends StatelessWidget {
+class SpinnerTemplatesView extends StatefulWidget {
   const SpinnerTemplatesView({super.key});
 
-  static final _tabs = [
-    _TabConfig(
-      icon: Icons.home,
-      label: 'Home',
-      description: 'Daily tasks, chores, and household decisions',
-      spinnerTemplates: SpinnerTemplateDefinitions.lifeAndHome,
-    ),
-    _TabConfig(
-      icon: Icons.favorite,
-      label: 'Wellness',
-      description: 'Wellness, mindfulness, and personal growth',
-      spinnerTemplates: SpinnerTemplateDefinitions.healthAndSelfCare,
-    ),
-    _TabConfig(
-      icon: Icons.celebration,
-      label: 'Fun',
-      description: 'Entertainment, games, and social activities',
-      spinnerTemplates: SpinnerTemplateDefinitions.funAndSocial,
-    ),
-  ];
+  @override
+  State<SpinnerTemplatesView> createState() => _SpinnerTemplatesViewState();
+}
+
+class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
+    with SingleTickerProviderStateMixin {
+  List<CategoryDefinition> _tabs = [];
+  bool _isLoading = true;
+  TabController? _tabController;
+  int _tabOrderVersion = 0;
+
+  // Cache for quick lookups
+  static final Map<String, CategoryDefinition> _categoryMap =
+      CategoryDefinitions.categoryMap;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserSelectedTabs();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserSelectedTabs() async {
+    try {
+      final categoriesJson = await BaseStorageService.getJson(
+        StorageConstants.selectedCategoriesKey,
+      );
+      final selectedIds =
+          (categoriesJson as List?)?.cast<String>() ?? <String>[];
+      _updateTabs(_buildTabsFromIds(selectedIds));
+    } catch (e) {
+      _updateTabs(CategoryDefinitions.allCategories);
+    }
+  }
+
+  void _updateTabs(List<CategoryDefinition> newTabs) {
+    _tabController?.dispose();
+    setState(() {
+      _tabs = newTabs;
+      _tabController = TabController(
+        length: newTabs.length,
+        vsync: this,
+        initialIndex: 0,
+      );
+      _isLoading = false;
+      _tabOrderVersion++;
+    });
+  }
+
+  List<CategoryDefinition> _buildTabsFromIds(List<String> selectedIds) {
+    if (selectedIds.isEmpty) return CategoryDefinitions.allCategories;
+
+    final selectedTabs = selectedIds
+        .where(_categoryMap.containsKey)
+        .map((id) => _categoryMap[id]!)
+        .toList();
+
+    final selectedSet = selectedIds.toSet();
+    final remainingTabs = CategoryDefinitions.allCategories
+        .where((cat) => !selectedSet.contains(cat.id))
+        .toList();
+
+    return [...selectedTabs, ...remainingTabs];
+  }
+
+  void _showReorderDialog() {
+    final categories = _tabs
+        .map(
+          (tab) => CategoryInfo(
+            id: tab.id,
+            icon: tab.icon,
+            label: tab.title,
+            description: tab.description,
+          ),
+        )
+        .toList();
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => CategoryReorderDialog(
+        categories: categories,
+        onReorder: _saveReorderedCategories,
+      ),
+    );
+  }
+
+  Future<void> _saveReorderedCategories(List<String> reorderedIds) async {
+    try {
+      await BaseStorageService.saveJson(
+        StorageConstants.selectedCategoriesKey,
+        reorderedIds,
+      );
+      _reorderTabsOnly(reorderedIds);
+      if (mounted) {
+        showSnackBar(context, 'Category order updated successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Failed to update category order: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+  void _reorderTabsOnly(List<String> reorderedIds) {
+    final newTabs = _buildTabsFromIds(reorderedIds);
+    if (_tabsAreEqual(_tabs, newTabs)) return;
+
+    final currentTabId =
+        _tabController?.index != null && _tabController!.index < _tabs.length
+        ? _tabs[_tabController!.index].id
+        : null;
+
+    final newIndex = currentTabId != null
+        ? newTabs
+              .indexWhere((tab) => tab.id == currentTabId)
+              .clamp(0, newTabs.length - 1)
+        : 0;
+
+    setState(() {
+      _tabs = newTabs;
+      _tabOrderVersion++;
+      if (_tabController!.length != newTabs.length) {
+        _tabController?.dispose();
+        _tabController = TabController(
+          length: newTabs.length,
+          vsync: this,
+          initialIndex: newIndex,
+        );
+      } else {
+        _tabController!.animateTo(newIndex);
+      }
+    });
+  }
+
+  bool _tabsAreEqual(
+    List<CategoryDefinition> tabs1,
+    List<CategoryDefinition> tabs2,
+  ) {
+    if (tabs1.length != tabs2.length) return false;
+    for (int i = 0; i < tabs1.length; i++) {
+      if (tabs1[i].id != tabs2[i].id) return false;
+    }
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: _tabs.length,
-      child: Scaffold(
+    if (_isLoading || _tabController == null) {
+      return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text('Spinner Templates'),
-          bottom: TabBar(
-            tabs: _tabs
-                .map((tab) => Tab(icon: Icon(tab.icon), text: tab.label))
-                .toList(),
-            indicatorColor: Theme.of(context).colorScheme.secondary,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Spinner Templates'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.reorder),
+            tooltip: 'Reorder Categories',
+            onPressed: _showReorderDialog,
           ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          tabs: _tabs
+              .map(
+                (tab) => SizedBox(
+                  width: MediaQuery.of(context).size.width / 3.5 - 16,
+                  child: Tab(icon: Icon(tab.icon), text: tab.title),
+                ),
+              )
+              .toList(),
+          indicatorColor: Theme.of(context).colorScheme.secondary,
         ),
-        body: TabBarView(
-          children: [
-            _SpinnerTemplatesTabView(config: _tabs[0]),
-            _SpinnerTemplatesTabView(config: _tabs[1]),
-            _SpinnerTemplatesTabView(config: _tabs[2]),
-          ],
-        ),
+      ),
+      body: TabBarView(
+        key: ValueKey(_tabOrderVersion),
+        controller: _tabController,
+        children: _tabs
+            .map((tab) => _SpinnerTemplatesTabView(config: tab))
+            .toList(),
       ),
     );
   }
 }
 
-class _TabConfig {
-  const _TabConfig({
-    required this.icon,
-    required this.label,
-    required this.description,
-    required this.spinnerTemplates,
-  });
-
-  final IconData icon;
-  final String label;
-  final String description;
-  final List<SpinnerModel> spinnerTemplates;
-}
-
 class _SpinnerTemplatesTabView extends StatefulWidget {
   const _SpinnerTemplatesTabView({required this.config});
 
-  final _TabConfig config;
+  final CategoryDefinition config;
 
   @override
   State<_SpinnerTemplatesTabView> createState() =>
@@ -84,24 +230,29 @@ class _SpinnerTemplatesTabView extends StatefulWidget {
 class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
   final Map<String, bool> _expansionStateByItemId = {};
 
-  List<SpinnerModel> get spinnerTemplates => widget.config.spinnerTemplates;
-
   @override
   void initState() {
     super.initState();
-    for (SpinnerModel spinnerModel in spinnerTemplates) {
-      _expansionStateByItemId[spinnerModel.id] = false;
-    }
+    _expansionStateByItemId.addAll({
+      for (var spinner in widget.config.spinnerTemplates) spinner.id: false,
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final spinnerTemplates = widget.config.spinnerTemplates;
+
     if (spinnerTemplates.isEmpty) {
       return _EmptyStateWidget(config: widget.config);
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: 16 + MediaQuery.of(context).padding.bottom,
+      ),
       itemCount: spinnerTemplates.length,
       itemBuilder: (context, index) {
         final spinner = spinnerTemplates[index];
@@ -127,7 +278,6 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
     SpinnerModel spinner,
   ) {
     final theme = Theme.of(context);
-
     return [
       SpinnerCardAction(
         icon: Icons.add_circle,
@@ -146,62 +296,67 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
 
   Future<void> _addSpinner(BuildContext context, SpinnerModel spinner) async {
     try {
-      SpinnerConflictResult? dialogResult;
+      final spinnersNotifier = Provider.of<SpinnersNotifier>(
+        context,
+        listen: false,
+      );
+      final spinnerProvider = Provider.of<SpinnerProvider>(
+        context,
+        listen: false,
+      );
+
       String? targetSpinnerId;
+      SpinnerConflictResult? dialogResult;
 
-      // Check for existing spinner with same content first
-      final existingSpinnerWithSameContent =
-          await SpinnerStorageService.findSpinnerWithIdenticalContent(spinner);
-
-      if (existingSpinnerWithSameContent != null) {
-        // Found identical content
+      // Check for existing spinner with same content
+      final existingWithSameContent = spinnersNotifier
+          .findSpinnerWithIdenticalContent(spinner);
+      if (existingWithSameContent != null) {
         if (!context.mounted) return;
         dialogResult = await showDialog<SpinnerConflictResult>(
           context: context,
           builder: (context) => SpinnerConflictDialog(
             proposedName: spinner.name,
-            existingSpinnerWithSameContent: existingSpinnerWithSameContent,
+            existingSpinnerWithSameContent: existingWithSameContent,
           ),
         );
         if (dialogResult?.action == SpinnerConflictAction.useExisting) {
-          targetSpinnerId = existingSpinnerWithSameContent.id;
+          targetSpinnerId = existingWithSameContent.id;
         }
-      } else if (await SpinnerStorageService.spinnerNameExists(spinner.name)) {
+      } else if (spinnersNotifier.spinnerNameExists(spinner.name)) {
         // Name conflict only
-        final existingSpinnerWithSameName =
-            await SpinnerStorageService.findSpinnerByName(spinner.name);
+        final existingWithSameName = spinnersNotifier.findSpinnerByName(
+          spinner.name,
+        );
         if (!context.mounted) return;
 
         dialogResult = await showDialog<SpinnerConflictResult>(
           context: context,
           builder: (context) => SpinnerConflictDialog(
             proposedName: spinner.name,
-            existingSpinnerWithSameName: existingSpinnerWithSameName,
+            existingSpinnerWithSameName: existingWithSameName,
           ),
         );
         if (dialogResult?.action == SpinnerConflictAction.useExisting &&
-            existingSpinnerWithSameName != null) {
-          targetSpinnerId = existingSpinnerWithSameName.id;
+            existingWithSameName != null) {
+          targetSpinnerId = existingWithSameName.id;
         }
       }
 
-      // Handle dialog result and determine target spinner
+      // Handle dialog result
       if (dialogResult?.action == SpinnerConflictAction.createNew &&
           dialogResult?.newName != null) {
         spinner.name = dialogResult!.newName!;
-        await SpinnerStorageService.saveSpinner(spinner);
+        await spinnerProvider.saveSpinner(spinner);
         targetSpinnerId = spinner.id;
       } else if (dialogResult?.action == SpinnerConflictAction.cancel) {
-        return; // User cancelled
+        return;
       } else if (targetSpinnerId == null) {
-        // No conflicts, save directly
-        await SpinnerStorageService.saveSpinner(spinner);
+        await spinnerProvider.saveSpinner(spinner);
         targetSpinnerId = spinner.id;
       }
 
-      // Set active spinner and cleanup
-      await SpinnerStorageService.setActiveSpinnerId(targetSpinnerId);
-      SpinnerStorageService.clearCache();
+      await spinnersNotifier.setActiveSpinnerId(targetSpinnerId);
       if (context.mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (context.mounted) showErrorSnackBar(context, 'Error: ${e.toString()}');
@@ -219,7 +374,7 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
 class _EmptyStateWidget extends StatelessWidget {
   const _EmptyStateWidget({required this.config});
 
-  final _TabConfig config;
+  final CategoryDefinition config;
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +391,7 @@ class _EmptyStateWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No ${config.label} Available',
+            'No ${config.title} Available',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

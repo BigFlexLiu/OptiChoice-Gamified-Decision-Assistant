@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../storage/spinner_model.dart';
-import '../../storage/spinner_storage_service.dart';
+import '../../providers/spinner_provider.dart';
 
 enum SpinnerConflictAction { useExisting, createNew, cancel }
 
@@ -113,7 +114,7 @@ class _SpinnerConflictDialogState extends State<SpinnerConflictDialog> {
           child: const Text('Back'),
         ),
         TextButton(
-          onPressed: () async {
+          onPressed: () {
             final newName = _nameController.text.trim();
             final navigator = Navigator.of(context);
 
@@ -131,11 +132,11 @@ class _SpinnerConflictDialogState extends State<SpinnerConflictDialog> {
             }
 
             // Check if name exists
-            final nameExists = await SpinnerStorageService.spinnerNameExists(
-              newName,
+            final spinnerProvider = Provider.of<SpinnerProvider>(
+              context,
+              listen: false,
             );
-
-            if (!mounted) return;
+            final nameExists = spinnerProvider.spinnerNameExists(newName);
 
             if (nameExists) {
               setState(() => _nameErrorText = 'This name is already taken');

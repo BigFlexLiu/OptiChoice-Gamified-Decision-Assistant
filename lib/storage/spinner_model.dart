@@ -217,6 +217,30 @@ class SpinnerModel {
     updatedAt = other.updatedAt;
   }
 
+  /// Check if this spinner has identical content to another spinner
+  bool isContentIdenticalTo(SpinnerModel other) {
+    if (slices.length != other.slices.length) return false;
+    for (int i = 0; i < slices.length; i++) {
+      final thisSlice = slices[i];
+      final otherSlice = other.slices[i];
+      if (thisSlice.text != otherSlice.text ||
+          thisSlice.weight != otherSlice.weight ||
+          thisSlice.isActive != otherSlice.isActive) {
+        return false;
+      }
+    }
+    if (colorThemeIndex != other.colorThemeIndex ||
+        backgroundColors.length != other.backgroundColors.length) {
+      return false;
+    }
+    for (int i = 0; i < backgroundColors.length; i++) {
+      if (backgroundColors[i] != other.backgroundColors[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   String toString() {
     return 'SpinnerModel('

@@ -1,20 +1,23 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/utils/onboarding_test_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/widgets/spinner_card.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_card.dart';
 import 'package:flutter/material.dart';
-import '../storage/spinner_storage_service.dart';
+import 'package:provider/provider.dart';
 import '../storage/spinner_model.dart';
 import 'edit_spinner_view.dart';
 
-class ManageSpinnerView extends StatefulWidget {
-  const ManageSpinnerView({super.key});
+class SpinnerManagerView extends StatefulWidget {
+  const SpinnerManagerView({super.key});
 
   @override
-  State<ManageSpinnerView> createState() => _ManageSpinnerViewState();
+  State<SpinnerManagerView> createState() => _SpinnerManagerViewState();
 }
 
-class _ManageSpinnerViewState extends State<ManageSpinnerView> {
+class _SpinnerManagerViewState extends State<SpinnerManagerView> {
   Map<String, SpinnerModel> _spinners = {};
   late String _activeSpinnerId;
   bool _isLoading = true;
@@ -52,8 +55,19 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
     setState(() => _isLoading = true);
 
     try {
-      final spinners = await SpinnerStorageService.loadAllSpinners();
-      final activeSpinnerId = await SpinnerStorageService.getActiveSpinnerId();
+      final spinnersNotifier = Provider.of<SpinnersNotifier>(
+        context,
+        listen: false,
+      );
+
+      // Ensure the notifier is initialized
+      if (!spinnersNotifier.isInitialized) {
+        await spinnersNotifier.initialize();
+      }
+
+      // Get the data from the notifier
+      final spinners = spinnersNotifier.cachedSpinners ?? {};
+      final activeSpinnerId = spinnersNotifier.activeSpinnerId ?? '';
 
       setState(() {
         _spinners = spinners;
@@ -72,6 +86,10 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
   }
 
   Future<void> _createNewSpinner() async {
+    final spinnersNotifier = Provider.of<SpinnersNotifier>(
+      context,
+      listen: false,
+    );
     String? name;
     bool nameExists = false;
 
@@ -90,7 +108,7 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
       }
 
       // Check if name already exists
-      nameExists = await SpinnerStorageService.spinnerNameExists(name);
+      nameExists = spinnersNotifier.spinnerNameExists(name);
 
       if (!nameExists) {
         // Create default slices
@@ -100,13 +118,17 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
           Slice(text: 'Option 3', weight: 1.0),
         ];
 
-        final newSpinner = await SpinnerStorageService.createSpinner(
+        final spinnerProvider = Provider.of<SpinnerProvider>(
+          context,
+          listen: false,
+        );
+        final newSpinner = await spinnerProvider.createSpinner(
           name,
           defaultSlices,
         );
 
         if (newSpinner != null) {
-          _loadData();
+          // No need to call _loadData() - Consumer will handle the update
           showSnackBar(context, 'Spinner "$name" created and set as active');
         } else {
           showSnackBar(context, 'Failed to create spinner. Please try again.');
@@ -193,9 +215,13 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
     );
 
     if (confirmed == true) {
-      final success = await SpinnerStorageService.deleteSpinner(id);
+      final spinnerProvider = Provider.of<SpinnerProvider>(
+        context,
+        listen: false,
+      );
+      final success = await spinnerProvider.deleteSpinner(id);
       if (success) {
-        _loadData();
+        // No need to call _loadData() - Consumer will handle the update
         showSnackBar(context, 'Spinner "${spinner.name}" deleted');
       } else {
         showSnackBar(context, 'Cannot delete the last spinner');
@@ -214,13 +240,17 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
     );
 
     if (newName != null && newName.isNotEmpty) {
-      final duplicatedSpinner = await SpinnerStorageService.duplicateSpinner(
+      final spinnerProvider = Provider.of<SpinnerProvider>(
+        context,
+        listen: false,
+      );
+      final duplicatedSpinner = await spinnerProvider.duplicateSpinner(
         originalId,
         newName,
       );
 
       if (duplicatedSpinner != null) {
-        _loadData();
+        // No need to call _loadData() - Consumer will handle the update
         showSnackBar(context, 'Spinner duplicated as "$newName"');
       } else {
         showSnackBar(context, 'Failed to duplicate. Name might already exist.');
@@ -330,11 +360,12 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
   }
 
   Future<void> _setActiveSpinner(String id) async {
-    final success = await SpinnerStorageService.setActiveSpinnerId(id);
+    final spinnersNotifier = Provider.of<SpinnersNotifier>(
+      context,
+      listen: false,
+    );
+    final success = await spinnersNotifier.setActiveSpinnerId(id);
     if (success) {
-      // Clear cache to force reload
-      SpinnerStorageService.clearCache();
-
       // Update the local state immediately
       setState(() {
         _activeSpinnerId = id;
@@ -368,7 +399,8 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
     );
 
     if (result != null) {
-      _loadData(); // Reload to ensure consistency
+      // No need to call _loadData() - Consumer will handle the update
+      // The EditSpinnerView already updates through SpinnersNotifier
     }
   }
 
@@ -402,112 +434,153 @@ class _ManageSpinnerViewState extends State<ManageSpinnerView> {
       _spinners = reorderedSpinners;
     });
 
-    // Save the new order to storage
-    await SpinnerStorageService.saveSpinnerOrder(_spinners.keys.toList());
+    // Save the new order to storage via SpinnersNotifier
+    final spinnerProvider = Provider.of<SpinnerProvider>(
+      context,
+      listen: false,
+    );
+    await spinnerProvider.saveSpinnerOrder(_spinners.keys.toList());
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Map<String, SpinnerModel> filteredSpinners = _filteredSpinners;
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search spinners...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                style: theme.textTheme.titleLarge,
-                onChanged: _onSearchChanged,
-              )
-            : Text('Manage Spinners'),
-        actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: _toggleSearch,
-            tooltip: _isSearching ? 'Close search' : 'Search spinners',
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : filteredSpinners.isEmpty
-          ? SafeArea(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _searchQuery.isNotEmpty
-                          ? Icons.search_off
-                          : Icons.casino_outlined,
-                      size: 64,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _searchQuery.isNotEmpty
-                          ? 'No spinners match "$_searchQuery"'
-                          : 'No spinners found',
-                      style: theme.textTheme.titleMedium?.copyWith(
+    return Consumer<SpinnersNotifier>(
+      builder: (context, spinnersNotifier, child) {
+        // Update local state from notifier if initialized
+        if (spinnersNotifier.isInitialized && !_isLoading) {
+          final spinners = spinnersNotifier.cachedSpinners ?? {};
+          final activeSpinnerId = spinnersNotifier.activeSpinnerId ?? '';
+
+          // Update local state if different
+          if (_spinners != spinners || _activeSpinnerId != activeSpinnerId) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _spinners = spinners;
+                  _activeSpinnerId = activeSpinnerId;
+
+                  // Initialize expansion states for new spinners
+                  for (var spinnerId in spinners.keys) {
+                    if (!_expansionStateByItemId.containsKey(spinnerId)) {
+                      _expansionStateByItemId[spinnerId] = false;
+                    }
+                  }
+                });
+              }
+            });
+          }
+        }
+
+        Map<String, SpinnerModel> filteredSpinners = _filteredSpinners;
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            title: _isSearching
+                ? TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Search spinners...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    if (_searchQuery.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _searchQuery = '';
-                            _searchController.clear();
-                          });
-                        },
-                        child: Text('Clear search'),
-                      ),
-                    ],
-                  ],
-                ),
+                    style: theme.textTheme.titleLarge,
+                    onChanged: _onSearchChanged,
+                  )
+                : Text('Manage Spinners'),
+            actions: [
+              IconButton(
+                icon: Icon(_isSearching ? Icons.close : Icons.search),
+                onPressed: _toggleSearch,
+                tooltip: _isSearching ? 'Close search' : 'Search spinners',
               ),
-            )
-          : ReorderableListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredSpinners.length,
-              onReorder: (oldIndex, newIndex) =>
-                  _reorderSpinners(oldIndex, newIndex, filteredSpinners),
-              itemBuilder: (context, index) {
-                // Show active spinner first if exists
-                final spinnerId = filteredSpinners.keys.elementAt(index);
-                final spinner = filteredSpinners[spinnerId]!;
-                final isActive = spinnerId == _activeSpinnerId;
-                final isExpanded = _expansionStateByItemId[spinnerId]!;
+            ],
+          ),
+          body: _isLoading || !spinnersNotifier.isInitialized
+              ? Center(child: CircularProgressIndicator())
+              : filteredSpinners.isEmpty
+              ? SafeArea(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _searchQuery.isNotEmpty
+                              ? Icons.search_off
+                              : Icons.casino_outlined,
+                          size: 64,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isNotEmpty
+                              ? 'No spinners match "$_searchQuery"'
+                              : 'No spinners found',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (_searchQuery.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _searchQuery = '';
+                                _searchController.clear();
+                              });
+                            },
+                            child: Text('Clear search'),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        DebugOnboardingWidget(),
+                      ],
+                    ),
+                  ),
+                )
+              : ReorderableListView.builder(
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 16 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  itemCount: filteredSpinners.length,
+                  onReorder: (oldIndex, newIndex) =>
+                      _reorderSpinners(oldIndex, newIndex, filteredSpinners),
+                  itemBuilder: (context, index) {
+                    // Show active spinner first if exists
+                    final spinnerId = filteredSpinners.keys.elementAt(index);
+                    final spinner = filteredSpinners[spinnerId]!;
+                    final isActive = spinnerId == _activeSpinnerId;
+                    final isExpanded = _expansionStateByItemId[spinnerId]!;
 
-                return SpinnerCard(
-                  key: ValueKey(spinnerId),
-                  spinner: spinner,
-                  isActive: isActive,
-                  isExpanded: isExpanded,
-                  onExpansionChanged: (bool value) => setState(() {
-                    _expansionStateByItemId[spinnerId] = value;
-                  }),
-                  canReorder: _searchQuery.isEmpty,
-                  actions: _buildSpinnerActions(spinnerId, isActive, theme),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _createNewSpinner,
-        tooltip: 'Create New Spinner',
-        child: Icon(Icons.add),
-      ),
+                    return SpinnerCard(
+                      key: ValueKey(spinnerId),
+                      spinner: spinner,
+                      isActive: isActive,
+                      isExpanded: isExpanded,
+                      onExpansionChanged: (bool value) => setState(() {
+                        _expansionStateByItemId[spinnerId] = value;
+                      }),
+                      canReorder: _searchQuery.isEmpty,
+                      actions: _buildSpinnerActions(spinnerId, isActive, theme),
+                    );
+                  },
+                ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _createNewSpinner,
+            tooltip: 'Create New Spinner',
+            child: Icon(Icons.add),
+          ),
+        );
+      },
     );
   }
 

@@ -20,51 +20,84 @@ class SpinnerTemplateDefinitions {
     );
   }
 
+  // Teaching & Classroom - Core teacher tools, still usable by general audiences
+  static List<SpinnerModel> get teachingAndClassroom => [
+    breakActivityGeneralSpinner,
+    dice6Spinner,
+    dice20Spinner,
+    icebreakerCasualSpinner,
+    whatToLearnSpinner,
+    skillToPracticeSpinner,
+    studyTopicSpinner,
+    creativePromptSpinner,
+    focusTaskSpinner,
+    randomChallengeSpinner,
+    homeworkTaskSpinner,
+    activityForKidsSpinner,
+    groupActivitySpinner,
+    mindfulnessActivitySpinner,
+    healthyHabitSpinner,
+  ];
+
+  // Life & Home - Daily living and household decisions
   static List<SpinnerModel> get lifeAndHome => [
+    yesNoSpinner,
     whatToEatSpinner,
+    whereToGoGeneralSpinner,
+    whatToDoSpinner,
+    whoPaysSpinner,
+    choreSpinner,
+    chorePickerSpinner,
     whatToWearSpinner,
     whatToDoTodaySpinner,
     whenToDoItSpinner,
-    whereToGoGeneralSpinner,
     whatToCleanSpinner,
     declutterTaskSpinner,
     roomToTidySpinner,
-    chorePickerSpinner,
     homeProjectSpinner,
     errandToRunSpinner,
     subscriptionReviewSpinner,
     budgetingTaskSpinner,
-    morningRoutineSpinner,
     lunchboxIdeaSpinner,
   ];
 
+  // Health & Self-Care - Personal wellness and physical activity
   static List<SpinnerModel> get healthAndSelfCare => [
+    workoutSpinner,
     exerciseTypeSpinner,
     selfCareIdeaSpinner,
     healthyHabitSpinner,
     mindfulnessActivitySpinner,
-    breakActivityGeneralSpinner,
-    focusTaskSpinner,
-    randomChallengeSpinner,
-    whatToLearnSpinner,
-    skillToPracticeSpinner,
-    creativePromptSpinner,
-    studyTopicSpinner,
+    morningRoutineSpinner,
   ];
 
+  // Fun & Social - Entertainment and group fun
   static List<SpinnerModel> get funAndSocial => [
+    dateNightIdeaSpinner,
+    groupActivitySpinner,
+    familyNightSpinner,
+    icebreakerCasualSpinner,
     whatToWatchGeneralSpinner,
     whatToListenToSpinner,
     gameToPlaySpinner,
     whoToCallSpinner,
-    dateNightIdeaSpinner,
-    groupActivitySpinner,
-    familyNightSpinner,
-    activityForKidsSpinner,
-    homeworkTaskSpinner,
     randomAppSpinner,
+  ];
+
+  // Productivity & Work - Focus, learning, and skill-building for adults
+  static List<SpinnerModel> get productivityAndWork => [
+    focusTaskSpinner,
+    whatToLearnSpinner,
+    skillToPracticeSpinner,
+    creativePromptSpinner,
+    randomChallengeSpinner,
+  ];
+
+  // Games & Challenges - Gamification, tabletop, and light competition
+  static List<SpinnerModel> get gamesAndChallenges => [
     dice6Spinner,
     dice20Spinner,
+    randomChallengeSpinner,
   ];
 
   static SpinnerModel get yesNoSpinner => createSpinner(
@@ -185,19 +218,6 @@ class SpinnerTemplateDefinitions {
     name: 'Roll a Die (d20)',
     slices: List.generate(20, (i) => Slice(text: '${i + 1}')),
     colors: [Colors.indigo.shade700, Colors.blueGrey.shade600],
-  );
-
-  static SpinnerModel get dateNightSpinner => createSpinner(
-    name: 'Date Night',
-    slices: [
-      'Movie night',
-      'Cook together',
-      'Take a stroll',
-      'Play a game',
-      'Try a new restaurant',
-      'Stay in and relax',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: threeSliceColors,
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(
