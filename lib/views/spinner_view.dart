@@ -4,7 +4,7 @@ import 'package:decision_spinner/views/spinner_template_view.dart';
 import 'package:decision_spinner/views/edit_spinner_view.dart';
 import 'package:decision_spinner/widgets/animated_text.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
-import 'package:decision_spinner/widgets/spinner_wheel.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_wheel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../storage/spinner_model.dart';
