@@ -5,7 +5,7 @@ import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/storage/base_storage_service.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/widgets/spinner_card.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_card.dart';
 import 'package:decision_spinner/widgets/dialogs/spinner_conflict_dialog.dart';
 import 'package:decision_spinner/widgets/dialogs/category_reorder_dialog.dart';
 import 'package:flutter/material.dart';

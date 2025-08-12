@@ -1,6 +1,6 @@
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
-import '../painters/spinner_painter.dart';
+import '../../painters/spinner_painter.dart';
 
 /// A display-only spinner widget that shows a static spinner wheel.
 /// This widget does not handle any interactions like spinning or panning.

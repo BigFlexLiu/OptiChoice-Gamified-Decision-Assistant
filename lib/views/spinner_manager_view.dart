@@ -4,7 +4,7 @@ import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/utils/onboarding_test_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
-import 'package:decision_spinner/widgets/spinner_card.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../storage/spinner_model.dart';

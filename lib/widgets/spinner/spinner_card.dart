@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../storage/spinner_model.dart';
+import '../../storage/spinner_model.dart';
 import 'spinner_preview.dart';
 
 class SpinnerCard extends StatelessWidget {

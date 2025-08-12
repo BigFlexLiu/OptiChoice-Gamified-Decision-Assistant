@@ -1,11 +1,11 @@
-import 'package:decision_spinner/widgets/spinner_display.dart';
+import 'package:decision_spinner/widgets/spinner/spinner_display.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../storage/spinner_model.dart';
-import '../providers/spinners_notifier.dart';
-import '../providers/spinner_provider.dart';
-import '../utils/widget_utils.dart';
-import 'dialogs/spinner_conflict_dialog.dart';
+import '../../storage/spinner_model.dart';
+import '../../providers/spinners_notifier.dart';
+import '../../providers/spinner_provider.dart';
+import '../../utils/widget_utils.dart';
+import '../dialogs/spinner_conflict_dialog.dart';
 
 class SpinnerPreview extends StatefulWidget {
   final SpinnerModel spinner;

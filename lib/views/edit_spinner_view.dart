@@ -5,7 +5,7 @@ import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/utils/audio_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/default_divider.dart';
-import 'package:decision_spinner/widgets/edit_name_dialogue.dart';
+import 'package:decision_spinner/widgets/dialogs/edit_name_dialogue.dart';
 import 'package:decision_spinner/widgets/dialogs/add_option_dialog.dart';
 import 'package:decision_spinner/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:decision_spinner/widgets/dialogs/edit_option_dialog.dart';
