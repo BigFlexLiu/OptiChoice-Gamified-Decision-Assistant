@@ -545,7 +545,12 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
                   ),
                 )
               : ReorderableListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 16 + MediaQuery.of(context).padding.bottom,
+                  ),
                   itemCount: filteredSpinners.length,
                   onReorder: (oldIndex, newIndex) =>
                       _reorderSpinners(oldIndex, newIndex, filteredSpinners),
