@@ -1,10 +1,12 @@
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/views/onboarding_view.dart';
 import 'package:decision_spinner/views/spinner_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +61,8 @@ class AppInitializer extends StatefulWidget {
 }
 
 class AppInitializerState extends State<AppInitializer> {
+  bool _shouldShowOnboarding = false;
+
   @override
   void initState() {
     super.initState();
@@ -66,12 +70,24 @@ class AppInitializerState extends State<AppInitializer> {
   }
 
   void _initializeApp() async {
+    // Check if onboarding should be shown
+    const onboardingCompletedKey = 'onboarding_completed';
+    final prefs = await SharedPreferences.getInstance();
+    final completed = prefs.getBool(onboardingCompletedKey) ?? false;
+    final shouldShowOnboarding = !completed;
+
     // Initialize SpinnersNotifier
+    if (!mounted) return;
     final spinnersNotifier = Provider.of<SpinnersNotifier>(
       context,
       listen: false,
     );
     await spinnersNotifier.initialize();
+
+    if (!mounted) return;
+    setState(() {
+      _shouldShowOnboarding = shouldShowOnboarding;
+    });
   }
 
   @override
@@ -81,6 +97,18 @@ class AppInitializerState extends State<AppInitializer> {
         if (!spinnersNotifier.isInitialized) {
           return Scaffold(body: Center(child: CircularProgressIndicator()));
         }
+
+        // Show onboarding if it's the first time
+        if (_shouldShowOnboarding) {
+          return OnboardingView(
+            onComplete: () {
+              setState(() {
+                _shouldShowOnboarding = false;
+              });
+            },
+          );
+        }
+
         return SpinnerView();
       },
     );

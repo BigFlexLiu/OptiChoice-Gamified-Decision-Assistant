@@ -2,6 +2,7 @@
 
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/utils/onboarding_test_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/spinner_card.dart';
 import 'package:flutter/material.dart';
@@ -537,6 +538,8 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
                             child: Text('Clear search'),
                           ),
                         ],
+                        const SizedBox(height: 24),
+                        DebugOnboardingWidget(),
                       ],
                     ),
                   ),
