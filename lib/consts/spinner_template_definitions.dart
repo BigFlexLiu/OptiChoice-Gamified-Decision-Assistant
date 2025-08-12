@@ -73,7 +73,6 @@ class SpinnerTemplateDefinitions {
 
   // Fun & Social - Entertainment and group fun
   static List<SpinnerModel> get funAndSocial => [
-    dateNightSpinner,
     dateNightIdeaSpinner,
     groupActivitySpinner,
     familyNightSpinner,
@@ -219,19 +218,6 @@ class SpinnerTemplateDefinitions {
     name: 'Roll a Die (d20)',
     slices: List.generate(20, (i) => Slice(text: '${i + 1}')),
     colors: [Colors.indigo.shade700, Colors.blueGrey.shade600],
-  );
-
-  static SpinnerModel get dateNightSpinner => createSpinner(
-    name: 'Date Night',
-    slices: [
-      'Movie night',
-      'Cook together',
-      'Take a stroll',
-      'Play a game',
-      'Try a new restaurant',
-      'Stay in and relax',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: threeSliceColors,
   );
 
   static SpinnerModel get icebreakerCasualSpinner => createSpinner(

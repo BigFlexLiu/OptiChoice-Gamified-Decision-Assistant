@@ -1,4 +1,4 @@
-import 'package:decision_spinner/consts/spinner_template_definitions.dart';
+import 'package:decision_spinner/consts/category_definitions.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/storage/base_storage_service.dart';
@@ -17,7 +17,7 @@ class OnboardingView extends StatefulWidget {
 }
 
 class _OnboardingViewState extends State<OnboardingView> {
-  final Set<OnboardingCategory> _selectedCategories = {};
+  final Set<CategoryDefinition> _selectedCategories = {};
   bool _isLoading = false;
 
   static const String _onboardingCompletedKey = 'onboarding_completed';
@@ -30,57 +30,6 @@ class _OnboardingViewState extends State<OnboardingView> {
   static Future<void> saveSelectedCategories(List<String> categoryIds) async {
     await BaseStorageService.saveJson(_selectedCategoriesKey, categoryIds);
   }
-
-  final List<OnboardingCategory> _categories = [
-    OnboardingCategory(
-      id: 'lifeAndHome',
-      title: 'Life & Home',
-      description: 'Daily living and household decisions',
-      icon: Icons.home,
-      color: const Color(0xFF4CAF50),
-      spinnerTemplates: SpinnerTemplateDefinitions.lifeAndHome,
-    ),
-    OnboardingCategory(
-      id: 'healthAndSelfCare',
-      title: 'Health & Self-Care',
-      description: 'Personal wellness and physical activity',
-      icon: Icons.favorite,
-      color: const Color(0xFFE91E63),
-      spinnerTemplates: SpinnerTemplateDefinitions.healthAndSelfCare,
-    ),
-    OnboardingCategory(
-      id: 'funAndSocial',
-      title: 'Fun & Social',
-      description: 'Entertainment and group activities',
-      icon: Icons.celebration,
-      color: const Color(0xFFFF9800),
-      spinnerTemplates: SpinnerTemplateDefinitions.funAndSocial,
-    ),
-    OnboardingCategory(
-      id: 'productivityAndWork',
-      title: 'Productivity & Work',
-      description: 'Focus, learning, and skill-building',
-      icon: Icons.work,
-      color: const Color(0xFF3F51B5),
-      spinnerTemplates: SpinnerTemplateDefinitions.productivityAndWork,
-    ),
-    OnboardingCategory(
-      id: 'teachingAndClassroom',
-      title: 'Teaching & Classroom',
-      description: 'Educational tools and activities',
-      icon: Icons.school,
-      color: const Color(0xFF9C27B0),
-      spinnerTemplates: SpinnerTemplateDefinitions.teachingAndClassroom,
-    ),
-    OnboardingCategory(
-      id: 'gamesAndChallenges',
-      title: 'Games & Challenges',
-      description: 'Gamification and light competition',
-      icon: Icons.games,
-      color: const Color(0xFF009688),
-      spinnerTemplates: SpinnerTemplateDefinitions.gamesAndChallenges,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -140,9 +89,9 @@ class _OnboardingViewState extends State<OnboardingView> {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
-      itemCount: _categories.length,
+      itemCount: CategoryDefinitions.allCategories.length,
       itemBuilder: (context, index) {
-        final category = _categories[index];
+        final category = CategoryDefinitions.allCategories[index];
         final isSelected = _selectedCategories.contains(category);
 
         return _buildCategoryCard(category, isSelected);
@@ -150,7 +99,7 @@ class _OnboardingViewState extends State<OnboardingView> {
     );
   }
 
-  Widget _buildCategoryCard(OnboardingCategory category, bool isSelected) {
+  Widget _buildCategoryCard(CategoryDefinition category, bool isSelected) {
     final theme = Theme.of(context);
 
     return GestureDetector(
@@ -183,77 +132,70 @@ class _OnboardingViewState extends State<OnboardingView> {
               ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? category.color
-                      : category.color.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  category.icon,
-                  size: 24,
-                  color: isSelected ? Colors.white : category.color,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                category.title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? category.color
-                      : theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                category.description,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (isSelected) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? category.color
+                          : category.color.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      category.icon,
+                      size: 24,
+                      color: isSelected ? Colors.white : category.color,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: category.color,
-                    borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 12),
+                  Text(
+                    category.title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? category.color
+                          : theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check, size: 12, color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Selected',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: Text(
+                      category.description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
                         ),
                       ),
-                    ],
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: category.color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check, size: 16, color: Colors.white),
                 ),
-              ],
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -302,7 +244,7 @@ class _OnboardingViewState extends State<OnboardingView> {
     );
   }
 
-  void _toggleCategory(OnboardingCategory category) {
+  void _toggleCategory(CategoryDefinition category) {
     setState(() {
       if (_selectedCategories.contains(category)) {
         _selectedCategories.remove(category);
@@ -391,32 +333,4 @@ class _OnboardingViewState extends State<OnboardingView> {
       }
     }
   }
-}
-
-class OnboardingCategory {
-  final String id;
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
-  final List<SpinnerModel> spinnerTemplates;
-
-  const OnboardingCategory({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.color,
-    required this.spinnerTemplates,
-  });
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is OnboardingCategory &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
 }

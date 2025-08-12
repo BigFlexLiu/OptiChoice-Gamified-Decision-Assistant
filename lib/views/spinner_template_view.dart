@@ -1,4 +1,4 @@
-import 'package:decision_spinner/consts/spinner_template_definitions.dart';
+import 'package:decision_spinner/consts/category_definitions.dart';
 import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
@@ -20,61 +20,14 @@ class SpinnerTemplatesView extends StatefulWidget {
 
 class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
     with SingleTickerProviderStateMixin {
-  List<_TabConfig> _tabs = [];
+  List<CategoryDefinition> _tabs = [];
   bool _isLoading = true;
   TabController? _tabController;
   int _tabOrderVersion = 0;
 
   // Cache for quick lookups
-  static final Map<String, _TabConfig> _categoryMap = {
-    for (var cat in _allCategories) cat.id: cat,
-  };
-
-  // All available categories
-  static final _allCategories = [
-    _TabConfig(
-      id: 'lifeAndHome',
-      icon: Icons.home,
-      label: 'Life & Home',
-      description: 'Daily tasks, chores, and household decisions',
-      spinnerTemplates: SpinnerTemplateDefinitions.lifeAndHome,
-    ),
-    _TabConfig(
-      id: 'healthAndSelfCare',
-      icon: Icons.favorite,
-      label: 'Health & Self-Care',
-      description: 'Wellness, mindfulness, and personal growth',
-      spinnerTemplates: SpinnerTemplateDefinitions.healthAndSelfCare,
-    ),
-    _TabConfig(
-      id: 'funAndSocial',
-      icon: Icons.celebration,
-      label: 'Fun & Social',
-      description: 'Entertainment, games, and social activities',
-      spinnerTemplates: SpinnerTemplateDefinitions.funAndSocial,
-    ),
-    _TabConfig(
-      id: 'productivityAndWork',
-      icon: Icons.work,
-      label: 'Productivity',
-      description: 'Focus, learning, and skill-building',
-      spinnerTemplates: SpinnerTemplateDefinitions.productivityAndWork,
-    ),
-    _TabConfig(
-      id: 'teachingAndClassroom',
-      icon: Icons.school,
-      label: 'Teaching',
-      description: 'Educational tools and activities',
-      spinnerTemplates: SpinnerTemplateDefinitions.teachingAndClassroom,
-    ),
-    _TabConfig(
-      id: 'gamesAndChallenges',
-      icon: Icons.games,
-      label: 'Games',
-      description: 'Gamification and light competition',
-      spinnerTemplates: SpinnerTemplateDefinitions.gamesAndChallenges,
-    ),
-  ];
+  static final Map<String, CategoryDefinition> _categoryMap =
+      CategoryDefinitions.categoryMap;
 
   @override
   void initState() {
@@ -97,11 +50,11 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
           (categoriesJson as List?)?.cast<String>() ?? <String>[];
       _updateTabs(_buildTabsFromIds(selectedIds));
     } catch (e) {
-      _updateTabs(_allCategories);
+      _updateTabs(CategoryDefinitions.allCategories);
     }
   }
 
-  void _updateTabs(List<_TabConfig> newTabs) {
+  void _updateTabs(List<CategoryDefinition> newTabs) {
     _tabController?.dispose();
     setState(() {
       _tabs = newTabs;
@@ -115,8 +68,8 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
     });
   }
 
-  List<_TabConfig> _buildTabsFromIds(List<String> selectedIds) {
-    if (selectedIds.isEmpty) return _allCategories;
+  List<CategoryDefinition> _buildTabsFromIds(List<String> selectedIds) {
+    if (selectedIds.isEmpty) return CategoryDefinitions.allCategories;
 
     final selectedTabs = selectedIds
         .where(_categoryMap.containsKey)
@@ -124,7 +77,7 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
         .toList();
 
     final selectedSet = selectedIds.toSet();
-    final remainingTabs = _allCategories
+    final remainingTabs = CategoryDefinitions.allCategories
         .where((cat) => !selectedSet.contains(cat.id))
         .toList();
 
@@ -137,7 +90,7 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
           (tab) => CategoryInfo(
             id: tab.id,
             icon: tab.icon,
-            label: tab.label,
+            label: tab.title,
             description: tab.description,
           ),
         )
@@ -203,7 +156,10 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
     });
   }
 
-  bool _tabsAreEqual(List<_TabConfig> tabs1, List<_TabConfig> tabs2) {
+  bool _tabsAreEqual(
+    List<CategoryDefinition> tabs1,
+    List<CategoryDefinition> tabs2,
+  ) {
     if (tabs1.length != tabs2.length) return false;
     for (int i = 0; i < tabs1.length; i++) {
       if (tabs1[i].id != tabs2[i].id) return false;
@@ -243,7 +199,7 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
               .map(
                 (tab) => SizedBox(
                   width: MediaQuery.of(context).size.width / 3.5 - 16,
-                  child: Tab(icon: Icon(tab.icon), text: tab.label),
+                  child: Tab(icon: Icon(tab.icon), text: tab.title),
                 ),
               )
               .toList(),
@@ -261,26 +217,10 @@ class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
   }
 }
 
-class _TabConfig {
-  const _TabConfig({
-    required this.id,
-    required this.icon,
-    required this.label,
-    required this.description,
-    required this.spinnerTemplates,
-  });
-
-  final String id;
-  final IconData icon;
-  final String label;
-  final String description;
-  final List<SpinnerModel> spinnerTemplates;
-}
-
 class _SpinnerTemplatesTabView extends StatefulWidget {
   const _SpinnerTemplatesTabView({required this.config});
 
-  final _TabConfig config;
+  final CategoryDefinition config;
 
   @override
   State<_SpinnerTemplatesTabView> createState() =>
@@ -429,7 +369,7 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
 class _EmptyStateWidget extends StatelessWidget {
   const _EmptyStateWidget({required this.config});
 
-  final _TabConfig config;
+  final CategoryDefinition config;
 
   @override
   Widget build(BuildContext context) {
@@ -446,7 +386,7 @@ class _EmptyStateWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No ${config.label} Available',
+            'No ${config.title} Available',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
