@@ -174,15 +174,20 @@ class SpinnerPainter extends CustomPainter {
   }
 
   double _calculateFontSize() {
-    if (wheelSize == null) return 14.0; // Default size
+    final numSlices = _slices.length;
+    final textScale = (wheelSize ?? 300) / 300;
 
-    // Scale font size based on wheel size
-    // Assuming default wheel size of 300 corresponds to 14pt font
-    final scaleFactor = wheelSize! / 200.0;
-    final scaledSize = 14.0 * scaleFactor;
+    // Keep size 20 for up to 12 slices
+    if (numSlices <= 12) {
+      return 20.0 * textScale;
+    }
 
-    // Clamp between 12 and 16
-    return scaledSize.clamp(12.0, 20.0);
+    // For every 4 more slices, reduce font size by 2
+    final extraSlices = numSlices - 12;
+    final reductions = (extraSlices / 6).floor();
+    final fontSize = 20.0 - (reductions * 2.0);
+
+    return fontSize.clamp(12.0, 20.0) * textScale;
   }
 
   // Binary search for the longest substring that fits maxTextWidth
