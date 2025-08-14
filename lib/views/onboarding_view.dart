@@ -1,0 +1,336 @@
+import 'package:decision_spinner/consts/category_definitions.dart';
+import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/storage/base_storage_service.dart';
+import 'package:decision_spinner/storage/spinner_model.dart';
+import 'package:decision_spinner/utils/widget_utils.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class OnboardingView extends StatefulWidget {
+  final VoidCallback? onComplete;
+
+  const OnboardingView({super.key, this.onComplete});
+
+  @override
+  State<OnboardingView> createState() => _OnboardingViewState();
+}
+
+class _OnboardingViewState extends State<OnboardingView> {
+  final Set<CategoryDefinition> _selectedCategories = {};
+  bool _isLoading = false;
+
+  static const String _onboardingCompletedKey = 'onboarding_completed';
+  static const String _selectedCategoriesKey = 'selected_categories';
+
+  static Future<void> markOnboardingCompleted() async {
+    await BaseStorageService.saveBool(_onboardingCompletedKey, true);
+  }
+
+  static Future<void> saveSelectedCategories(List<String> categoryIds) async {
+    await BaseStorageService.saveJson(_selectedCategoriesKey, categoryIds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              _buildHeader(),
+              const SizedBox(height: 24),
+              Expanded(child: _buildCategoryGrid()),
+              const SizedBox(height: 32),
+              _buildActionButtons(),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Text(
+          'Welcome to Decision Spinner!',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Select up to 3 categories to get started.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryGrid() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: CategoryDefinitions.allCategories.length,
+      itemBuilder: (context, index) {
+        final category = CategoryDefinitions.allCategories[index];
+        final isSelected = _selectedCategories.contains(category);
+
+        return _buildCategoryCard(category, isSelected);
+      },
+    );
+  }
+
+  Widget _buildCategoryCard(CategoryDefinition category, bool isSelected) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: () => _toggleCategory(category),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? category.color.withValues(alpha: 0.1)
+              : theme.colorScheme.surface,
+          border: Border.all(
+            color: isSelected
+                ? category.color
+                : theme.colorScheme.outline.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: category.color.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? category.color
+                          : category.color.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      category.icon,
+                      size: 24,
+                      color: isSelected ? Colors.white : category.color,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    category.title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? category.color
+                          : theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: Text(
+                      category.description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: category.color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check, size: 16, color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        if (_selectedCategories.isNotEmpty) ...[
+          Text(
+            '${_selectedCategories.length}/3 categories selected',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : _skipOnboarding,
+                child: const Text('Skip'),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isLoading || _selectedCategories.isEmpty
+                    ? null
+                    : _completeOnboarding,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Get Started'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _toggleCategory(CategoryDefinition category) {
+    setState(() {
+      if (_selectedCategories.contains(category)) {
+        _selectedCategories.remove(category);
+      } else if (_selectedCategories.length < 3) {
+        _selectedCategories.add(category);
+      } else {
+        // Show message about 3 category limit
+        showSnackBar(context, 'You can select up to 3 categories');
+      }
+    });
+  }
+
+  Future<void> _skipOnboarding() async {
+    await markOnboardingCompleted();
+    if (mounted) {
+      widget.onComplete?.call();
+    }
+  }
+
+  Future<void> _completeOnboarding() async {
+    if (_selectedCategories.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final spinnerProvider = Provider.of<SpinnerProvider>(
+        context,
+        listen: false,
+      );
+      final spinnersNotifier = Provider.of<SpinnersNotifier>(
+        context,
+        listen: false,
+      );
+
+      // Get example spinners from selected categories
+      final selectedSpinners = <SpinnerModel>[];
+      for (final category in _selectedCategories) {
+        // Take the first 2 spinners from each category
+        final exampleSpinners = category.spinnerTemplates.take(2).toList();
+        selectedSpinners.addAll(exampleSpinners);
+      }
+
+      // If we have too many spinners, limit to 6 total
+      if (selectedSpinners.length > 6) {
+        selectedSpinners.removeRange(6, selectedSpinners.length);
+      }
+
+      // Create spinners
+      String? firstSpinnerId;
+      for (int i = 0; i < selectedSpinners.length; i++) {
+        final spinner = selectedSpinners[i];
+        final newSpinner = SpinnerModel.duplicate(spinner);
+        await spinnerProvider.saveSpinner(newSpinner);
+
+        if (i == 0) {
+          firstSpinnerId = newSpinner.id;
+        }
+      }
+
+      // Set the first spinner as active
+      if (firstSpinnerId != null) {
+        await spinnersNotifier.setActiveSpinnerId(firstSpinnerId);
+      }
+
+      // Save selected categories
+      final selectedCategoryIds = _selectedCategories.map((c) => c.id).toList();
+      await saveSelectedCategories(selectedCategoryIds);
+
+      // Mark onboarding as completed
+      await markOnboardingCompleted();
+
+      if (mounted) {
+        widget.onComplete?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, 'Error setting up spinners: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+}

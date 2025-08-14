@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
-class AnimatedTextJumpChangeColor extends StatefulWidget {
+class AnimatedText extends StatefulWidget {
   final String text;
   final bool shouldAnimate;
+  final Color color;
   final void Function() setShouldAnimateFalse;
-  const AnimatedTextJumpChangeColor(
+  const AnimatedText(
     this.text,
     this.shouldAnimate,
+    this.color,
     this.setShouldAnimateFalse, {
     super.key,
   });
 
   @override
-  State<AnimatedTextJumpChangeColor> createState() =>
-      _AnimatedTextJumpChangeColorState();
+  State<AnimatedText> createState() => _AnimatedTextState();
 }
 
-class _AnimatedTextJumpChangeColorState
-    extends State<AnimatedTextJumpChangeColor>
+class _AnimatedTextState extends State<AnimatedText>
     with SingleTickerProviderStateMixin {
   final _animationTime = 500;
   late AnimationController _scaleController;
@@ -25,6 +25,7 @@ class _AnimatedTextJumpChangeColorState
 
   // Cache for font size calculations to avoid expensive recalculations
   final Map<String, double> _fontSizeCache = {};
+
   String _cacheKey(String text, double maxWidth, double maxHeight) =>
       '$text|$maxWidth|$maxHeight';
 
@@ -41,13 +42,13 @@ class _AnimatedTextJumpChangeColorState
       TweenSequenceItem(
         tween: Tween<double>(
           begin: 1.0,
-          end: 1.5,
+          end: 2,
         ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 50,
       ),
       TweenSequenceItem(
         tween: Tween<double>(
-          begin: 1.5,
+          begin: 2,
           end: 1.0,
         ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 50,
@@ -68,7 +69,7 @@ class _AnimatedTextJumpChangeColorState
   }
 
   @override
-  void didUpdateWidget(covariant AnimatedTextJumpChangeColor oldWidget) {
+  void didUpdateWidget(covariant AnimatedText oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.shouldAnimate && !oldWidget.shouldAnimate) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -172,6 +173,7 @@ class _AnimatedTextJumpChangeColorState
 
         final adaptiveTextStyle = baseTextStyle.copyWith(
           fontSize: optimalFontSize,
+          color: widget.color,
         );
 
         Text baseTextWidget = Text(

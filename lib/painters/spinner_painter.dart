@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class SpinnerPainter extends CustomPainter {
   final SpinnerModel spinnerModel;
   final double rotation;
-  final SpinnerOption? selectedOption;
+  final Slice? selectedOption;
   final double? wheelSize;
 
   static const double spinnerBorderWidth = 5;
@@ -19,7 +19,7 @@ class SpinnerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant SpinnerPainter oldDelegate) {
-    return oldDelegate._options != _options ||
+    return oldDelegate._slices != _slices ||
         oldDelegate.rotation != rotation ||
         oldDelegate.selectedOption != selectedOption ||
         oldDelegate.wheelSize != wheelSize;
@@ -27,13 +27,13 @@ class SpinnerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (_options.isEmpty) return;
+    if (_slices.isEmpty) return;
 
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    final anglePerOption = 2 * math.pi / _options.length;
-    for (int i = 0; i < _options.length; i++) {
+    final anglePerOption = 2 * math.pi / _slices.length;
+    for (int i = 0; i < _slices.length; i++) {
       // Start from the top (-π/2) and add rotation
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
       final sweepAngle = anglePerOption;
@@ -76,7 +76,7 @@ class SpinnerPainter extends CustomPainter {
     // Draw text - use the middle of the slice
     _drawText(
       canvas,
-      _options[sliceIndex],
+      _slices[sliceIndex],
       foregroundColor,
       center,
       radius,
@@ -96,7 +96,7 @@ class SpinnerPainter extends CustomPainter {
       ..strokeWidth = _calculateSliceBorderWidth();
 
     // Draw a border line for each slice
-    for (int i = 0; i < _options.length; i++) {
+    for (int i = 0; i < _slices.length; i++) {
       final startAngle = (i * anglePerOption) - (math.pi / 2) + rotation;
 
       // Draw line from center to edge at the start angle
@@ -114,7 +114,7 @@ class SpinnerPainter extends CustomPainter {
   }
 
   double _calculateSliceBorderWidth() {
-    final numSlices = _options.length;
+    final numSlices = _slices.length;
     if (numSlices <= 0) return 2.0; // Default fallback
 
     // Base width for 8 slices, scale inversely with number of slices
@@ -174,15 +174,20 @@ class SpinnerPainter extends CustomPainter {
   }
 
   double _calculateFontSize() {
-    if (wheelSize == null) return 14.0; // Default size
+    final numSlices = _slices.length;
+    final textScale = (wheelSize ?? 300) / 300;
 
-    // Scale font size based on wheel size
-    // Assuming default wheel size of 300 corresponds to 14pt font
-    final scaleFactor = wheelSize! / 200.0;
-    final scaledSize = 14.0 * scaleFactor;
+    // Keep size 20 for up to 12 slices
+    if (numSlices <= 12) {
+      return 20.0 * textScale;
+    }
 
-    // Clamp between 12 and 16
-    return scaledSize.clamp(12.0, 20.0);
+    // For every 4 more slices, reduce font size by 2
+    final extraSlices = numSlices - 12;
+    final reductions = (extraSlices / 6).floor();
+    final fontSize = 20.0 - (reductions * 2.0);
+
+    return fontSize.clamp(12.0, 20.0) * textScale;
   }
 
   // Binary search for the longest substring that fits maxTextWidth
@@ -214,6 +219,6 @@ class SpinnerPainter extends CustomPainter {
     return result;
   }
 
-  List<String> get _options =>
-      spinnerModel.activeOptions.map((e) => e.text).toList();
+  List<String> get _slices =>
+      spinnerModel.activeSlices.map((e) => e.text).toList();
 }

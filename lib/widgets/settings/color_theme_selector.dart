@@ -103,7 +103,7 @@ class ColorThemeSelector extends StatelessWidget {
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
-            runSpacing: 8,
+            runSpacing: 16,
             children: [
               // Existing predefined themes
               ...DefaultColorThemes.all.asMap().entries.map((entry) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../storage/spinner_model.dart';
+import '../../storage/spinner_model.dart';
 import 'spinner_preview.dart';
 
 class SpinnerCard extends StatelessWidget {
@@ -10,6 +10,7 @@ class SpinnerCard extends StatelessWidget {
   final String? subtitle;
   final ValueChanged<bool>? onExpansionChanged;
   final bool isExpanded;
+  final bool isFromSpinnerTemplates;
 
   const SpinnerCard({
     super.key,
@@ -20,6 +21,7 @@ class SpinnerCard extends StatelessWidget {
     this.isActive = false,
     this.canReorder = false,
     this.subtitle,
+    this.isFromSpinnerTemplates = false,
   });
 
   @override
@@ -95,7 +97,7 @@ class SpinnerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${spinner.options.length} options',
+                  '${spinner.slices.length} slices',
                   style: theme.textTheme.bodyMedium,
                 ),
                 if (subtitle != null)
@@ -112,7 +114,12 @@ class SpinnerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Spinner Preview
-                    Expanded(child: SpinnerPreview(spinner: spinner)),
+                    Expanded(
+                      child: SpinnerPreview(
+                        spinner: spinner,
+                        isFromSpinnerTemplates: isFromSpinnerTemplates,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     // Action Buttons
                     IntrinsicWidth(

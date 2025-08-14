@@ -131,7 +131,7 @@ class _ColorPickerViewState extends State<ColorPickerView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Custom Colors'),
+          title: const Text('Customize Colors'),
           backgroundColor: theme.colorScheme.inversePrimary,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),

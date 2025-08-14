@@ -3,7 +3,7 @@ import '../../storage/spinner_model.dart';
 import '../../consts/storage_constants.dart';
 
 class EditOptionDialog extends StatefulWidget {
-  final SpinnerOption option;
+  final Slice option;
   final bool canDelete;
   final Function(String, double) onOptionChanged;
   final VoidCallback onDeleteRequested;
