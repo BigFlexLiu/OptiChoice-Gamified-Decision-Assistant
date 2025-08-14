@@ -23,20 +23,16 @@ class SpinnerTemplateDefinitions {
   // Teaching & Classroom - Core teacher tools, still usable by general audiences
   static List<SpinnerModel> get teachingAndClassroom => [
     breakActivityGeneralSpinner,
-    dice6Spinner,
-    dice20Spinner,
-    icebreakerCasualSpinner,
-    whatToLearnSpinner,
-    skillToPracticeSpinner,
     studyTopicSpinner,
     creativePromptSpinner,
-    focusTaskSpinner,
-    randomChallengeSpinner,
-    homeworkTaskSpinner,
     activityForKidsSpinner,
     groupActivitySpinner,
+    icebreakerCasualSpinner,
     mindfulnessActivitySpinner,
-    healthyHabitSpinner,
+    whatToLearnSpinner,
+    homeworkTaskSpinner,
+    dice6Spinner,
+    dice20Spinner,
   ];
 
   // Life & Home - Daily living and household decisions
@@ -46,42 +42,37 @@ class SpinnerTemplateDefinitions {
     whereToGoGeneralSpinner,
     whatToDoSpinner,
     whoPaysSpinner,
-    choreSpinner,
     chorePickerSpinner,
-    whatToWearSpinner,
     whatToDoTodaySpinner,
-    whenToDoItSpinner,
     whatToCleanSpinner,
-    declutterTaskSpinner,
     roomToTidySpinner,
     homeProjectSpinner,
-    errandToRunSpinner,
-    subscriptionReviewSpinner,
     budgetingTaskSpinner,
+    declutterTaskSpinner,
+    whatToWearSpinner,
     lunchboxIdeaSpinner,
+    subscriptionReviewSpinner,
   ];
 
   // Health & Self-Care - Personal wellness and physical activity
   static List<SpinnerModel> get healthAndSelfCare => [
     workoutSpinner,
-    exerciseTypeSpinner,
-    selfCareIdeaSpinner,
-    healthyHabitSpinner,
     mindfulnessActivitySpinner,
     morningRoutineSpinner,
+    selfCareIdeaSpinner,
+    healthyHabitSpinner,
   ];
 
   // Fun & Social - Entertainment and group fun
   static List<SpinnerModel> get funAndSocial => [
-    dateNightIdeaSpinner,
     groupActivitySpinner,
+    dateNightIdeaSpinner,
     familyNightSpinner,
     icebreakerCasualSpinner,
     whatToWatchGeneralSpinner,
-    whatToListenToSpinner,
     gameToPlaySpinner,
     whoToCallSpinner,
-    randomAppSpinner,
+    whatToListenToSpinner,
   ];
 
   // Productivity & Work - Focus, learning, and skill-building for adults
@@ -90,7 +81,6 @@ class SpinnerTemplateDefinitions {
     whatToLearnSpinner,
     skillToPracticeSpinner,
     creativePromptSpinner,
-    randomChallengeSpinner,
   ];
 
   // Games & Challenges - Gamification, tabletop, and light competition
@@ -164,6 +154,7 @@ class SpinnerTemplateDefinitions {
       'Strength training',
       'Yoga',
       'Pilates',
+      'Core workout',
       'HIIT',
       'Stretching',
       'Rest day',
@@ -181,20 +172,6 @@ class SpinnerTemplateDefinitions {
       'Split',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
-  );
-
-  static SpinnerModel get choreSpinner => createSpinner(
-    name: 'Chore Spinner',
-    slices: [
-      'Dishes',
-      'Laundry',
-      'Vacuum',
-      'Trash',
-      'Clean bathroom',
-      'Dust',
-      'Mop floors',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fourSliceColors,
   );
 
   static SpinnerModel get breakActivitySpinner => createSpinner(
@@ -288,23 +265,6 @@ class SpinnerTemplateDefinitions {
       'Declutter area',
       'Journal',
       'Cook/bake',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
-  static SpinnerModel get whenToDoItSpinner => createSpinner(
-    name: 'When to Do It',
-    slices: [
-      'Right now',
-      'After break',
-      'This morning',
-      'This afternoon',
-      'This evening',
-      'After lunch',
-      'Before bed',
-      'Set timer (25min)',
-      'Tomorrow',
-      'Next weekend',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
@@ -410,24 +370,6 @@ class SpinnerTemplateDefinitions {
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
-
-  static SpinnerModel get errandToRunSpinner => createSpinner(
-    name: 'Errand to Run',
-    slices: [
-      'Grocery store',
-      'Post office',
-      'Pharmacy',
-      'Gas station',
-      'Hardware store',
-      'Drop off donation',
-      'Dry cleaning',
-      'Bank/ATM',
-      'Return item',
-      'Car wash',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
   static SpinnerModel get subscriptionReviewSpinner => createSpinner(
     name: 'Subscription to Review',
     slices: [
@@ -492,24 +434,6 @@ class SpinnerTemplateDefinitions {
       'Cheese + crackers',
       'Hummus + pita',
       'DIY lunchables',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
-  // Health & Self-Care Spinners
-  static SpinnerModel get exerciseTypeSpinner => createSpinner(
-    name: 'Exercise Type',
-    slices: [
-      'Walk/jog',
-      'Yoga/stretching',
-      'Bodyweight circuit',
-      'Dance workout',
-      'Bike ride',
-      'Core workout',
-      'Strength training',
-      'Gym',
-      'Fitness app/class',
-      'Rest day',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
@@ -583,18 +507,16 @@ class SpinnerTemplateDefinitions {
   );
 
   static SpinnerModel get focusTaskSpinner => createSpinner(
-    name: 'Focus Task',
+    name: 'Focus',
     slices: [
-      'Reply to email',
-      'Clean desk',
-      'Finish small task',
-      'Most urgent item',
-      'Avoided task',
-      'Start 25min timer',
-      'Plan next 3 hours',
-      'File/sort',
-      'Review document',
-      'Prep for meeting',
+      'Do nothing for 3 minutes',
+      'Name one distraction, remove it',
+      'List steps to do the task',
+      'Define your intention in one sentence',
+      'Box breathing',
+      'Mind dump',
+      'Light snack',
+      '10 jumping jacks/squats',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );
@@ -834,23 +756,6 @@ class SpinnerTemplateDefinitions {
       'Research project',
       'Make flashcards',
       'Ask for help',
-    ].map((text) => Slice(text: text)).toList(),
-    colors: fiveSliceColors,
-  );
-
-  static SpinnerModel get randomAppSpinner => createSpinner(
-    name: 'Random App to Use',
-    slices: [
-      'Note-taking app',
-      'Fitness tracker',
-      'Meditation app',
-      'Photo editor',
-      'Language learning',
-      'Calendar/planner',
-      'Music discovery',
-      'Habit tracker',
-      'Creative tool',
-      'Unused game',
     ].map((text) => Slice(text: text)).toList(),
     colors: fiveSliceColors,
   );

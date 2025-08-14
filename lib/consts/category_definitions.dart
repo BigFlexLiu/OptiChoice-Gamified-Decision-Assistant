@@ -39,7 +39,7 @@ class CategoryDefinitions {
     funAndSocial,
     productivityAndWork,
     teachingAndClassroom,
-    gamesAndChallenges,
+    // gamesAndChallenges,
   ];
 
   static final CategoryDefinition lifeAndHome = CategoryDefinition(
