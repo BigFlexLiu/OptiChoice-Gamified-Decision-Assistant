@@ -34,9 +34,7 @@ class SpinnerStorageService extends BaseStorageService {
   static SpinnerModel _createDefaultSpinnerModel() {
     return SpinnerModel(
       name: StorageConstants.defaultSpinnerName,
-      slices: StorageConstants.defaultSlices
-          .map((text) => Slice(text: text, weight: 1.0))
-          .toList(),
+      slices: StorageConstants.defaultSlices,
       colorThemeIndex: -1,
       backgroundColors: [
         Colors.red,

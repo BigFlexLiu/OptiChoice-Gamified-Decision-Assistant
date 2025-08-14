@@ -220,7 +220,7 @@ class _OnboardingViewState extends State<OnboardingView> {
             Expanded(
               child: OutlinedButton(
                 onPressed: _isLoading ? null : _skipOnboarding,
-                child: const Text('Skip for now'),
+                child: const Text('Skip'),
               ),
             ),
             const SizedBox(width: 16),
