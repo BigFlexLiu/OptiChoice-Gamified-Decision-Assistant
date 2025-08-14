@@ -780,11 +780,11 @@ final List<Color> fourSliceColors = [
 ];
 
 final List<Color> fiveSliceColors = [
-  Color(0xFF007ACC), // Coral red
-  Color(0xFFFF5733), // Golden yellow
-  Color(0xFF28A745), // Medium green
-  Color(0xFFFFC107), // Sky blue
-  Color(0xFF6F42C1), // Purple
+  Colors.red,
+  Colors.blue,
+  Colors.green,
+  Colors.purple,
+  Colors.orange,
 ];
 
 final List<Color> sevenSliceColors = [
