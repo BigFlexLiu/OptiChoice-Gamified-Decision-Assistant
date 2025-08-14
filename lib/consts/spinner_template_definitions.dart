@@ -37,21 +37,19 @@ class SpinnerTemplateDefinitions {
 
   // Life & Home - Daily living and household decisions
   static List<SpinnerModel> get lifeAndHome => [
-    yesNoSpinner,
     whatToEatSpinner,
     whereToGoGeneralSpinner,
     whatToDoSpinner,
-    whoPaysSpinner,
-    chorePickerSpinner,
     whatToDoTodaySpinner,
     whatToCleanSpinner,
-    roomToTidySpinner,
+    chorePickerSpinner,
     homeProjectSpinner,
-    budgetingTaskSpinner,
     declutterTaskSpinner,
     whatToWearSpinner,
     lunchboxIdeaSpinner,
     subscriptionReviewSpinner,
+    budgetingTaskSpinner,
+    yesNoSpinner,
   ];
 
   // Health & Self-Care - Personal wellness and physical activity
@@ -73,6 +71,7 @@ class SpinnerTemplateDefinitions {
     gameToPlaySpinner,
     whoToCallSpinner,
     whatToListenToSpinner,
+    whoPaysSpinner,
   ];
 
   // Productivity & Work - Focus, learning, and skill-building for adults

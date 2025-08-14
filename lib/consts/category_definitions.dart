@@ -38,13 +38,13 @@ class CategoryDefinitions {
     healthAndSelfCare,
     funAndSocial,
     productivityAndWork,
-    teachingAndClassroom,
+    // teachingAndClassroom,
     // gamesAndChallenges,
   ];
 
   static final CategoryDefinition lifeAndHome = CategoryDefinition(
     id: 'lifeAndHome',
-    title: 'Life & Home',
+    title: 'Home',
     description: 'Daily living and household decisions',
     icon: Icons.home,
     color: const Color(0xFF4CAF50),
@@ -53,7 +53,7 @@ class CategoryDefinitions {
 
   static final CategoryDefinition healthAndSelfCare = CategoryDefinition(
     id: 'healthAndSelfCare',
-    title: 'Health & Self-Care',
+    title: 'Wellness',
     description: 'Personal wellness and physical activity',
     icon: Icons.favorite,
     color: const Color(0xFFE91E63),
@@ -62,7 +62,7 @@ class CategoryDefinitions {
 
   static final CategoryDefinition funAndSocial = CategoryDefinition(
     id: 'funAndSocial',
-    title: 'Fun & Social',
+    title: 'Fun',
     description: 'Entertainment and group activities',
     icon: Icons.celebration,
     color: const Color(0xFFFF9800),
@@ -71,7 +71,7 @@ class CategoryDefinitions {
 
   static final CategoryDefinition productivityAndWork = CategoryDefinition(
     id: 'productivityAndWork',
-    title: 'Productivity & Work',
+    title: 'Productivity',
     description: 'Focus, learning, and skill-building',
     icon: Icons.work,
     color: const Color(0xFF3F51B5),
