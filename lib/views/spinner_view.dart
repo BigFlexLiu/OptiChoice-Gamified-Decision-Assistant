@@ -1,7 +1,7 @@
 import 'package:decision_spinner/utils/spinner_audio_manager.dart';
 import 'package:decision_spinner/views/spinner_manager_view.dart';
-import 'package:decision_spinner/views/spinner_template_view.dart';
 import 'package:decision_spinner/views/edit_spinner_view.dart';
+import 'package:decision_spinner/views/template_view.dart';
 import 'package:decision_spinner/widgets/animated_text.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/widgets/spinner/spinner_wheel.dart';
@@ -251,9 +251,7 @@ class SpinnerViewState extends State<SpinnerView>
             onPressed: () async {
               _onNavigationStart();
               await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                  builder: (context) => const SpinnerTemplatesView(),
-                ),
+                MaterialPageRoute(builder: (context) => const TemplatesView()),
               );
 
               // Provider will automatically refresh if a spinner was successfully added

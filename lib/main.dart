@@ -86,7 +86,7 @@ class AppInitializerState extends State<AppInitializer> {
 
     if (!mounted) return;
     setState(() {
-      // _shouldShowOnboarding = shouldShowOnboarding;
+      _shouldShowOnboarding = shouldShowOnboarding;
     });
   }
 
