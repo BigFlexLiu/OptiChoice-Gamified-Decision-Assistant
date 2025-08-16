@@ -56,7 +56,7 @@ class _OnboardingViewState extends State<OnboardingView> {
               const SizedBox(height: 24),
               Expanded(child: _buildCategoryGrid()),
               const SizedBox(height: 32),
-              _buildActionButtons(),
+              _buildActionButton(),
               const SizedBox(height: 24),
             ],
           ),
@@ -91,19 +91,16 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Widget _buildCategoryGrid() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
+    return ListView.builder(
       itemCount: CategoryDefinitions.allCategories.length,
       itemBuilder: (context, index) {
         final category = CategoryDefinitions.allCategories[index];
         final isSelected = _selectedCategory == category;
 
-        return _buildCategoryCard(category, isSelected);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: _buildCategoryCard(category, isSelected),
+        );
       },
     );
   }
@@ -115,6 +112,7 @@ class _OnboardingViewState extends State<OnboardingView> {
       onTap: () => _toggleCategory(category),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        height: 80, // Fixed height for compact design
         decoration: BoxDecoration(
           color: isSelected
               ? category.color.withValues(alpha: 0.1)
@@ -145,9 +143,9 @@ class _OnboardingViewState extends State<OnboardingView> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
+                  // Icon container
                   Container(
                     width: 48,
                     height: 48,
@@ -163,29 +161,34 @@ class _OnboardingViewState extends State<OnboardingView> {
                       color: isSelected ? Colors.white : category.color,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    category.title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? category.color
-                          : theme.colorScheme.onSurface,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Flexible(
-                    child: Text(
-                      category.description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.6,
+                  const SizedBox(width: 16),
+                  // Text content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          category.title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: isSelected
+                                ? category.color
+                                : theme.colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 4),
+                        Text(
+                          category.description,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -210,31 +213,21 @@ class _OnboardingViewState extends State<OnboardingView> {
     );
   }
 
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: _isLoading ? null : _skipOnboarding,
-            child: const Text('Skip'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading || _selectedCategory == null
-                ? null
-                : _completeOnboarding,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Get Started'),
-          ),
-        ),
-      ],
+  Widget _buildActionButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading || _selectedCategory == null
+            ? null
+            : _completeOnboarding,
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('Get Started'),
+      ),
     );
   }
 
@@ -242,13 +235,6 @@ class _OnboardingViewState extends State<OnboardingView> {
     setState(() {
       _selectedCategory = category;
     });
-  }
-
-  Future<void> _skipOnboarding() async {
-    await markOnboardingCompleted();
-    if (mounted) {
-      widget.onComplete?.call();
-    }
   }
 
   Future<void> _completeOnboarding() async {
