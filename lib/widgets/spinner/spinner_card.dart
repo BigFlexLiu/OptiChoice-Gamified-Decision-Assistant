@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../storage/spinner_model.dart';
+import '../../services/spinner_actions.dart';
 import 'spinner_preview.dart';
 
 class SpinnerCard extends StatelessWidget {
@@ -10,7 +11,7 @@ class SpinnerCard extends StatelessWidget {
   final String? subtitle;
   final ValueChanged<bool>? onExpansionChanged;
   final bool isExpanded;
-  final bool isFromSpinnerTemplates;
+  final VoidCallback? onSpinnerTap;
 
   const SpinnerCard({
     super.key,
@@ -21,8 +22,13 @@ class SpinnerCard extends StatelessWidget {
     this.isActive = false,
     this.canReorder = false,
     this.subtitle,
-    this.isFromSpinnerTemplates = false,
+    this.onSpinnerTap,
   });
+
+  VoidCallback? _getDefaultTapHandler(BuildContext context) {
+    // Default to manage spinners behavior if no custom handler provided
+    return () => SpinnerActions.handleManageSpinnersTap(context, spinner);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +123,7 @@ class SpinnerCard extends StatelessWidget {
                     Expanded(
                       child: SpinnerPreview(
                         spinner: spinner,
-                        isFromSpinnerTemplates: isFromSpinnerTemplates,
+                        onTap: onSpinnerTap ?? _getDefaultTapHandler(context),
                       ),
                     ),
                     const SizedBox(width: 8),

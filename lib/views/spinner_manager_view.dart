@@ -2,6 +2,7 @@
 
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/services/spinner_actions.dart';
 import 'package:decision_spinner/utils/onboarding_test_utils.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
 import 'package:decision_spinner/widgets/spinner/spinner_card.dart';
@@ -571,6 +572,11 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
                       }),
                       canReorder: _searchQuery.isEmpty,
                       actions: _buildSpinnerActions(spinnerId, isActive, theme),
+                      onSpinnerTap: () =>
+                          SpinnerActions.handleManageSpinnersTap(
+                            context,
+                            spinner,
+                          ),
                     );
                   },
                 ),

@@ -2,6 +2,7 @@ import 'package:decision_spinner/consts/category_definitions.dart';
 import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
+import 'package:decision_spinner/services/spinner_actions.dart';
 import 'package:decision_spinner/storage/base_storage_service.dart';
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:decision_spinner/utils/widget_utils.dart';
@@ -11,14 +12,14 @@ import 'package:decision_spinner/widgets/dialogs/category_reorder_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class SpinnerTemplatesView extends StatefulWidget {
-  const SpinnerTemplatesView({super.key});
+class TemplatesView extends StatefulWidget {
+  const TemplatesView({super.key});
 
   @override
-  State<SpinnerTemplatesView> createState() => _SpinnerTemplatesViewState();
+  State<TemplatesView> createState() => _TemplatesViewState();
 }
 
-class _SpinnerTemplatesViewState extends State<SpinnerTemplatesView>
+class _TemplatesViewState extends State<TemplatesView>
     with SingleTickerProviderStateMixin {
   List<CategoryDefinition> _tabs = [];
   bool _isLoading = true;
@@ -267,7 +268,8 @@ class _SpinnerTemplatesTabViewState extends State<_SpinnerTemplatesTabView> {
           isActive: false,
           canReorder: false,
           actions: _buildActions(context, spinner),
-          isFromSpinnerTemplates: true,
+          onSpinnerTap: () =>
+              SpinnerActions.handleTemplateSelectionTap(context, spinner),
         );
       },
     );

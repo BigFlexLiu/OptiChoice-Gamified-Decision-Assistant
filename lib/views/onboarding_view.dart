@@ -17,11 +17,20 @@ class OnboardingView extends StatefulWidget {
 }
 
 class _OnboardingViewState extends State<OnboardingView> {
-  final Set<CategoryDefinition> _selectedCategories = {};
+  CategoryDefinition? _selectedCategory;
   bool _isLoading = false;
 
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _selectedCategoriesKey = 'selected_categories';
+
+  @override
+  void initState() {
+    super.initState();
+    // Set the first category as default selection
+    if (CategoryDefinitions.allCategories.isNotEmpty) {
+      _selectedCategory = CategoryDefinitions.allCategories.first;
+    }
+  }
 
   static Future<void> markOnboardingCompleted() async {
     await BaseStorageService.saveBool(_onboardingCompletedKey, true);
@@ -71,7 +80,7 @@ class _OnboardingViewState extends State<OnboardingView> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Select up to 3 categories to get started.',
+          'Select a category to get started.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
@@ -92,7 +101,7 @@ class _OnboardingViewState extends State<OnboardingView> {
       itemCount: CategoryDefinitions.allCategories.length,
       itemBuilder: (context, index) {
         final category = CategoryDefinitions.allCategories[index];
-        final isSelected = _selectedCategories.contains(category);
+        final isSelected = _selectedCategory == category;
 
         return _buildCategoryCard(category, isSelected);
       },
@@ -202,43 +211,28 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Widget _buildActionButtons() {
-    final theme = Theme.of(context);
-
-    return Column(
+    return Row(
       children: [
-        if (_selectedCategories.isNotEmpty) ...[
-          Text(
-            '${_selectedCategories.length}/3 categories selected',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _skipOnboarding,
+            child: const Text('Skip'),
           ),
-          const SizedBox(height: 16),
-        ],
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _isLoading ? null : _skipOnboarding,
-                child: const Text('Skip'),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _isLoading || _selectedCategories.isEmpty
-                    ? null
-                    : _completeOnboarding,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Get Started'),
-              ),
-            ),
-          ],
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading || _selectedCategory == null
+                ? null
+                : _completeOnboarding,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Get Started'),
+          ),
         ),
       ],
     );
@@ -246,14 +240,7 @@ class _OnboardingViewState extends State<OnboardingView> {
 
   void _toggleCategory(CategoryDefinition category) {
     setState(() {
-      if (_selectedCategories.contains(category)) {
-        _selectedCategories.remove(category);
-      } else if (_selectedCategories.length < 3) {
-        _selectedCategories.add(category);
-      } else {
-        // Show message about 3 category limit
-        showSnackBar(context, 'You can select up to 3 categories');
-      }
+      _selectedCategory = category;
     });
   }
 
@@ -265,7 +252,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Future<void> _completeOnboarding() async {
-    if (_selectedCategories.isEmpty) return;
+    if (_selectedCategory == null) return;
 
     setState(() {
       _isLoading = true;
@@ -281,18 +268,13 @@ class _OnboardingViewState extends State<OnboardingView> {
         listen: false,
       );
 
-      // Get example spinners from selected categories
+      // Get example spinners from selected category
       final selectedSpinners = <SpinnerModel>[];
-      for (final category in _selectedCategories) {
-        // Take the first 2 spinners from each category
-        final exampleSpinners = category.spinnerTemplates.take(2).toList();
-        selectedSpinners.addAll(exampleSpinners);
-      }
-
-      // If we have too many spinners, limit to 6 total
-      if (selectedSpinners.length > 6) {
-        selectedSpinners.removeRange(6, selectedSpinners.length);
-      }
+      // Take the first 2 spinners from the selected category
+      final exampleSpinners = _selectedCategory!.spinnerTemplates
+          .take(2)
+          .toList();
+      selectedSpinners.addAll(exampleSpinners);
 
       // Create spinners
       String? firstSpinnerId;
@@ -311,8 +293,8 @@ class _OnboardingViewState extends State<OnboardingView> {
         await spinnersNotifier.setActiveSpinnerId(firstSpinnerId);
       }
 
-      // Save selected categories
-      final selectedCategoryIds = _selectedCategories.map((c) => c.id).toList();
+      // Save selected category
+      final selectedCategoryIds = [_selectedCategory!.id];
       await saveSelectedCategories(selectedCategoryIds);
 
       // Mark onboarding as completed

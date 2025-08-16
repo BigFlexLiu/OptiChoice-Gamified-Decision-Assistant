@@ -61,7 +61,7 @@ class AppInitializer extends StatefulWidget {
 }
 
 class AppInitializerState extends State<AppInitializer> {
-  bool _shouldShowOnboarding = false;
+  bool _shouldShowOnboarding = true;
 
   @override
   void initState() {
@@ -86,7 +86,7 @@ class AppInitializerState extends State<AppInitializer> {
 
     if (!mounted) return;
     setState(() {
-      _shouldShowOnboarding = shouldShowOnboarding;
+      // _shouldShowOnboarding = shouldShowOnboarding;
     });
   }
 
@@ -99,15 +99,15 @@ class AppInitializerState extends State<AppInitializer> {
         }
 
         // Show onboarding if it's the first time
-        // if (_shouldShowOnboarding) {
-        //   return OnboardingView(
-        //     onComplete: () {
-        //       setState(() {
-        //         _shouldShowOnboarding = false;
-        //       });
-        //     },
-        //   );
-        // }
+        if (_shouldShowOnboarding) {
+          return OnboardingView(
+            onComplete: () {
+              setState(() {
+                _shouldShowOnboarding = false;
+              });
+            },
+          );
+        }
 
         return SpinnerView();
       },
