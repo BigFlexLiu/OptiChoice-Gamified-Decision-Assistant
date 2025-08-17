@@ -12,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   // Lock orientation to portrait mode
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
