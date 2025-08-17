@@ -1,3 +1,4 @@
+import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/views/onboarding_view.dart';
@@ -71,9 +72,9 @@ class AppInitializerState extends State<AppInitializer> {
 
   void _initializeApp() async {
     // Check if onboarding should be shown
-    const onboardingCompletedKey = 'onboarding_completed';
     final prefs = await SharedPreferences.getInstance();
-    final completed = prefs.getBool(onboardingCompletedKey) ?? false;
+    final completed =
+        prefs.getBool(StorageConstants.onboardingCompletedKey) ?? false;
     final shouldShowOnboarding = !completed;
 
     // Initialize SpinnersNotifier

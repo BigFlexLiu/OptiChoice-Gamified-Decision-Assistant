@@ -13,7 +13,10 @@ class StorageConstants {
       'decision_spinner_saved_solid_colors';
   static const String useGradientKey = 'decision_spinner_use_gradient';
   static const String colorThemeKey = 'decision_spinner_color_theme';
+
+  // Onboarding
   static const String selectedCategoriesKey = 'selected_categories';
+  static const String onboardingCompletedKey = 'onboarding_completed';
 
   // Default values
   static const String defaultSpinnerName = 'Food Slices';
