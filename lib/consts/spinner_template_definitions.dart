@@ -116,7 +116,7 @@ class SpinnerTemplateDefinitions {
       'Sandwich',
       'Skip Meal',
     ].map((text) => Slice(text: text)).toList(),
-    colors: fourSliceColors,
+    colors: fiveSliceColors,
   );
 
   static SpinnerModel get whereToGoSpinner => createSpinner(
