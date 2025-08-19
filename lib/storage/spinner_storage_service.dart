@@ -23,28 +23,8 @@ class SpinnerStorageService extends BaseStorageService {
 
       return loadedSpinners;
     } catch (e) {
-      final defaultSpinner = _createDefaultSpinnerModel();
-      final defaultSpinners = {defaultSpinner.id: defaultSpinner};
-      await saveAllSpinners(defaultSpinners);
-      await setActiveSpinnerId(defaultSpinner.id);
-      return defaultSpinners;
+      return {};
     }
-  }
-
-  static SpinnerModel _createDefaultSpinnerModel() {
-    return SpinnerModel(
-      name: StorageConstants.defaultSpinnerName,
-      slices: StorageConstants.defaultSlices,
-      colorThemeIndex: -1,
-      backgroundColors: [
-        Colors.red,
-        Colors.blue,
-        Colors.green,
-        Colors.purple,
-        Colors.orange,
-        Colors.teal,
-      ],
-    );
   }
 
   static Future<String?> _getActiveSpinnerId() async {

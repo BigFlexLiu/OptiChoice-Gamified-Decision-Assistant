@@ -1,4 +1,5 @@
 import 'package:decision_spinner/consts/category_definitions.dart';
+import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/storage/base_storage_service.dart';
@@ -20,9 +21,6 @@ class _OnboardingViewState extends State<OnboardingView> {
   CategoryDefinition? _selectedCategory;
   bool _isLoading = false;
 
-  static const String _onboardingCompletedKey = 'onboarding_completed';
-  static const String _selectedCategoriesKey = 'selected_categories';
-
   @override
   void initState() {
     super.initState();
@@ -33,11 +31,17 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   static Future<void> markOnboardingCompleted() async {
-    await BaseStorageService.saveBool(_onboardingCompletedKey, true);
+    await BaseStorageService.saveBool(
+      StorageConstants.onboardingCompletedKey,
+      true,
+    );
   }
 
   static Future<void> saveSelectedCategories(List<String> categoryIds) async {
-    await BaseStorageService.saveJson(_selectedCategoriesKey, categoryIds);
+    await BaseStorageService.saveJson(
+      StorageConstants.selectedCategoriesKey,
+      categoryIds,
+    );
   }
 
   @override
@@ -257,30 +261,17 @@ class _OnboardingViewState extends State<OnboardingView> {
         listen: false,
       );
 
-      // Get example spinners from selected category
-      final selectedSpinners = <SpinnerModel>[];
-      // Take the first 2 spinners from the selected category
-      final exampleSpinners = _selectedCategory!.spinnerTemplates
-          .take(2)
-          .toList();
-      selectedSpinners.addAll(exampleSpinners);
+      // Get example spinner from selected category
+      // Take the first spinner from the selected category
+      final exampleSpinner = _selectedCategory!.spinnerTemplates.first;
 
-      // Create spinners
-      String? firstSpinnerId;
-      for (int i = 0; i < selectedSpinners.length; i++) {
-        final spinner = selectedSpinners[i];
-        final newSpinner = SpinnerModel.duplicate(spinner);
-        await spinnerProvider.saveSpinner(newSpinner);
-
-        if (i == 0) {
-          firstSpinnerId = newSpinner.id;
-        }
-      }
+      // Create spinner
+      final newSpinner = SpinnerModel.duplicate(exampleSpinner);
+      await spinnerProvider.saveSpinner(newSpinner);
+      final firstSpinnerId = newSpinner.id;
 
       // Set the first spinner as active
-      if (firstSpinnerId != null) {
-        await spinnersNotifier.setActiveSpinnerId(firstSpinnerId);
-      }
+      await spinnersNotifier.setActiveSpinnerId(firstSpinnerId);
 
       // Save selected category
       final selectedCategoryIds = [_selectedCategory!.id];

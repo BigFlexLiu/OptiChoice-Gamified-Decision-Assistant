@@ -1,6 +1,3 @@
-import 'package:decision_spinner/consts/spinner_template_definitions.dart';
-import 'package:decision_spinner/storage/spinner_model.dart';
-
 class StorageConstants {
   // Spinner related keys
   static const String spinnersKey = 'decision_spinner_spinners';
@@ -17,12 +14,6 @@ class StorageConstants {
   // Onboarding
   static const String selectedCategoriesKey = 'selected_categories';
   static const String onboardingCompletedKey = 'onboarding_completed';
-
-  // Default values
-  static const String defaultSpinnerName = 'Food Slices';
-
-  static List<Slice> defaultSlices =
-      SpinnerTemplateDefinitions.whatToEatSpinner.slices;
 
   // Validation constraints
   static const int optionMaxLength = 100;
