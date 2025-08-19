@@ -157,33 +157,36 @@ class EditSpinnerViewState extends State<EditSpinnerView> {
         appBar: _buildAppBar(),
         body: _isLoading
             ? Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    ColorThemeSelector(
-                      selectedThemeIndex: spinner.colorThemeIndex,
-                      customColors: spinner.customBackgroundColors,
-                      onThemeChanged: _updateColorTheme,
-                      onCustomColorsChanged: _updateCustomColors,
-                    ),
-                    const SizedBox(height: 8),
-                    AudioSettingsSection(
-                      spinSound: spinner.spinSound,
-                      spinEndSound: spinner.spinEndSound,
-                      availableSpinSounds: _spinAudioFiles,
-                      availableSpinEndSounds: _spinEndAudioFiles,
-                      onSpinSoundChanged: _updateSpinSound,
-                      onSpinEndSoundChanged: _updateSpinEndSound,
-                    ),
-                    const SizedBox(height: 8),
-                    SpinDurationSection(
-                      spinDuration: spinner.spinDuration,
-                      onDurationChanged: _updateSpinDuration,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSlicesListSection(),
-                  ],
+            : SafeArea(
+                bottom: true,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      ColorThemeSelector(
+                        selectedThemeIndex: spinner.colorThemeIndex,
+                        customColors: spinner.customBackgroundColors,
+                        onThemeChanged: _updateColorTheme,
+                        onCustomColorsChanged: _updateCustomColors,
+                      ),
+                      const SizedBox(height: 8),
+                      AudioSettingsSection(
+                        spinSound: spinner.spinSound,
+                        spinEndSound: spinner.spinEndSound,
+                        availableSpinSounds: _spinAudioFiles,
+                        availableSpinEndSounds: _spinEndAudioFiles,
+                        onSpinSoundChanged: _updateSpinSound,
+                        onSpinEndSoundChanged: _updateSpinEndSound,
+                      ),
+                      const SizedBox(height: 8),
+                      SpinDurationSection(
+                        spinDuration: spinner.spinDuration,
+                        onDurationChanged: _updateSpinDuration,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildSlicesListSection(),
+                    ],
+                  ),
                 ),
               ),
       ),
@@ -246,7 +249,7 @@ class EditSpinnerViewState extends State<EditSpinnerView> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -380,7 +383,6 @@ class EditSpinnerViewState extends State<EditSpinnerView> {
 
                   // Button to activate all inactive slices
                   Container(
-                    margin: const EdgeInsets.only(top: 8, bottom: 8),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer.withValues(
                         alpha: 0.3,
