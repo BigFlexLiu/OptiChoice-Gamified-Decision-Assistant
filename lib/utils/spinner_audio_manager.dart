@@ -4,21 +4,29 @@ import 'package:decision_spinner/utils/logger.dart';
 import '../storage/spinner_model.dart';
 
 class SpinnerAudioManager {
+  String? _spinAudioPath;
+  String? _spinEndAudioPath;
   AudioSource? _spinAudioSource;
   AudioSource? _spinEndAudioSource;
 
-  Future<void> preloadAudioSources(SpinnerModel? activeSpinner) async {
+  Future<void> loadAudioSources(SpinnerModel? activeSpinner) async {
     if (activeSpinner == null) return;
 
     try {
-      _spinAudioSource = await _loadAudioSource(
-        activeSpinner.spinSound,
-        AudioUtils.getSpinAudioPath,
-      );
-      _spinEndAudioSource = await _loadAudioSource(
-        activeSpinner.spinEndSound,
-        AudioUtils.getSpinEndAudioPath,
-      );
+      if (activeSpinner.spinSound != _spinAudioPath) {
+        _spinAudioPath = activeSpinner.spinSound;
+        _spinAudioSource = await _loadAudioSource(
+          activeSpinner.spinSound,
+          AudioUtils.getSpinAudioPath,
+        );
+      }
+      if (activeSpinner.spinEndSound != _spinEndAudioPath) {
+        _spinEndAudioPath = activeSpinner.spinEndSound;
+        _spinEndAudioSource = await _loadAudioSource(
+          activeSpinner.spinEndSound,
+          AudioUtils.getSpinEndAudioPath,
+        );
+      }
     } catch (e, stackTrace) {
       logger.e(
         "Error preloading audio sources",

@@ -82,6 +82,7 @@ class SpinnerViewState extends State<SpinnerView>
 
         // Initialize current option if needed
         _ensureCurrentOptionInitialized(activeSpinner);
+        _audioManager.loadAudioSources(activeSpinner);
 
         return AnimatedBuilder(
           animation: _backgroundColorAnimation,
