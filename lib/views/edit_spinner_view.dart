@@ -558,7 +558,7 @@ class EditSpinnerViewState extends State<EditSpinnerView> {
       context: context,
       builder: (context) => EditOptionDialog(
         option: option,
-        canDelete: spinner.slices.length > 2,
+        canDelete: spinner.activeSlices.length > 2,
         onOptionChanged: (newText, newWeight) {
           _editOption(index, newText);
           _updateOptionWeight(index, newWeight);
