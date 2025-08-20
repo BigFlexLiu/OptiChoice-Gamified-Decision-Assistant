@@ -20,7 +20,7 @@ class SpinnerManagerView extends StatefulWidget {
 
 class _SpinnerManagerViewState extends State<SpinnerManagerView> {
   Map<String, SpinnerModel> _spinners = {};
-  late String _activeSpinnerId;
+  late String _activeSpinner;
   bool _isLoading = true;
   bool _isSearching = false;
   String _searchQuery = '';
@@ -67,12 +67,12 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
       }
 
       // Get the data from the notifier
-      final spinners = spinnersNotifier.cachedSpinners ?? {};
-      final activeSpinnerId = spinnersNotifier.activeSpinnerId ?? '';
+      final spinners = spinnersNotifier.spinners ?? {};
+      final activeSpinnerId = spinnersNotifier.activeSpinner?.id ?? "";
 
       setState(() {
         _spinners = spinners;
-        _activeSpinnerId = activeSpinnerId;
+        _activeSpinner = activeSpinnerId;
         _isLoading = false;
         for (var spinnerId in spinners.keys) {
           if (!_expansionStateByItemId.containsKey(spinnerId)) {
@@ -172,8 +172,8 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
     // Sort to put active spinner first
     final sortedEntries = filtered.entries.toList()
       ..sort((a, b) {
-        if (a.key == _activeSpinnerId) return -1;
-        if (b.key == _activeSpinnerId) return 1;
+        if (a.key == _activeSpinner) return -1;
+        if (b.key == _activeSpinner) return 1;
         return 0;
       });
 
@@ -369,7 +369,7 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
     if (success) {
       // Update the local state immediately
       setState(() {
-        _activeSpinnerId = id;
+        _activeSpinner = id;
       });
 
       final spinnerName = _spinners[id]?.name ?? 'Unknown';
@@ -451,16 +451,16 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
       builder: (context, spinnersNotifier, child) {
         // Update local state from notifier if initialized
         if (spinnersNotifier.isInitialized && !_isLoading) {
-          final spinners = spinnersNotifier.cachedSpinners ?? {};
-          final activeSpinnerId = spinnersNotifier.activeSpinnerId ?? '';
+          final spinners = spinnersNotifier.spinners ?? {};
+          final activeSpinnerId = spinnersNotifier.activeSpinner?.id ?? '';
 
           // Update local state if different
-          if (_spinners != spinners || _activeSpinnerId != activeSpinnerId) {
+          if (_spinners != spinners || _activeSpinner != activeSpinnerId) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 setState(() {
                   _spinners = spinners;
-                  _activeSpinnerId = activeSpinnerId;
+                  _activeSpinner = activeSpinnerId;
 
                   // Initialize expansion states for new spinners
                   for (var spinnerId in spinners.keys) {
@@ -559,7 +559,7 @@ class _SpinnerManagerViewState extends State<SpinnerManagerView> {
                     // Show active spinner first if exists
                     final spinnerId = filteredSpinners.keys.elementAt(index);
                     final spinner = filteredSpinners[spinnerId]!;
-                    final isActive = spinnerId == _activeSpinnerId;
+                    final isActive = spinnerId == _activeSpinner;
                     final isExpanded = _expansionStateByItemId[spinnerId]!;
 
                     return SpinnerCard(

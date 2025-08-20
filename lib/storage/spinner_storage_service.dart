@@ -63,15 +63,8 @@ class SpinnerStorageService extends BaseStorageService {
   }
 
   static Future<bool> saveSpinner(SpinnerModel spinner) async {
-    return await _updateSpinner(spinner, updateTimestamp: true);
-  }
-
-  static Future<bool> _updateSpinner(
-    SpinnerModel spinner, {
-    bool updateTimestamp = false,
-  }) async {
     final allSpinners = await loadAllSpinners();
-    if (updateTimestamp) spinner.updatedAt = DateTime.now();
+    spinner.updatedAt = DateTime.now();
     allSpinners[spinner.id] = spinner;
     return await saveAllSpinners(allSpinners);
   }

@@ -5,14 +5,12 @@ import 'package:decision_spinner/storage/spinner_storage_service.dart';
 /// A ChangeNotifier that manages the cached spinners and active spinner state.
 /// This replaces the singleton caching logic in SpinnerStorageService.
 class SpinnersNotifier extends ChangeNotifier {
-  Map<String, SpinnerModel>? _cachedSpinners;
-  String? _activeSpinnerId;
+  Map<String, SpinnerModel>? _spinners;
   SpinnerModel? _activeSpinner;
   bool _isInitialized = false;
 
   // Getters
-  Map<String, SpinnerModel>? get cachedSpinners => _cachedSpinners;
-  String? get activeSpinnerId => _activeSpinnerId;
+  Map<String, SpinnerModel>? get spinners => _spinners;
   SpinnerModel? get activeSpinner => _activeSpinner;
   bool get isInitialized => _isInitialized;
 
@@ -22,20 +20,18 @@ class SpinnersNotifier extends ChangeNotifier {
 
     try {
       // Load all spinners from storage
-      _cachedSpinners = await SpinnerStorageService.loadAllSpinners();
+      _spinners = await SpinnerStorageService.loadAllSpinners();
 
       // Load active spinner ID
-      _activeSpinnerId = await SpinnerStorageService.getActiveSpinnerId();
+      final activeSpinnerId = await SpinnerStorageService.getActiveSpinnerId();
 
       // Set active spinner based on ID
-      if (_activeSpinnerId != null &&
-          _cachedSpinners!.containsKey(_activeSpinnerId)) {
-        _activeSpinner = _cachedSpinners![_activeSpinnerId];
-      } else if (_cachedSpinners!.isNotEmpty) {
+      if (_spinners!.containsKey(activeSpinnerId)) {
+        _activeSpinner = _spinners![activeSpinnerId];
+      } else if (_spinners!.isNotEmpty) {
         // Fallback to first spinner if active ID not found
-        _activeSpinner = _cachedSpinners!.values.first;
-        _activeSpinnerId = _activeSpinner!.id;
-        await SpinnerStorageService.setActiveSpinnerId(_activeSpinnerId!);
+        _activeSpinner = _spinners!.values.first;
+        await SpinnerStorageService.setActiveSpinnerId(activeSpinnerId!);
       }
 
       _isInitialized = true;
@@ -48,14 +44,14 @@ class SpinnersNotifier extends ChangeNotifier {
 
   /// Get a spinner by ID from cache, or null if not found
   SpinnerModel? getSpinnerById(String id) {
-    return _cachedSpinners?[id];
+    return _spinners?[id];
   }
 
   /// Find a spinner by name
   SpinnerModel? findSpinnerByName(String name) {
-    if (_cachedSpinners == null) return null;
+    if (_spinners == null) return null;
 
-    for (final spinner in _cachedSpinners!.values) {
+    for (final spinner in _spinners!.values) {
       if (spinner.name == name) return spinner;
     }
     return null;
@@ -63,18 +59,18 @@ class SpinnersNotifier extends ChangeNotifier {
 
   /// Check if a spinner name exists (excluding a specific ID)
   bool spinnerNameExists(String name, {String? excludeId}) {
-    if (_cachedSpinners == null) return false;
+    if (_spinners == null) return false;
 
-    return _cachedSpinners!.values.any(
+    return _spinners!.values.any(
       (spinner) => spinner.name == name && spinner.id != excludeId,
     );
   }
 
   /// Find a spinner with identical content (slices and colors)
   SpinnerModel? findSpinnerWithIdenticalContent(SpinnerModel targetSpinner) {
-    if (_cachedSpinners == null) return null;
+    if (_spinners == null) return null;
 
-    for (final existingSpinner in _cachedSpinners!.values) {
+    for (final existingSpinner in _spinners!.values) {
       if (existingSpinner.id == targetSpinner.id) continue;
       if (targetSpinner.isContentIdenticalTo(existingSpinner)) {
         return existingSpinner;
@@ -85,16 +81,16 @@ class SpinnersNotifier extends ChangeNotifier {
 
   /// Generate a unique name for a spinner
   String generateUniqueName(String baseName, {String? excludeId}) {
-    if (_cachedSpinners == null) return baseName;
+    if (_spinners == null) return baseName;
 
-    final nameExists = _cachedSpinners!.values.any(
+    final nameExists = _spinners!.values.any(
       (spinner) => spinner.name == baseName && spinner.id != excludeId,
     );
     if (!nameExists) return baseName;
 
     for (int counter = 1; ; counter++) {
       final candidateName = '$baseName ($counter)';
-      final candidateExists = _cachedSpinners!.values.any(
+      final candidateExists = _spinners!.values.any(
         (spinner) => spinner.name == candidateName && spinner.id != excludeId,
       );
       if (!candidateExists) return candidateName;
@@ -103,7 +99,7 @@ class SpinnersNotifier extends ChangeNotifier {
 
   /// Save a single spinner and update cache
   Future<bool> saveSpinner(SpinnerModel spinner) async {
-    if (_cachedSpinners == null) return false;
+    if (_spinners == null) return false;
 
     try {
       // Save to storage first
@@ -111,7 +107,7 @@ class SpinnersNotifier extends ChangeNotifier {
       if (!storageSuccess) return false;
 
       // Update cache
-      _cachedSpinners![spinner.id] = spinner;
+      _spinners![spinner.id] = spinner;
 
       // Update active spinner if it's the same ID
       if (_activeSpinner?.id == spinner.id) {
@@ -131,18 +127,7 @@ class SpinnersNotifier extends ChangeNotifier {
     try {
       final success = await SpinnerStorageService.saveAllSpinners(spinners);
       if (success) {
-        _cachedSpinners = spinners;
-
-        // Update active spinner if it exists in the new set
-        if (_activeSpinnerId != null &&
-            spinners.containsKey(_activeSpinnerId)) {
-          _activeSpinner = spinners[_activeSpinnerId];
-        } else if (spinners.isNotEmpty) {
-          // Fallback to first spinner
-          _activeSpinner = spinners.values.first;
-          _activeSpinnerId = _activeSpinner!.id;
-          await SpinnerStorageService.setActiveSpinnerId(_activeSpinnerId!);
-        }
+        _spinners = spinners;
 
         notifyListeners();
       }
@@ -155,7 +140,7 @@ class SpinnersNotifier extends ChangeNotifier {
 
   /// Set the active spinner by ID
   Future<bool> setActiveSpinnerId(String spinnerId) async {
-    if (_cachedSpinners == null || !_cachedSpinners!.containsKey(spinnerId)) {
+    if (_spinners == null || !_spinners!.containsKey(spinnerId)) {
       return false;
     }
 
@@ -163,8 +148,7 @@ class SpinnersNotifier extends ChangeNotifier {
       final success = await SpinnerStorageService.setActiveSpinnerId(spinnerId);
 
       if (success) {
-        _activeSpinnerId = spinnerId;
-        _activeSpinner = _cachedSpinners![spinnerId];
+        _activeSpinner = _spinners![spinnerId];
         notifyListeners();
       }
 
@@ -175,32 +159,19 @@ class SpinnersNotifier extends ChangeNotifier {
     }
   }
 
-  /// Refresh the cache by reloading from storage
   Future<void> refreshCache() async {
     try {
-      _cachedSpinners = await SpinnerStorageService.loadAllSpinners();
+      final results = await Future.wait([
+        SpinnerStorageService.loadAllSpinners(),
+        SpinnerStorageService.loadActiveSpinner(),
+      ]);
 
-      if (_activeSpinnerId != null &&
-          _cachedSpinners!.containsKey(_activeSpinnerId)) {
-        _activeSpinner = _cachedSpinners![_activeSpinnerId];
-      } else if (_cachedSpinners!.isNotEmpty) {
-        _activeSpinner = _cachedSpinners!.values.first;
-        _activeSpinnerId = _activeSpinner!.id;
-        await SpinnerStorageService.setActiveSpinnerId(_activeSpinnerId!);
-      }
+      _spinners = results[0] as Map<String, SpinnerModel>?;
+      _activeSpinner = results[1] as SpinnerModel?;
 
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to refresh cache: $e');
     }
-  }
-
-  /// Clear the cache and reset state
-  void clearCache() {
-    _cachedSpinners = null;
-    _activeSpinnerId = null;
-    _activeSpinner = null;
-    _isInitialized = false;
-    notifyListeners();
   }
 }

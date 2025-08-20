@@ -108,7 +108,7 @@ class MockSpinnersNotifier extends SpinnersNotifier {
   final Map<String, SpinnerModel> _testSpinners = {};
 
   @override
-  Map<String, SpinnerModel>? get cachedSpinners => _testSpinners;
+  Map<String, SpinnerModel>? get spinners => _testSpinners;
 
   @override
   bool spinnerNameExists(String name, {String? excludeId}) {

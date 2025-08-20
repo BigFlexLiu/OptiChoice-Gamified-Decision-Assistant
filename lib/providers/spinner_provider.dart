@@ -211,7 +211,7 @@ class SpinnerProvider extends ChangeNotifier {
     if (_spinnersNotifier == null) return false;
 
     // Prevent deleting if it's the last spinner
-    final cachedSpinners = _spinnersNotifier!.cachedSpinners;
+    final cachedSpinners = _spinnersNotifier!.spinners;
     if (cachedSpinners == null || cachedSpinners.length <= 1) return false;
 
     try {
@@ -232,7 +232,6 @@ class SpinnerProvider extends ChangeNotifier {
   /// Save a spinner with business logic
   Future<bool> saveSpinner(SpinnerModel spinner) async {
     if (_spinnersNotifier == null) return false;
-
     try {
       // Update timestamp
       spinner.updatedAt = DateTime.now();

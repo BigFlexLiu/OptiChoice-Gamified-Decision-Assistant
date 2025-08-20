@@ -18,7 +18,7 @@ class SpinnerView extends StatefulWidget {
 
 class SpinnerViewState extends State<SpinnerView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  Slice? _currentSpinnerOption;
+  Slice? _currentSlice;
   Slice? _previousSpinResult;
 
   bool _isSpinning = false;
@@ -201,8 +201,8 @@ class SpinnerViewState extends State<SpinnerView>
         if (_showRemoveSlice && activeSpinner.activeSlicesCount > 2)
           ElevatedButton.icon(
             onPressed: () {
-              if (_currentSpinnerOption != null) {
-                spinnerProvider.toggleSlice(_currentSpinnerOption!);
+              if (_currentSlice != null) {
+                spinnerProvider.toggleSlice(_currentSlice!);
                 setState(() {
                   _showRemoveSlice = false;
                   _showCompleteSpinActions = false;
@@ -290,7 +290,7 @@ class SpinnerViewState extends State<SpinnerView>
 
     return Center(
       child: AnimatedText(
-        _currentSpinnerOption?.text ?? "",
+        _currentSlice?.text ?? "",
         _shouldAnimateText,
         textColor,
         setShouldAnimateFalse,
@@ -373,10 +373,8 @@ class SpinnerViewState extends State<SpinnerView>
       context,
       listen: false,
     ).activeSpinner;
-    if (activeSpinner != null && _currentSpinnerOption != null) {
-      final sliceIndex = activeSpinner.activeSlices.indexOf(
-        _currentSpinnerOption!,
-      );
+    if (activeSpinner != null && _currentSlice != null) {
+      final sliceIndex = activeSpinner.activeSlices.indexOf(_currentSlice!);
       if (sliceIndex >= 0) {
         final sliceColor = activeSpinner.getCircularBackgroundColor(sliceIndex);
         _animateBackgroundColor(sliceColor);
@@ -424,10 +422,10 @@ class SpinnerViewState extends State<SpinnerView>
   }
 
   void _onPointingOptionChanged(Slice option) {
-    if (option != _currentSpinnerOption) {
+    if (option != _currentSlice) {
       _audioManager.playSpinSoundIfAvailable();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _currentSpinnerOption = option);
+        if (mounted) setState(() => _currentSlice = option);
       });
     }
   }
@@ -439,13 +437,9 @@ class SpinnerViewState extends State<SpinnerView>
   }
 
   void _ensureCurrentOptionInitialized(SpinnerModel activeSpinner) {
-    if (_currentSpinnerOption == null ||
-        !activeSpinner.slices.any(
-          (slice) => slice.text == _currentSpinnerOption!.text,
-        )) {
+    if (!activeSpinner.slices.contains(_currentSlice)) {
       if (activeSpinner.slices.isNotEmpty) {
-        _currentSpinnerOption = activeSpinner.slices.first;
-        _audioManager.preloadAudioSources(activeSpinner);
+        _currentSlice = activeSpinner.slices.first;
       }
     }
   }
