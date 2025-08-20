@@ -103,16 +103,12 @@ class _AnimatedTextState extends State<AnimatedText>
     }
 
     const maxLines = 2;
-    double fontSize = baseStyle.fontSize ?? 24.0;
     const minFontSize = 12.0;
     const maxFontSize = 48.0;
 
-    // Start with a reasonable font size
-    fontSize = fontSize.clamp(minFontSize, maxFontSize);
-
     // Use binary search for faster convergence instead of linear search
     double low = minFontSize;
-    double high = fontSize;
+    double high = maxFontSize;
     double result = minFontSize;
 
     while (high - low > 1.0) {
@@ -137,6 +133,7 @@ class _AnimatedTextState extends State<AnimatedText>
     }
 
     final finalResult = result.clamp(minFontSize, maxFontSize);
+    print(result);
 
     // Cache the result
     _fontSizeCache[cacheKey] = finalResult;
