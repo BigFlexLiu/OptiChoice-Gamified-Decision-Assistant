@@ -1,6 +1,9 @@
 import 'package:decision_spinner/consts/storage_constants.dart';
 import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
+import 'package:decision_spinner/services/install_referrer_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:decision_spinner/views/onboarding_view.dart';
 import 'package:decision_spinner/views/spinner_view.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +23,12 @@ void main() async {
 
   // Initialize SoLoud audio engine
   await SoLoud.instance.init();
+
+  // Initialize Firebase (must be before any analytics/referrer logging)
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Install Referrer Service (will log custom analytics event)
+  await InstallReferrerService.initialize();
 
   runApp(
     MultiProvider(

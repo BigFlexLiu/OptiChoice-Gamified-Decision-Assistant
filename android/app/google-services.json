@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "875108140422",
+    "project_id": "analyst-f98ab",
+    "storage_bucket": "analyst-f98ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875108140422:android:2f673ecc2b3b39be29d807",
+        "android_client_info": {
+          "package_name": "dev.vfile.decision_spin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbpZNdgIUb17_OJWD13TjdO4W0Dmab91A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
