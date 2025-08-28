@@ -35,6 +35,11 @@ class _OnboardingViewState extends State<OnboardingView> {
       StorageConstants.onboardingCompletedKey,
       true,
     );
+    // Save the timestamp when onboarding was completed
+    await BaseStorageService.saveInt(
+      StorageConstants.onboardingCompletedTimestampKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   static Future<void> saveSelectedCategories(List<String> categoryIds) async {

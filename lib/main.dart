@@ -3,6 +3,7 @@ import 'package:decision_spinner/providers/spinner_provider.dart';
 import 'package:decision_spinner/providers/spinners_notifier.dart';
 import 'package:decision_spinner/views/onboarding_view.dart';
 import 'package:decision_spinner/views/spinner_view.dart';
+import 'package:decision_spinner/widgets/dialogs/review_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
@@ -98,6 +99,11 @@ class AppInitializerState extends State<AppInitializer> {
         if (!spinnersNotifier.isInitialized) {
           return Scaffold(body: Center(child: CircularProgressIndicator()));
         }
+
+        // Show review dialog after initialization (for testing purposes)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ReviewDialog.showIfNeeded(context);
+        });
 
         // Show onboarding if it's the first time
         if (_shouldShowOnboarding) {
