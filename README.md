@@ -1,6 +1,6 @@
 # Decision Spinner
 
-Decision Spinner is a Flutter-based mobile application designed to help users make decisions in a fun and interactive way. The app features a customizable spinner that users can configure with their own options, making it perfect for games, decision-making, or just having fun.
+Decision Spinner is a Flutter-based mobile application designed to help users make decisions in a fun and interactive way. The app features a customizable spinner that users can configure with their own options, making it perfect for games, decision-making, or just having fun. You can download from [Google Play](https://play.google.com/store/apps/details?id=dev.vfile.decision_spin) or follow the installation steps below to try it out.
 
 ## Features
 - Customizable spinner with user-defined options.
