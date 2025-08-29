@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:decision_spinner/storage/spinner_model.dart';
 import 'package:flutter/material.dart';
+import 'package:characters/characters.dart';
 
 class SpinnerPainter extends CustomPainter {
   final SpinnerModel spinnerModel;
@@ -142,21 +143,22 @@ class SpinnerPainter extends CustomPainter {
     double radius,
     double angle,
   ) {
-    final textStyle = TextStyle(
-      color: textColor,
-      fontSize: _calculateFontSize(),
-      fontWeight: FontWeight.w900,
+    final textSpan = TextSpan(
+      text: _truncateToFit(text, radius),
+      style: TextStyle(
+        color: textColor,
+        fontSize: _calculateFontSize(),
+        fontWeight: FontWeight.w900,
+        fontFamily: 'Roboto', // Ensure a font that supports emojis is used
+      ),
     );
 
     final textPainter = TextPainter(
+      text: textSpan,
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.left,
     );
 
-    final truncatedText = _truncateToFit(text, textPainter, textStyle, radius);
-
-    // Layout final text
-    textPainter.text = TextSpan(text: truncatedText, style: textStyle);
     textPainter.layout();
 
     // Calculate starting position (just inside border)
@@ -171,6 +173,55 @@ class SpinnerPainter extends CustomPainter {
     textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
 
     canvas.restore();
+  }
+
+  String _truncateToFit(String fullText, double maxTextWidth) {
+    if (fullText.isEmpty) return fullText;
+
+    final textStyle = TextStyle(
+      fontSize: _calculateFontSize(),
+      fontWeight: FontWeight.w900,
+      fontFamily: 'Roboto',
+    );
+
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    // Helper function to test if text fits
+    bool textFits(String text) {
+      try {
+        textPainter.text = TextSpan(text: text, style: textStyle);
+        textPainter.layout();
+        return textPainter.width <= maxTextWidth;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Return full text if it fits
+    if (textFits(fullText)) return fullText;
+
+    // Binary search for the longest fitting substring
+    final characters = fullText.characters.toList();
+    int low = 0, high = characters.length;
+    String result = '';
+
+    while (low <= high) {
+      final mid = (low + high) ~/ 2;
+      if (mid <= 0) {
+        high = mid - 1;
+        continue;
+      }
+
+      final candidate = characters.take(mid).join();
+      if (textFits(candidate)) {
+        result = candidate;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return result;
   }
 
   double _calculateFontSize() {
@@ -188,35 +239,6 @@ class SpinnerPainter extends CustomPainter {
     final fontSize = 20.0 - (reductions * 2.0);
 
     return fontSize.clamp(12.0, 20.0) * textScale;
-  }
-
-  // Binary search for the longest substring that fits maxTextWidth
-  String _truncateToFit(
-    String fullText,
-    TextPainter textPainter,
-    TextStyle textStyle,
-    double maxTextWidth,
-  ) {
-    int low = 0;
-    int high = fullText.length;
-    String result = '';
-
-    while (low <= high) {
-      final mid = (low + high) ~/ 2;
-      final candidate = fullText.substring(0, mid);
-
-      textPainter.text = TextSpan(text: candidate, style: textStyle);
-      textPainter.layout();
-
-      if (textPainter.width <= maxTextWidth) {
-        result = candidate;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    return result;
   }
 
   List<String> get _slices =>

@@ -14,6 +14,12 @@ class StorageConstants {
   // Onboarding
   static const String selectedCategoriesKey = 'selected_categories';
   static const String onboardingCompletedKey = 'onboarding_completed';
+  static const String onboardingCompletedTimestampKey =
+      'onboarding_completed_timestamp';
+
+  // Review
+  static const String reviewShownKey = 'review_shown';
+  static const String reviewPostponedKey = 'review_postponed_timestamp';
 
   // Validation constraints
   static const int optionMaxLength = 100;
