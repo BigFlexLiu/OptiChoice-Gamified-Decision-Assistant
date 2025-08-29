@@ -142,21 +142,22 @@ class SpinnerPainter extends CustomPainter {
     double radius,
     double angle,
   ) {
-    final textStyle = TextStyle(
-      color: textColor,
-      fontSize: _calculateFontSize(),
-      fontWeight: FontWeight.w900,
+    final textSpan = TextSpan(
+      text: text,
+      style: TextStyle(
+        color: textColor,
+        fontSize: _calculateFontSize(),
+        fontWeight: FontWeight.w900,
+        fontFamily: 'Roboto', // Ensure a font that supports emojis is used
+      ),
     );
 
     final textPainter = TextPainter(
+      text: textSpan,
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.left,
     );
 
-    final truncatedText = _truncateToFit(text, textPainter, textStyle, radius);
-
-    // Layout final text
-    textPainter.text = TextSpan(text: truncatedText, style: textStyle);
     textPainter.layout();
 
     // Calculate starting position (just inside border)
